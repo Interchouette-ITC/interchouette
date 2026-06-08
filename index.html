@@ -105,13 +105,15 @@
     Interchouette <span id="js-current-year">2024</span> - All Rights Reserved
   </footer>
 
-  <script src="https://code.jquery.com/jquery-3.6.3.slim.min.js"
-    integrity="sha256-ZwqZIVdD3iXNyGHbSYdsmWP//UBokj2FHAxKuSBKDSo=" crossorigin="anonymous"></script>
+  <script
+  src="https://code.jquery.com/jquery-3.7.1.slim.js"
+  integrity="sha256-UgvvN8vBkgO0luPSUl2s8TIlOSYRoGFAX4jlCIm9Adc="
+  crossorigin="anonymous"></script>
   <script type="text/javascript">
     const today = new Date();
     $('#js-current-year').text(today.getFullYear());
     const mail = atob('Y29udGFjdEBpbnRlcmNob3VldHRlLm5ldA==');
-    const whatsapp = atob('MzE2NDc2MDYyMjU=');
+    const whatsapp = atob('MzE2MjA4MDg0NTQ=');
     $('#contact').attr('href', `mailto:${mail}`);
     $('#whatsapp').attr('href', `https://wa.me/${whatsapp}`);
   </script>
