@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/CV/CV_Gregory_Roussac.pdf",
+      "destination": "/CV/Gregory_Roussac.pdf",
+      "type": 301
+    }
+  ]
+}
