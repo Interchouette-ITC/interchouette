@@ -1,0 +1,132 @@
+/* PDF only — minimal overrides; fonts/layout from styles.css */
+
+@page {
+  size: A4;
+  margin: 7mm 3mm 7mm 3mm;
+}
+
+@page :first {
+  margin-top: 5mm;
+}
+
+html {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+body {
+  background: white;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.cv-top-bar {
+  display: none;
+}
+
+.cv-header {
+  padding-top: 0;
+}
+
+.cv-contact a,
+.cv-contact-linkedin,
+.cv-job a {
+  color: #2c5282;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.cv-education-entry,
+.language-item {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.cv-job-header {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.page-break-before {
+  break-before: page;
+  page-break-before: always;
+}
+
+/* Experience lists — compact for PDF */
+.cv-job ul {
+  font-size: 0.75rem !important;
+  line-height: 1.33 !important;
+}
+
+.cv-job > ul > li > strong {
+  font-size: 0.78rem !important;
+}
+
+.cv-job li {
+  margin-bottom: 0.08rem !important;
+}
+
+.cv-job ul ul {
+  margin: 0.1rem 0 0.22rem !important;
+}
+
+.cv-job ul ul li {
+  margin-bottom: 0.05rem !important;
+}
+
+.cv-job > ul > li {
+  margin-bottom: 0.35rem !important;
+}
+
+.cv-interests {
+  font-size: 0.75rem !important;
+  line-height: 1.33 !important;
+}
+
+/* Areas of Expertise — PDF column widths (must sum to 100%) */
+.expertise-grid {
+  --expertise-col-1: 25%;
+  --expertise-col-2: 23%;
+  --expertise-col-3: 28%;
+  --expertise-col-4: 24%;
+
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: flex-start;
+  gap: 0 0.6rem;
+  width: 100%;
+  table-layout: auto;
+}
+
+.expertise-col {
+  display: block !important;
+  flex: 0 0 auto;
+  min-width: 0;
+  padding-right: 0;
+  box-sizing: border-box;
+}
+
+.expertise-col:nth-child(1) {
+  width: var(--expertise-col-1);
+  flex-basis: var(--expertise-col-1);
+  max-width: var(--expertise-col-1);
+}
+
+.expertise-col:nth-child(2) {
+  width: var(--expertise-col-2);
+  flex-basis: var(--expertise-col-2);
+  max-width: var(--expertise-col-2);
+}
+
+.expertise-col:nth-child(3) {
+  width: var(--expertise-col-3);
+  flex-basis: var(--expertise-col-3);
+  max-width: var(--expertise-col-3);
+}
+
+.expertise-col:nth-child(4) {
+  width: var(--expertise-col-4);
+  flex-basis: var(--expertise-col-4);
+  max-width: var(--expertise-col-4);
+}

@@ -1,0 +1,417 @@
+/* CV - Template 10 inspired */
+
+:root {
+  --color-top-bar: #1e3a5f;
+  --color-marine: #1e3a5f;
+  --color-heading: #7a6f66;
+  --color-accent: #2c5282;
+  --color-text: #333333;
+  --color-text-light: #555555;
+  --color-divider: #c8c8c8;
+  --color-bg: #ffffff;
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif;
+  --page-max-width: 800px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: #f0f0f0;
+}
+
+/* Top accent bar */
+.cv-top-bar {
+  height: 8px;
+  background: var(--color-top-bar);
+}
+
+/* Header */
+.cv-header {
+  background: var(--color-bg);
+  text-align: center;
+  padding: 2rem 2rem 1.25rem;
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+}
+
+.cv-name {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-sans);
+  font-size: 2.25rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--color-marine);
+  text-transform: none;
+}
+
+.cv-title {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.cv-title-primary {
+  font-weight: 600;
+  font-size: 1.02rem;
+  letter-spacing: 0.015em;
+  color: #234e70;
+}
+
+.cv-title-secondary {
+  font-weight: 500;
+  color: #2a4365;
+}
+
+.cv-title-sep {
+  margin: 0 0.4rem;
+  font-weight: 400;
+  color: var(--color-divider);
+}
+
+.cv-contact {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text-light);
+  line-height: 1.6;
+}
+
+.cv-contact a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.cv-contact-linkedin {
+  font-weight: 600;
+}
+
+.cv-contact a:hover {
+  text-decoration: underline;
+}
+
+.cv-contact-sep {
+  margin: 0 0.4rem;
+  color: var(--color-divider);
+}
+
+/* Main page */
+.cv-page {
+  background: var(--color-bg);
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: 0 2rem 2.5rem;
+}
+
+/* Sections */
+.cv-section {
+  margin-bottom: 1.5rem;
+}
+
+.cv-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+}
+
+.cv-section-heading h2 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-heading);
+  white-space: nowrap;
+}
+
+.cv-section-heading::after {
+  content: "";
+  flex: 1;
+  border-bottom: 1px dashed var(--color-divider);
+  min-width: 2rem;
+}
+
+/* Summary - compact 4-line block */
+.cv-summary {
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.cv-summary p {
+  margin: 0 0 0.35rem;
+  text-align: justify;
+  text-align-last: left;
+  hyphens: auto;
+}
+
+.cv-summary p:last-child {
+  margin-bottom: 0;
+}
+
+/* Expertise grid */
+.expertise-grid {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.expertise-col {
+  display: table-cell;
+  width: 25%;
+  vertical-align: top;
+  padding-right: 0.7rem;
+}
+
+.expertise-col:nth-child(2) {
+  width: 23%;
+  padding-right: 0.35rem;
+}
+
+.expertise-col:nth-child(3) {
+  width: 27%;
+}
+
+.expertise-col:last-child {
+  padding-right: 0;
+}
+
+.expertise-col ul {
+  margin: 0;
+  padding-left: 1.05rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.expertise-col li {
+  margin-bottom: 0.2rem;
+}
+
+/* Experience */
+.cv-job {
+  margin-bottom: 1.1rem;
+}
+
+.cv-job:last-child {
+  margin-bottom: 0;
+}
+
+.cv-job-header {
+  margin-bottom: 0.25rem;
+}
+
+.cv-job-title-line {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.cv-job-dates {
+  font-weight: 700;
+}
+
+.cv-job-company {
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-bottom: 0.3rem;
+}
+
+.cv-job-overview {
+  margin: 0 0 0.4rem;
+  font-style: italic;
+  font-size: 0.88rem;
+  color: var(--color-text-light);
+  text-align: justify;
+  text-align-last: left;
+  hyphens: auto;
+}
+
+.cv-job-concurrent {
+  display: block;
+  margin-top: 0.25rem;
+  font-style: normal;
+  font-size: 0.82rem;
+  color: var(--color-text-light);
+}
+
+.cv-job ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  line-height: 1.42;
+}
+
+.cv-job a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.cv-job li {
+  margin-bottom: 0.15rem;
+}
+
+.cv-job ul ul {
+  margin: 0.2rem 0 0.35rem;
+  padding-left: 1.1rem;
+}
+
+.cv-job ul ul li {
+  margin-bottom: 0.1rem;
+}
+
+/* Sous-titres de catégorie (Interchouette, Casper Labs) — noir */
+.cv-job > ul > li > strong {
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 0.84rem;
+}
+
+/* Mots-clés inline uniquement — gris gras */
+.cv-job ul ul strong,
+.cv-job-overview strong,
+.cv-job > ul > li:not(:has(ul)) strong {
+  color: var(--color-heading);
+  font-weight: 700;
+}
+
+/* Education */
+.cv-education-entry {
+  margin-bottom: 0.85rem;
+}
+
+.cv-education-entry:last-child {
+  margin-bottom: 0;
+}
+
+.cv-education-degree {
+  font-weight: 700;
+  font-size: 0.92rem;
+  margin-bottom: 0.15rem;
+}
+
+.cv-education-dates {
+  font-weight: 700;
+}
+
+.cv-education-school {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.1rem;
+}
+
+.cv-education-detail {
+  font-size: 0.84rem;
+  color: var(--color-text-light);
+  line-height: 1.4;
+  text-align: justify;
+  text-align-last: left;
+  hyphens: auto;
+}
+
+/* Languages */
+.languages-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr) minmax(0, 1.1fr) max-content;
+  gap: 0.5rem 1.25rem;
+  font-size: 0.86rem;
+}
+
+.language-item strong {
+  display: block;
+  font-size: 0.88rem;
+}
+
+.language-item-native {
+  min-width: 4.5rem;
+}
+
+.language-item span {
+  color: var(--color-text-light);
+}
+
+.language-item ul {
+  margin: 0.2rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  color: var(--color-text-light);
+}
+
+/* Personal interests */
+.cv-interests-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1.5rem;
+}
+
+.cv-interests {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.82rem;
+  line-height: 1.42;
+  color: var(--color-text-light);
+}
+
+.cv-interests li {
+  position: relative;
+  padding-left: 1.1rem;
+  margin-bottom: 0;
+}
+
+.cv-interests li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--color-text);
+}
+
+/* Responsive - stack expertise on smaller screens */
+@media screen and (max-width: 700px) {
+  .expertise-grid {
+    display: block;
+  }
+
+  .expertise-col {
+    display: block;
+    width: auto;
+    padding-right: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .languages-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-interests-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .cv-header,
+  .cv-page {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .cv-name {
+    font-size: 1.75rem;
+  }
+}
