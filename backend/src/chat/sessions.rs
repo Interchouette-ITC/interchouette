@@ -1,4 +1,4 @@
-//! In-memory chat sessions (no SQLite).
+//! In-memory chat sessions (no `SQLite`).
 
 use std::collections::HashMap;
 use std::sync::Arc;
