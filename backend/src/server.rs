@@ -156,6 +156,7 @@ pub async fn run_http(
     knowledge_db: PathBuf,
     data_dir: PathBuf,
     cors_origin: String,
+    allowed_hosts: Vec<String>,
 ) -> Result<()> {
     let store = Arc::new(Store::open_readonly(&knowledge_db, &data_dir)?);
     let n = store.doc_count()?;
@@ -165,8 +166,9 @@ pub async fn run_http(
     let mcp = KnowledgeMcp {
         store: Arc::clone(&store),
     };
-    let config =
+    let mut config =
         rmcp::transport::streamable_http_server::tower::StreamableHttpServerConfig::default();
+    config = config.with_allowed_hosts(allowed_hosts);
     let mcp_service = rmcp::transport::streamable_http_server::tower::StreamableHttpService::new(
         {
             let mcp = mcp.clone();
