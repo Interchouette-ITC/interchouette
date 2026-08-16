@@ -79,13 +79,10 @@ describe('ChatService', () => {
       onclose: (() => void) | null = null;
       send = vi.fn();
       close = vi.fn();
-    }
-    vi.stubGlobal(
-      'WebSocket',
-      vi.fn().mockImplementation(() => {
-        const sock = new FakeSocket();
+
+      constructor() {
         queueMicrotask(() => {
-          sock.onmessage?.(
+          this.onmessage?.(
             new MessageEvent('message', {
               data: JSON.stringify({
                 type: 'ready',
@@ -95,9 +92,9 @@ describe('ChatService', () => {
             }),
           );
         });
-        return sock;
-      }),
-    );
+      }
+    }
+    vi.stubGlobal('WebSocket', FakeSocket);
 
     await service.openPanel();
     expect(service.open()).toBe(true);
