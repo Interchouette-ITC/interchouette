@@ -1,6 +1,6 @@
 # Interchouette chat
 
-Website visitor chat: WebSocket sessions, Slack DM for live replies, remote knowledge MCP for away mode.
+Website visitor chat: WebSocket sessions, Slack DM for live replies, remote Interchouette MCP for away mode.
 
 **No chat database.** Durable retrieval is the bot↔Greg Slack DM. Away mode must call the remote MCP HTTP API; it does not open `interchouette.db`.
 
@@ -8,7 +8,7 @@ Website visitor chat: WebSocket sessions, Slack DM for live replies, remote know
 
 | Variable             | Role                                                                           |
 | -------------------- | ------------------------------------------------------------------------------ |
-| `CHAT_LISTEN`        | Bind address (default `0.0.0.0:8080`)                                           |
+| `CHAT_LISTEN`        | Bind address (default `0.0.0.0:8080`)                                          |
 | `CHAT_FORCE_MODE`    | `live` or `away` (local/tests)                                                 |
 | `SLACK_BOT_TOKEN`    | Bot token for presence + DM                                                    |
 | `SLACK_APP_TOKEN`    | App-level token for Socket Mode (`xapp-…`) so Greg DM replies reach the widget |

@@ -1,10 +1,10 @@
 <article class="legal">
-  <a class="back" routerLink="/">&larr; Interchouette</a>
+  <a class="back" routerLink="/">&larr; Interchouette - ITC</a>
   <h1>Privacy Policy</h1>
   <p class="meta">Last updated: 22 July 2026</p>
 
   <p>
-    This Privacy Policy describes how <strong>Interchouette</strong> (“we”, “us”, or “our”),
+    This Privacy Policy describes how <strong>Interchouette - ITC</strong> (“we”, “us”, or “our”),
     operated by Gregory Roussac, collects, uses, and protects information when you use our websites,
     applications, and related services (the “Services”), including integrations with third-party
     platforms such as LinkedIn.
@@ -108,11 +108,27 @@
 
   <h2>10. Contact</h2>
   <p>
-    Interchouette / Gregory Roussac<br />
+    Interchouette - ITC / Gregory Roussac<br />
     Email:
-    <a href="mailto:contact@interchouette.net">contact@interchouette.net</a><br />
+    <a href="mailto:contact@interchouette.net">contact&#64;interchouette.net</a><br />
     Website:
-    <a href="https://interchouette.net">https://interchouette.net</a>
+    <a href="https://interchouette.net">https://interchouette.net</a><br />
+    About:
+    <a routerLink="/about">About Interchouette - ITC</a>
+    @if (chat.ready()) {
+      <br />
+      Chat:
+      <a
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="chat.hero() === 'greg' ? 'Open chat with Greg' : 'Open chat with ITCy'"
+        (click)="openChat($event)"
+        (keydown.enter)="openChat($event)"
+        (keydown.space)="$event.preventDefault(); openChat($event)"
+        >do not hesitate</a
+      >
+      to open the site chat.
+    }
   </p>
 </article>
-<app-site-footer [showLegalLinks]="true" />
+<app-site-footer />

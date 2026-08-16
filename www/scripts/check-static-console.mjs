@@ -9,7 +9,7 @@ import { join, extname } from 'node:path';
 import { chromium } from '@playwright/test';
 
 const root = join(process.cwd(), 'dist', 'interchouette', 'browser');
-const routes = ['/', '/CV', '/privacy', '/terms'];
+const routes = ['/', '/CV', '/about', '/privacy', '/terms'];
 const port = Number(process.env.STATIC_CONSOLE_PORT ?? 4201);
 const host = '127.0.0.1';
 

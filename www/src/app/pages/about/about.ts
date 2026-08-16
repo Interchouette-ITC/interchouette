@@ -5,14 +5,16 @@ import { ChatService } from '../../core/chat.service';
 import { SiteFooter } from '../../shared/site-footer/site-footer';
 
 @Component({
-  selector: 'app-privacy-page',
+  selector: 'app-about-page',
   imports: [RouterLink, SiteFooter],
-  templateUrl: './privacy.html',
-  styleUrl: './privacy.scss',
+  templateUrl: './about.html',
+  styleUrl: './about.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PrivacyPage {
+export class AboutPage {
   protected readonly chat = inject(ChatService);
+  /** Calendar year for the discreet copyright line. */
+  protected readonly currentYear = new Date().getFullYear();
 
   /** Open the chat panel when the widget is ready. */
   protected openChat(event: Event): void {

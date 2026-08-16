@@ -9,7 +9,12 @@
   }
 
   @if (chat.ready() || chat.open()) {
-    <div class="chat-fab-dock" [class.chat-fab-dock--nudge]="nudgeBounce()">
+    <div
+      class="chat-fab-dock"
+      [class.chat-fab-dock--nudge]="nudgeBounce()"
+      [class.chat-fab-dock--hidden]="chat.open()"
+      [attr.aria-hidden]="chat.open() ? 'true' : null"
+    >
       @if (nudgeHint() && !chat.open()) {
         <button
           type="button"
@@ -24,11 +29,11 @@
       <button
         type="button"
         class="chat-fab"
-        [class.chat-fab--open]="chat.open()"
         [class.chat-fab--busy]="chat.connecting()"
         [class.chat-fab--live]="chat.hero() === 'greg' && !chat.open()"
         (click)="onFab()"
         [attr.aria-expanded]="chat.open()"
+        [attr.tabindex]="chat.open() ? -1 : null"
         aria-controls="interchouette-chat-panel"
         [attr.aria-label]="fabAriaLabel()"
         [attr.title]="fabAriaLabel()"
@@ -56,6 +61,7 @@
       id="interchouette-chat-panel"
       class="chat-panel"
       [class.chat-panel--open]="chat.open()"
+      [class.chat-panel--expanded]="expanded()"
       [attr.data-hero]="chat.hero()"
       [attr.role]="chat.open() ? 'dialog' : null"
       [attr.aria-hidden]="chat.open() ? null : 'true'"
@@ -95,17 +101,49 @@
             </p>
           </div>
         </div>
-        <button type="button" class="chat-panel__close" (click)="onClose()" aria-label="Close chat">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M7 7l10 10M17 7 7 17"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-            />
-          </svg>
-        </button>
+        <div class="chat-panel__actions">
+          <button
+            type="button"
+            class="chat-panel__icon-btn"
+            (click)="onToggleExpand()"
+            [attr.aria-label]="expanded() ? 'Exit full screen chat' : 'Expand chat'"
+            [attr.title]="expanded() ? 'Exit full screen' : 'Expand chat'"
+            [attr.aria-pressed]="expanded()"
+          >
+            @if (expanded()) {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M9 9H4v2h3v3h2V9zm6 0v5h2v-3h3V9h-5zM9 15H7v3H4v2h5v-5zm11 3h-3v-3h-2v5h5v-2z"
+                  fill="currentColor"
+                />
+              </svg>
+            } @else {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M4 4h5v2H6v3H4V4zm11 0h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm16 0v5h-5v-2h3v-3h2z"
+                  fill="currentColor"
+                />
+              </svg>
+            }
+          </button>
+          <button
+            type="button"
+            class="chat-panel__icon-btn chat-panel__close"
+            (click)="onClose()"
+            aria-label="Close chat"
+            title="Close chat"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M7 7l10 10M17 7 7 17"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+        </div>
       </header>
 
       <div #scroller class="chat-panel__messages" tabindex="0">

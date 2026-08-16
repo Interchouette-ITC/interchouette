@@ -14,6 +14,7 @@
 
 @media screen and (min-width: 1280px) {
   :host {
+    display: block;
     min-height: 100vh;
     min-height: 100dvh;
     padding-bottom: 2.75rem;
@@ -21,76 +22,89 @@
   }
 }
 
-.legal {
-  max-width: 720px;
-  margin: 4% auto 2%;
-  padding: 2rem 2.5rem;
+.card.about {
+  width: min(72rem, 94vw);
+  max-width: none;
+  margin: 3% auto 2%;
+  padding: 2.35rem 3rem;
   background: #fff;
   border-radius: 5px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
   color: #444;
   font-weight: 400;
-  line-height: 1.6;
-  font-size: 0.95rem;
+  line-height: 1.65;
+  font-size: 1rem;
+  box-sizing: border-box;
 }
 
-.legal h1 {
+.about h1 {
   font-size: 1.6rem;
   font-weight: 700;
   color: #555;
-  margin-top: 0;
+  margin: 0 0 0.75rem;
 }
 
-.legal h2 {
+.about h2 {
   font-size: 1.15rem;
   font-weight: 700;
   color: #555;
   margin-top: 1.75rem;
+  margin-bottom: 0.55rem;
 }
 
-.legal a,
-.legal a:link,
-.legal a:visited {
+.about h1 + h2 {
+  margin-top: 0.85rem;
+}
+
+.about a {
   color: #27084e;
   text-decoration: underline;
   text-decoration-color: rgba(39, 8, 78, 0.35);
   cursor: pointer;
 }
 
-.legal a:hover,
-.legal a:focus-visible {
+.about a:hover {
   color: #3a1868;
   text-decoration-color: rgba(58, 24, 104, 0.55);
 }
 
-.legal .meta {
-  color: #888;
-  font-size: 0.85rem;
-  margin-bottom: 1.5rem;
-}
-
-.legal ul {
+.about ul {
   padding-left: 1.25rem;
+  margin: 0.6rem 0 0;
 }
 
-.back,
-.back:link,
-.back:visited {
+.about li {
+  margin-bottom: 0.45rem;
+}
+
+.about code {
+  font-size: 0.9em;
+  background: #f4f0fa;
+  padding: 0.1em 0.35em;
+  border-radius: 0.25rem;
+}
+
+.about .legal-copy {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.back {
   display: inline-block;
   margin-bottom: 1rem;
   color: #27084e;
   text-decoration: none;
 }
 
-.back:hover,
-.back:focus-visible {
+.back:hover {
   color: #3a1868;
   text-decoration: underline;
 }
 
 @media screen and (max-width: 768px) {
-  .legal {
-    margin: 2% 4%;
-    padding: 1.5rem;
+  .card.about {
+    width: auto;
+    margin: 2% 3%;
+    padding: 1.5rem 1.35rem;
   }
 }

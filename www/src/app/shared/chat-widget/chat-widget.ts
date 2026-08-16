@@ -56,6 +56,8 @@ export class ChatWidget implements OnDestroy {
   protected readonly nudgeBounce = signal(false);
   /** Stable copy for the current nudge pulse. */
   protected readonly nudgeCopy = signal('');
+  /** Near-fullscreen chat panel. */
+  protected readonly expanded = signal(false);
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
 
   protected draft = '';
@@ -70,6 +72,11 @@ export class ChatWidget implements OnDestroy {
     afterNextRender(() => {
       this.mounted.set(true);
       void this.chat.warm().then(() => this.tryStartNudge());
+    });
+    effect(() => {
+      if (!this.chat.open()) {
+        this.expanded.set(false);
+      }
     });
     effect(() => {
       this.chat.messages();
@@ -103,7 +110,12 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected onClose(): void {
+    this.expanded.set(false);
     this.chat.closePanel();
+  }
+
+  protected onToggleExpand(): void {
+    this.expanded.update((v) => !v);
   }
 
   protected onRetry(): void {
@@ -179,9 +191,6 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected fabAriaLabel(): string {
-    if (this.chat.open()) {
-      return 'Close chat';
-    }
     switch (this.chat.hero()) {
       case 'greg':
         return 'Open chat with Greg';
@@ -230,7 +239,7 @@ export class ChatWidget implements OnDestroy {
       case 'greg':
         return 'Your message reaches Greg live. Ask about Rust, Wasm, or a collaboration.';
       case 'itcy':
-        return "Greg's AI, powered by Interchouette public knowledge. Leave a note anytime.";
+        return "Greg's AI, powered by Interchouette MCP. Leave a note anytime.";
       default:
         return 'Opening a private Interchouette line…';
     }

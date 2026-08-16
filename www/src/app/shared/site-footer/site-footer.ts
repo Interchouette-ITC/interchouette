@@ -1,17 +1,17 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
   selector: 'app-site-footer',
-  imports: [RouterLink],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './site-footer.html',
   styleUrl: './site-footer.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    ngSkipHydration: 'true',
+  },
 })
 export class SiteFooter {
-  /** Show Privacy / Terms links (legal pages). */
-  readonly showLegalLinks = input(false);
-
   /** Calendar year for copyright line. */
   readonly currentYear = new Date().getFullYear();
 }

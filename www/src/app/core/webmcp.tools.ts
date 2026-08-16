@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { SITE_ORIGIN } from './seo.constants';
 
 /** Public pages agents may open (Angular paths, no leading slash except home). */
-export const WEBMCP_PAGE_PATHS = ['', 'CV', 'privacy', 'terms'] as const;
+export const WEBMCP_PAGE_PATHS = ['', 'CV', 'about', 'privacy', 'terms'] as const;
 export type WebMcpPagePath = (typeof WEBMCP_PAGE_PATHS)[number];
 
 const EMPTY_INPUT_SCHEMA = {
@@ -18,8 +18,8 @@ const OPEN_PAGE_INPUT_SCHEMA = {
   properties: {
     path: {
       type: 'string' as const,
-      description: 'Angular route path: empty string for home, or CV, privacy, terms.',
-      enum: ['', 'CV', 'privacy', 'terms'] as const,
+      description: 'Angular route path: empty string for home, or CV, about, privacy, terms.',
+      enum: ['', 'CV', 'about', 'privacy', 'terms'] as const,
     },
   },
   required: ['path'] as const,
@@ -40,6 +40,7 @@ export function siteOverviewText(): string {
     `Home: ${SITE_ORIGIN}/`,
     `CV: ${SITE_ORIGIN}/CV`,
     `CV PDF: ${SITE_ORIGIN}/CV/Gregory_Roussac.pdf`,
+    `About: ${SITE_ORIGIN}/about`,
     `Privacy: ${SITE_ORIGIN}/privacy`,
     `Terms: ${SITE_ORIGIN}/terms`,
     'Contact email: contact@interchouette.net',
@@ -99,7 +100,7 @@ export function createSiteInfoWebMcpTools() {
     {
       name: 'get_remote_mcp',
       description:
-        'Returns the official remote Streamable HTTP MCP endpoint for Interchouette knowledge (not this in-page WebMCP).',
+        'Returns the official remote Streamable HTTP MCP endpoint for Interchouette MCP (not this in-page WebMCP).',
       inputSchema: EMPTY_INPUT_SCHEMA,
       execute: () => remoteMcpText(),
     },
@@ -112,7 +113,7 @@ export function createOpenPageWebMcpTools() {
     {
       name: 'open_public_page',
       description:
-        'Navigates this browser tab to a public Interchouette page. Use path "" for home, or CV, privacy, terms.',
+        'Navigates this browser tab to a public Interchouette page. Use path "" for home, or CV, about, privacy, terms.',
       inputSchema: OPEN_PAGE_INPUT_SCHEMA,
       execute: ({ path }: { path: string }) => {
         if (!isWebMcpPagePath(path)) {

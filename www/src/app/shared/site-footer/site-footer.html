@@ -1,9 +1,11 @@
 <footer class="site-footer animated fadeIn">
-  Interchouette {{ currentYear }} - All Rights Reserved
-  @if (showLegalLinks()) {
-    <span aria-hidden="true"> · </span>
-    <a routerLink="/privacy">Privacy</a>
-    <span aria-hidden="true"> · </span>
-    <a routerLink="/terms">Terms</a>
-  }
+  &#169; Interchouette {{ currentYear
+  }}<span class="site-footer__home-wrap"
+    ><span aria-hidden="true"> · </span
+    ><a routerLink="/" routerLinkActive="is-current" [routerLinkActiveOptions]="{ exact: true }"
+      >Home</a
+    ></span
+  ><span aria-hidden="true"> · </span><a routerLink="/about">About</a
+  ><span aria-hidden="true"> · </span><a routerLink="/privacy">Privacy</a
+  ><span aria-hidden="true"> · </span><a routerLink="/terms">Terms</a>
 </footer>

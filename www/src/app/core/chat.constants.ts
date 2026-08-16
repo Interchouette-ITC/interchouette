@@ -1,6 +1,6 @@
 import { CHAT_WIDGET_ENABLED as CHAT_WIDGET_ENABLED_ENV } from './chat-widget.enabled';
 
-/** Chat API base URL (chat backend; not the knowledge MCP). */
+/** Chat API base URL (chat backend; not the Interchouette MCP). */
 export function chatApiBase(): string {
   if (typeof window === 'undefined') {
     return 'http://127.0.0.1:8080';

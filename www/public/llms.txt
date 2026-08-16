@@ -7,6 +7,7 @@ Gregory Roussac is a Rust and Wasm freelance developer operating Interchouette I
 - [Home](https://interchouette.net/): contact card and social links
 - [CV](https://interchouette.net/CV): professional curriculum vitae (HTML)
 - [CV PDF](https://interchouette.net/CV/Gregory_Roussac.pdf): downloadable curriculum vitae
+- [About](https://interchouette.net/about): how the site is built
 - [Privacy Policy](https://interchouette.net/privacy)
 - [Terms of Service](https://interchouette.net/terms)
 
@@ -18,7 +19,7 @@ Gregory Roussac is a Rust and Wasm freelance developer operating Interchouette I
 
 ## Remote MCP
 
-Streamable HTTP MCP for Interchouette knowledge (Gregory Roussac, CV, public projects, Rust / Wasm / MCP / API topics):
+Streamable HTTP MCP for Interchouette (Gregory Roussac, CV, public projects, Rust / Wasm / MCP / API topics):
 
 - Endpoint: https://mcp.interchouette.net/interchouette
 - Transport: streamable-http

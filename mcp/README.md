@@ -1,4 +1,4 @@
-# Interchouette knowledge MCP
+# Interchouette MCP
 
 Read-only committed SQLite file:
 
@@ -6,14 +6,14 @@ Read-only committed SQLite file:
 
 Official MCP URL: `https://mcp.interchouette.net/interchouette`
 
-## How to update knowledge content
+## How to update content
 
 1. Edit `db/interchouette.db` (DB Browser for SQLite, `sqlite3`, etc.)
 2. Commit + merge to `dev`
 3. CI publishes `interchouette/interchouette-mcp:latest`
 4. CI calls the Render deploy hook for the MCP service
 
-No content inserts at runtime. No Postgres for knowledge.
+No content inserts at runtime. No Postgres for this MCP.
 
 ## Images
 

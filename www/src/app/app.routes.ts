@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 /**
  * URL convention (match live static hosting):
- * - `/`, `/privacy`, `/terms`, `/CV`: no trailing slash
+ * - `/`, `/about`, `/privacy`, `/terms`, `/CV`: no trailing slash
  * - `/CV/` redirects to `/CV` on the host
  * - legacy `/CV - Gregory Roussac/` → `/CV`
  * Host must Rewrite clean paths to prerendered page HTML (never Redirect to root index).
@@ -26,6 +26,15 @@ export const routes: Routes = [
       description:
         'Curriculum vitae of Gregory Roussac: Rust, Wasm, full-stack engineering experience and PDF download.',
       ogType: 'profile',
+    },
+  },
+  {
+    path: 'about',
+    loadComponent: () => import('./pages/about/about').then((m) => m.AboutPage),
+    title: 'About Interchouette - ITC',
+    data: {
+      description:
+        'Interchouette - ITC: how interchouette.net is built (Angular, Rust, Docker, Cursor) and public links.',
     },
   },
   {

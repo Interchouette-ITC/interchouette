@@ -1,11 +1,11 @@
 <article class="legal">
-  <a class="back" routerLink="/">&larr; Interchouette</a>
+  <a class="back" routerLink="/">&larr; Interchouette - ITC</a>
   <h1>Terms of Service</h1>
   <p class="meta">Last updated: 22 July 2026</p>
 
   <p>
     These Terms of Service (“Terms”) govern your access to and use of websites, applications, and
-    related services (the “Services”) provided by <strong>Interchouette</strong>
+    related services (the “Services”) provided by <strong>Interchouette - ITC</strong>
     (“we”, “us”, or “our”), operated by Gregory Roussac.
   </p>
   <p>
@@ -15,9 +15,9 @@
 
   <h2>1. The Services</h2>
   <p>
-    Interchouette provides software development services, tools, and applications, which may include
-    integrations with third-party platforms such as LinkedIn. Features may change, be interrupted,
-    or be discontinued at any time without prior notice.
+    Interchouette - ITC provides software development services, tools, and applications, which may
+    include integrations with third-party platforms such as LinkedIn. Features may change, be
+    interrupted, or be discontinued at any time without prior notice.
   </p>
 
   <h2>2. Eligibility</h2>
@@ -74,8 +74,8 @@
 
   <h2>8. Limitation of liability</h2>
   <p>
-    To the maximum extent permitted by law, Interchouette and Gregory Roussac shall not be liable
-    for any indirect, incidental, special, consequential, or punitive damages, or any loss of
+    To the maximum extent permitted by law, Interchouette - ITC and Gregory Roussac shall not be
+    liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of
     profits, data, or goodwill, arising from your use of the Services.
   </p>
 
@@ -94,11 +94,27 @@
 
   <h2>11. Contact</h2>
   <p>
-    Interchouette / Gregory Roussac<br />
+    Interchouette - ITC / Gregory Roussac<br />
     Email:
-    <a href="mailto:contact@interchouette.net">contact@interchouette.net</a><br />
+    <a href="mailto:contact@interchouette.net">contact&#64;interchouette.net</a><br />
     Website:
-    <a href="https://interchouette.net">https://interchouette.net</a>
+    <a href="https://interchouette.net">https://interchouette.net</a><br />
+    About:
+    <a routerLink="/about">About Interchouette - ITC</a>
+    @if (chat.ready()) {
+      <br />
+      Chat:
+      <a
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="chat.hero() === 'greg' ? 'Open chat with Greg' : 'Open chat with ITCy'"
+        (click)="openChat($event)"
+        (keydown.enter)="openChat($event)"
+        (keydown.space)="$event.preventDefault(); openChat($event)"
+        >do not hesitate</a
+      >
+      to open the site chat.
+    }
   </p>
 </article>
-<app-site-footer [showLegalLinks]="true" />
+<app-site-footer />

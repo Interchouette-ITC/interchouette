@@ -1,8 +1,5 @@
 :host {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  display: block;
   font-family: 'Montserrat', sans-serif;
   width: 100%;
   margin: 0;
@@ -11,13 +8,21 @@
   --home-muted: #a9a9a9;
 }
 
-/* Split leftover height above/below the card; footer stays on the bottom edge. */
-:host > .card {
-  margin-top: auto;
-}
+/* Desktop: room for fixed footer + vertical center of the card. */
+@media screen and (min-width: 1280px) {
+  :host {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-bottom: 2.75rem;
+    box-sizing: border-box;
+  }
 
-:host > app-site-footer {
-  margin-top: auto;
+  :host > .card {
+    margin-top: auto;
+    margin-bottom: auto;
+  }
 }
 
 /* Lighthouse mobile / narrow viewports: darker muted text on white. */
@@ -186,7 +191,7 @@
   }
 
   p.icons {
-    font-size: 11px;
+    font-size: 16px;
     text-align: center;
     margin: 1.25rem 0 0.35rem;
     color: var(--home-muted);

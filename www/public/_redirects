@@ -5,6 +5,7 @@
 # A Redirect to /index.html breaks /terms /privacy /CV (clean URLs become /index.html).
 
 # Prerendered pages (no trailing slash)
+/about    /about/index.html    200
 /terms    /terms/index.html    200
 /privacy  /privacy/index.html  200
 /CV       /CV/index.html       200

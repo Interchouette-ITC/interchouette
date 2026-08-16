@@ -59,6 +59,10 @@
   pointer-events: none;
   transform-origin: 85% 100%;
   animation: chatFabIn 1s ease both;
+  transition:
+    opacity 0.28s ease,
+    transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.28s;
 }
 
 .chat-fab-dock > * {
@@ -67,6 +71,15 @@
 
 .chat-fab-dock--nudge {
   animation: chatFabNudge 1s ease both;
+}
+
+/* Chat open: launcher fades away; header close + backdrop cover dismiss. */
+.chat-fab-dock--hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(0.7rem) scale(0.82);
+  animation: none;
 }
 
 .chat-nudge {
@@ -139,8 +152,7 @@
   isolation: isolate;
   transition:
     box-shadow 0.28s ease,
-    background 0.28s ease,
-    filter 0.28s ease;
+    background 0.28s ease;
 }
 
 .chat-fab-dock:not(.chat-fab-dock--nudge) .chat-fab:hover {
@@ -155,15 +167,6 @@
   box-shadow:
     0 24px 48px rgba(22, 4, 48, 0.5),
     0 1px 0 rgba(255, 228, 236, 0.42) inset;
-}
-
-/* Open: same owl face; slight dim so it reads as dismiss without morphing to an X. */
-.chat-fab--open {
-  filter: brightness(0.92);
-}
-
-.chat-fab--open:hover {
-  filter: brightness(1);
 }
 
 .chat-fab__ring {
@@ -230,18 +233,13 @@
 .chat-panel {
   position: fixed;
   right: max(var(--chat-fab-right), calc(env(safe-area-inset-right) + 0.9rem));
-  /* Sit just above the owl FAB; tighter gap now that open state keeps the same face. */
-  bottom: calc(
-    var(--chat-fab-size) + var(--chat-fab-bottom) + 0.45rem + env(safe-area-inset-bottom)
-  );
+  /* Same footprint as the FAB dock, lifted slightly so bottoms read aligned. */
+  bottom: calc(max(var(--chat-fab-bottom), env(safe-area-inset-bottom) + 0.9rem) + 0.45rem);
   z-index: 49;
   width: min(28.5rem, calc(100vw - 3.5rem));
   height: min(
-    46rem,
-    calc(
-      100dvh - var(--chat-fab-size) - var(--chat-fab-bottom) - 1.35rem - env(safe-area-inset-top) -
-        env(safe-area-inset-bottom)
-    )
+    48rem,
+    calc(100dvh - 2.25rem - env(safe-area-inset-top) - env(safe-area-inset-bottom))
   );
   display: flex;
   flex-direction: column;
@@ -258,12 +256,16 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(0.9rem) scale(0.97);
+  transform: translateY(1.1rem) scale(0.96);
   transform-origin: bottom right;
   transition:
     opacity 0.32s ease,
     transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0.32s;
+    visibility 0.32s,
+    inset 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    width 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.38s cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 0.38s ease;
 }
 
 .chat-panel--open {
@@ -271,6 +273,18 @@
   visibility: visible;
   pointer-events: auto;
   transform: translateY(0) scale(1);
+}
+
+.chat-panel--expanded {
+  top: max(0.75rem, env(safe-area-inset-top));
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  left: max(0.75rem, env(safe-area-inset-left));
+  width: auto;
+  height: auto;
+  max-width: none;
+  border-radius: 1.35rem;
+  transform: none;
 }
 
 .chat-panel__mesh,
@@ -449,7 +463,14 @@
   background: var(--chat-warn);
 }
 
-.chat-panel__close {
+.chat-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.chat-panel__icon-btn {
   width: 2.2rem;
   height: 2.2rem;
   border: 0;
@@ -464,14 +485,18 @@
     transform 0.2s ease;
 }
 
-.chat-panel__close:hover {
+.chat-panel__icon-btn:hover {
   background: rgba(255, 255, 255, 0.24);
-  transform: rotate(90deg);
 }
 
-.chat-panel__close svg {
+.chat-panel__icon-btn svg {
   width: 0.95rem;
   height: 0.95rem;
+  display: block;
+}
+
+.chat-panel__close:hover {
+  transform: rotate(90deg);
 }
 
 .chat-panel__messages {
@@ -1091,15 +1116,10 @@
     right: max(0.65rem, env(safe-area-inset-right));
     left: max(0.65rem, env(safe-area-inset-left));
     width: auto;
-    bottom: calc(
-      var(--chat-fab-size) + var(--chat-fab-bottom) + 0.4rem + env(safe-area-inset-bottom)
-    );
+    bottom: calc(max(var(--chat-fab-bottom), env(safe-area-inset-bottom) + 0.65rem) + 0.35rem);
     height: min(
-      82vh,
-      calc(
-        100dvh - var(--chat-fab-size) - var(--chat-fab-bottom) - 1.1rem - env(safe-area-inset-top) -
-          env(safe-area-inset-bottom)
-      )
+      88vh,
+      calc(100dvh - 1.4rem - env(safe-area-inset-top) - env(safe-area-inset-bottom))
     );
     border-radius: 1.35rem;
   }
@@ -1109,6 +1129,7 @@
   .chat-fab,
   .chat-fab-dock,
   .chat-fab-dock--nudge,
+  .chat-fab-dock--hidden,
   .chat-nudge,
   .chat-panel,
   .chat-backdrop,
