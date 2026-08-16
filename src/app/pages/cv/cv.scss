@@ -1,9 +1,6 @@
-:host { display: block; background: #fff; min-height: 100vh; }
-.cv-pdf-link { padding: 1rem 1.5rem; font-family: Montserrat, sans-serif; }
-.cv-pdf-link a { color: #27084E; }
-/* CV - Template 10 inspired */
-
-:root {
+/* CV styles. Variables and page chrome live on :host (Angular encapsulation
+ * ignores component :root / html / body against the document). */
+:host {
   --color-top-bar: #1e3a5f;
   --color-marine: #1e3a5f;
   --color-heading: #7a6f66;
@@ -15,26 +12,41 @@
   --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
   --font-sans: "Source Sans 3", "Segoe UI", Helvetica, Arial, sans-serif;
   --page-max-width: 800px;
+
+  display: block;
+  box-sizing: border-box;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: #f0f0f0;
+}
+
+.cv-pdf-link {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: 0.75rem 2rem 0;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+}
+
+.cv-pdf-link a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.cv-pdf-link a:hover {
+  text-decoration: underline;
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
-}
-
-html {
-  font-size: 16px;
-}
-
-body {
-  margin: 0;
-  padding: 0;
-  font-family: var(--font-sans);
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: var(--color-text);
-  background: #f0f0f0;
 }
 
 /* Top accent bar */
@@ -278,14 +290,14 @@ body {
   margin-bottom: 0.1rem;
 }
 
-/* Sous-titres de catégorie (Interchouette, Casper Labs) — noir */
+/* Category subheads (top-level experience bullets) */
 .cv-job > ul > li > strong {
   color: var(--color-text);
   font-weight: 700;
   font-size: 0.84rem;
 }
 
-/* Mots-clés inline uniquement — gris gras */
+/* Inline keywords only */
 .cv-job ul ul strong,
 .cv-job-overview strong,
 .cv-job > ul > li:not(:has(ul)) strong {
@@ -420,7 +432,7 @@ body {
 }
 
 @media print {
-/* PDF only — minimal overrides; fonts/layout from styles.css */
+/* PDF only — minimal overrides */
 
 @page {
   size: A4;
@@ -431,15 +443,14 @@ body {
   margin-top: 5mm;
 }
 
-html {
+:host {
+  background: white;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 
-body {
-  background: white;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
+.cv-pdf-link {
+  display: none;
 }
 
 .cv-top-bar {

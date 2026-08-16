@@ -78,7 +78,7 @@
       <h2>6. Privacy</h2>
       <p>
         Our collection and use of personal data is described in our
-        <a href="/privacy/">Privacy Policy</a>, which forms part of these Terms.
+        <a href="/privacy">Privacy Policy</a>, which forms part of these Terms.
       </p>
 
       <h2>7. Disclaimer</h2>
@@ -122,13 +122,4 @@
         <a href="https://interchouette.net">https://interchouette.net</a>
       </p>
     </article>
-
-    <footer>
-      Interchouette <span id="js-current-year">2026</span> - All Rights Reserved
-      · <a href="/privacy/" style="color: inherit">Privacy</a> ·
-      <a href="/terms/" style="color: inherit">Terms</a>
-    </footer>
-    <script>
-      document.getElementById("js-current-year").textContent =
-        new Date().getFullYear();
-    </script>
+<app-site-footer [showLegalLinks]="true" />

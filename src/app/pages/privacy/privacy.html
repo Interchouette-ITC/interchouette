@@ -137,13 +137,4 @@
         <a href="https://interchouette.net">https://interchouette.net</a>
       </p>
     </article>
-
-    <footer>
-      Interchouette <span id="js-current-year">2026</span> - All Rights Reserved
-      · <a href="/privacy/" style="color: inherit">Privacy</a> ·
-      <a href="/terms/" style="color: inherit">Terms</a>
-    </footer>
-    <script>
-      document.getElementById("js-current-year").textContent =
-        new Date().getFullYear();
-    </script>
+<app-site-footer [showLegalLinks]="true" />

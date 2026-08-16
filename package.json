@@ -7,8 +7,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "e2e": "playwright test",
-    "e2e:ui": "playwright test --ui"
+    "e2e": "playwright test --config .cursor/scripts/playwright.config.ts",
+    "e2e:ui": "playwright test --config .cursor/scripts/playwright.config.ts --ui"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
@@ -21,7 +21,12 @@
     "@angular/platform-server": "^22.1.0",
     "@angular/router": "^22.1.0",
     "@angular/ssr": "^22.1.4",
+    "@fontsource/montserrat": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0",
+    "@fontsource/source-sans-3": "^5.3.0",
+    "animate.css": "^3.7.2",
     "express": "^5.1.0",
+    "font-awesome": "^4.7.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

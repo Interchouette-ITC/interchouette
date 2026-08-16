@@ -1,5 +1,11 @@
 import { Routes } from '@angular/router';
 
+/**
+ * URL convention (match live static hosting):
+ * - `/`, `/privacy`, `/terms`: no trailing slash
+ * - `/CV/`: trailing slash (directory); `/CV` redirects to `/CV/` on the host
+ * - legacy `/CV - Gregory Roussac/` → `/CV/`
+ */
 export const routes: Routes = [
   {
     path: '',
