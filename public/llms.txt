@@ -15,3 +15,9 @@ Gregory Roussac is a Rust and Wasm freelance developer operating Interchouette I
 - Email: [contact@interchouette.net](mailto:contact@interchouette.net)
 - Organization: [Interchouette-ITC on GitHub](https://github.com/Interchouette-ITC)
 - Profile: [Gregory Roussac on LinkedIn](https://www.linkedin.com/in/gregoryroussac/)
+
+## Browser agents (WebMCP)
+
+When the browser supports WebMCP, this site registers read-only tools:
+`get_site_overview`, `get_contact`, `list_public_pages`, and `open_public_page`.
+This is in-page browser context, not a remote MCP HTTP endpoint.
