@@ -7,6 +7,9 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "ci": "npm run format:check && npm run build && npm test && node scripts/verify-static-dist.mjs",
     "e2e": "playwright test --config .cursor/scripts/playwright.config.ts",
     "e2e:ui": "playwright test --config .cursor/scripts/playwright.config.ts --ui"
   },
