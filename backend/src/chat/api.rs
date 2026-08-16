@@ -221,7 +221,8 @@ async fn sync_session_presence(state: &ChatState, session_id: &str) -> Option<Se
 /// Poll Slack presence and fan out flips to every open session.
 fn spawn_presence_watcher(state: ChatState) {
     tokio::spawn(async move {
-        let mut ticker = tokio::time::interval(std::time::Duration::from_secs(15));
+        // Slack DND updates often lag ~1m; 30s is enough without stampeding the API.
+        let mut ticker = tokio::time::interval(std::time::Duration::from_secs(30));
         ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
         // First tick completes immediately; skip so we do not double-hit Slack on boot.
         ticker.tick().await;

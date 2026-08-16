@@ -1,7 +1,14 @@
-//! Greg Slack presence (live vs away).
+//! Greg Slack presence → chat live vs away.
+//!
+//! Live when presence is `active` and DND is not currently in effect.
+//! Away when presence is not active, or DND is on now (in schedule window
+//! and/or snooze), or custom status marks unavailable.
+//!
+//! `dnd_enabled` alone is not enough: Slack can leave it true while
+//! `next_dnd_*` already points at the *next* night. Use the time window.
 
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
 use tokio::sync::RwLock;
@@ -59,26 +66,11 @@ impl PresenceSnapshot {
 pub enum PresenceSource {
     /// Fixed mode (local / tests / missing Slack token).
     Fixed(PresenceMode),
-    /// Slack presence + paused notifications (DND) + custom status markers => away.
+    /// Slack presence + DND + status.
     Slack(Arc<SlackPresence>),
 }
 
-/// True when Slack `dnd.info` says notifications are paused / DND is on.
-#[must_use]
-pub fn dnd_info_means_away(body: &serde_json::Value) -> bool {
-    if body["ok"] != true {
-        return false;
-    }
-    if body["dnd_enabled"] == true {
-        return true;
-    }
-    if body["snooze_enabled"] == true {
-        return true;
-    }
-    false
-}
-
-/// True when Slack custom status should treat Greg as away despite `presence=active`.
+/// True when Slack custom status means unavailable (meeting, etc.).
 #[must_use]
 pub fn status_text_means_away(status_text: &str, status_emoji: &str) -> bool {
     let status = status_text.trim().to_ascii_lowercase();
@@ -86,29 +78,66 @@ pub fn status_text_means_away(status_text: &str, status_emoji: &str) -> bool {
     if status.is_empty() && emoji.is_empty() {
         return false;
     }
-    // Standalone Z / sleep markers (not every status that merely contains the letter "z").
-    if is_z_sleep_marker(&status) {
-        return true;
-    }
-    if emoji == ":z:"
-        || emoji.contains("zzz")
-        || emoji.contains("sleeping")
-        || status_text.contains('\u{1F4A4}') // 💤
-        || status_emoji.contains('\u{1F4A4}')
-    {
-        return true;
-    }
     let blob = format!("{status} {emoji}");
     blob.contains("away")
         || blob.contains("dnd")
         || blob.contains("do not disturb")
         || blob.contains("meeting")
         || blob.contains("in a call")
+        || emoji.contains("zzz")
+        || emoji.contains("sleeping")
+        || status_text.contains('\u{1F4A4}')
+        || status_emoji.contains('\u{1F4A4}')
 }
 
-/// `Z`, `Zz`, `zzz`, … only (not "organizing").
-fn is_z_sleep_marker(status: &str) -> bool {
-    !status.is_empty() && status.bytes().all(|b| b == b'z')
+/// Live only when active and not DND-now and not away-status.
+#[must_use]
+pub const fn resolve_slack_mode(
+    presence_active: bool,
+    dnd_now: bool,
+    status_away: bool,
+) -> PresenceMode {
+    if presence_active && !dnd_now && !status_away {
+        PresenceMode::Live
+    } else {
+        PresenceMode::Away
+    }
+}
+
+/// Unix seconds now (testable).
+#[must_use]
+pub fn unix_now_secs() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |d| i64::try_from(d.as_secs()).unwrap_or(i64::MAX))
+}
+
+/// DND currently in effect from `dnd.info`.
+///
+/// - snooze / Pause when the token exposes it
+/// - else `dnd_enabled` **and** `now` inside `[next_dnd_start_ts, next_dnd_end_ts)`
+#[must_use]
+pub fn dnd_info_is_on(body: &serde_json::Value, now_secs: i64) -> bool {
+    if body["ok"] != true {
+        return false;
+    }
+    if body["snooze_enabled"] == true
+        || body["snooze_remaining"]
+            .as_i64()
+            .is_some_and(|secs| secs > 0)
+    {
+        return true;
+    }
+    if body["dnd_enabled"] != true {
+        return false;
+    }
+    let Some(start) = body["next_dnd_start_ts"].as_i64() else {
+        return false;
+    };
+    let Some(end) = body["next_dnd_end_ts"].as_i64() else {
+        return false;
+    };
+    start <= now_secs && now_secs < end
 }
 
 impl PresenceSource {
@@ -151,12 +180,12 @@ impl PresenceSource {
 pub struct SlackPresence {
     token: String,
     user_id: String,
-    /// Short TTL so WS connect + message + poller do not stampede Slack.
     cache: RwLock<Option<(Instant, PresenceMode)>>,
 }
 
 impl SlackPresence {
-    const CACHE_TTL: Duration = Duration::from_secs(10);
+    /// Slack Pause can lag ~1m; no point hammering. Connect/message still refresh.
+    const CACHE_TTL: Duration = Duration::from_secs(15);
 
     async fn resolve(&self) -> PresenceMode {
         if let Some(mode) = self.cached_mode().await {
@@ -186,11 +215,18 @@ impl SlackPresence {
                 return PresenceMode::Away;
             }
         };
+        let presence_active = self.fetch_presence_active(&client).await;
+        let dnd_now = self.fetch_dnd_now(&client).await;
+        let status_away = self.fetch_status_away(&client).await;
+        resolve_slack_mode(presence_active, dnd_now, status_away)
+    }
+
+    async fn fetch_presence_active(&self, client: &reqwest::Client) -> bool {
         let url = format!(
             "https://slack.com/api/users.getPresence?user={}",
             self.user_id
         );
-        let presence_online = match client.get(&url).bearer_auth(&self.token).send().await {
+        match client.get(&url).bearer_auth(&self.token).send().await {
             Ok(resp) => match resp.json::<serde_json::Value>().await {
                 Ok(body) if body["ok"] == true => body["presence"].as_str() == Some("active"),
                 Ok(body) => {
@@ -206,21 +242,10 @@ impl SlackPresence {
                 tracing::warn!(error = %err, "presence request failed; away");
                 false
             }
-        };
-        if !presence_online {
-            return PresenceMode::Away;
         }
-        if self.dnd_means_away(&client).await {
-            return PresenceMode::Away;
-        }
-        if self.status_means_away(&client).await {
-            return PresenceMode::Away;
-        }
-        PresenceMode::Live
     }
 
-    /// Slack "Pause notifications" / DND (`dnd:read` required on the bot).
-    async fn dnd_means_away(&self, client: &reqwest::Client) -> bool {
+    async fn fetch_dnd_now(&self, client: &reqwest::Client) -> bool {
         let url = format!("https://slack.com/api/dnd.info?user={}", self.user_id);
         let Ok(resp) = client.get(url).bearer_auth(&self.token).send().await else {
             return false;
@@ -230,16 +255,14 @@ impl SlackPresence {
         };
         if body["ok"] != true {
             if body["error"].as_str() == Some("missing_scope") {
-                tracing::warn!(
-                    "dnd.info missing_scope (need dnd:read); paused notifications ignored"
-                );
+                tracing::warn!("dnd.info missing_scope (need dnd:read)");
             }
             return false;
         }
-        dnd_info_means_away(&body)
+        dnd_info_is_on(&body, unix_now_secs())
     }
 
-    async fn status_means_away(&self, client: &reqwest::Client) -> bool {
+    async fn fetch_status_away(&self, client: &reqwest::Client) -> bool {
         let url = format!("https://slack.com/api/users.info?user={}", self.user_id);
         let Ok(resp) = client.get(url).bearer_auth(&self.token).send().await else {
             return false;
@@ -262,64 +285,65 @@ impl SlackPresence {
 
 #[cfg(test)]
 mod tests {
-    use super::{dnd_info_means_away, status_text_means_away};
+    use super::{dnd_info_is_on, resolve_slack_mode, status_text_means_away, PresenceMode};
     use serde_json::json;
 
     #[test]
-    fn dnd_or_snooze_is_away() {
-        assert!(dnd_info_means_away(&json!({
+    fn active_no_dnd_is_live() {
+        assert_eq!(resolve_slack_mode(true, false, false), PresenceMode::Live);
+    }
+
+    #[test]
+    fn dnd_or_offline_is_away() {
+        assert_eq!(resolve_slack_mode(true, true, false), PresenceMode::Away);
+        assert_eq!(resolve_slack_mode(false, false, false), PresenceMode::Away);
+        assert_eq!(resolve_slack_mode(true, false, true), PresenceMode::Away);
+    }
+
+    #[test]
+    fn dnd_enabled_outside_window_is_off() {
+        // Greg active at ~23:58 with next window tomorrow 22:00–08:00
+        let body = json!({
             "ok": true,
             "dnd_enabled": true,
-            "snooze_enabled": false
-        })));
-        assert!(dnd_info_means_away(&json!({
-            "ok": true,
-            "dnd_enabled": false,
-            "snooze_enabled": true
-        })));
-        assert!(!dnd_info_means_away(&json!({
-            "ok": true,
-            "dnd_enabled": false,
-            "snooze_enabled": false
-        })));
-        assert!(!dnd_info_means_away(&json!({
-            "ok": false,
-            "error": "missing_scope"
-        })));
+            "next_dnd_start_ts": 1_786_996_800_i64,
+            "next_dnd_end_ts": 1_787_032_800_i64
+        });
+        let now = 1_786_917_480_i64; // 2026-08-16 23:58 Paris
+        assert!(!dnd_info_is_on(&body, now));
     }
 
     #[test]
-    fn empty_status_is_live() {
+    fn dnd_enabled_inside_window_is_on() {
+        let body = json!({
+            "ok": true,
+            "dnd_enabled": true,
+            "next_dnd_start_ts": 1_786_910_400_i64, // 22:00 same night
+            "next_dnd_end_ts": 1_786_946_400_i64    // 08:00
+        });
+        let now = 1_786_917_480_i64; // 23:58
+        assert!(dnd_info_is_on(&body, now));
+    }
+
+    #[test]
+    fn snooze_is_on_even_outside_window() {
+        let body = json!({
+            "ok": true,
+            "dnd_enabled": false,
+            "snooze_enabled": true,
+            "next_dnd_start_ts": 1_786_996_800_i64,
+            "next_dnd_end_ts": 1_787_032_800_i64
+        });
+        assert!(dnd_info_is_on(&body, 1_786_917_480_i64));
+    }
+
+    #[test]
+    fn empty_status_ok() {
         assert!(!status_text_means_away("", ""));
-        assert!(!status_text_means_away("  ", "  "));
     }
 
     #[test]
-    fn letter_z_in_normal_words_is_not_away() {
-        assert!(!status_text_means_away("organizing", ""));
-        assert!(!status_text_means_away("amazing progress", ""));
-        assert!(!status_text_means_away("focusing", ""));
-    }
-
-    #[test]
-    fn z_and_zzz_are_away() {
-        assert!(status_text_means_away("Z", ""));
-        assert!(status_text_means_away("Zz", ""));
-        assert!(status_text_means_away("zzz", ""));
-        assert!(status_text_means_away("", ":zzz:"));
-        assert!(status_text_means_away("", ":Zzz:"));
-        assert!(status_text_means_away("", ":sleeping:"));
-        assert!(status_text_means_away("napping \u{1F4A4}", ""));
-    }
-
-    #[test]
-    fn away_dnd_meeting_are_away() {
-        assert!(status_text_means_away("Away", ""));
-        assert!(status_text_means_away("brb - away", ""));
-        assert!(status_text_means_away("DND", ""));
-        assert!(status_text_means_away("Do not disturb", ""));
+    fn meeting_is_away() {
         assert!(status_text_means_away("In a meeting", ""));
-        assert!(status_text_means_away("On a meeting call", ":calendar:"));
-        assert!(status_text_means_away("In a call", ""));
     }
 }

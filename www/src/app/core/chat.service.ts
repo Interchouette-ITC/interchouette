@@ -106,7 +106,8 @@ export class ChatService {
     }
     this.warming = true;
     try {
-      await this.connect();
+      // Never surface browser/network noise during background warm.
+      await this.connect({ silent: true });
     } finally {
       this.warming = false;
     }
@@ -132,7 +133,7 @@ export class ChatService {
       this.wsReady.set(true);
       return;
     }
-    await this.connect();
+    await this.connect({ silent: false });
   }
 
   /** True after the visitor opened the chat panel at least once this browser session. */
@@ -158,10 +159,13 @@ export class ChatService {
     }
   }
 
-  async connect(): Promise<void> {
+  async connect(options: { silent?: boolean } = {}): Promise<void> {
+    const silent = options.silent === true;
     this.connecting.set(true);
     this.wsReady.set(false);
-    this.error.set(null);
+    if (!silent) {
+      this.error.set(null);
+    }
 
     const stored = this.readStore();
     if (stored?.sessionId) {
@@ -172,11 +176,14 @@ export class ChatService {
       const resumed = await this.bindSocket(stored.sessionId);
       if (resumed) {
         this.connecting.set(false);
+        this.error.set(null);
         return;
       }
       // Stale id after chat restart: drop it and mint a fresh session (keep transcript).
       this.clearStore();
-      this.error.set(null);
+      if (!silent) {
+        this.error.set(null);
+      }
     }
 
     this.mode.set('connecting');
@@ -199,13 +206,18 @@ export class ChatService {
       if (!linked) {
         throw new Error('Could not open chat socket');
       }
+      this.error.set(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not connect';
-      this.error.set(message);
       this.mode.set('away');
       this.hero.set('itcy');
       this.statusLabel.set('Offline');
       this.wsReady.set(false);
+      if (silent) {
+        // Background warm: keep FAB usable, never flash browser fetch noise.
+        this.error.set(null);
+      } else {
+        this.error.set(humanizeChatError(err));
+      }
     } finally {
       this.connecting.set(false);
     }
@@ -290,7 +302,8 @@ export class ChatService {
   private applyPresence(mode: 'live' | 'away', label: string, hero: 'greg' | 'itcy'): void {
     this.mode.set(mode);
     this.hero.set(hero);
-    this.statusLabel.set(label);
+    const clean = label.trim();
+    this.statusLabel.set(clean || (mode === 'live' ? 'Online' : 'Away'));
   }
 
   /** Open WS and resolve only after the server `ready` event (not merely TCP open). */
@@ -341,16 +354,21 @@ export class ChatService {
             succeed();
           }
           if (type === 'error') {
-            const message = String(data['message'] ?? 'Error');
+            const message = humanizeChatError(data['message'] ?? 'Chat error');
             // Dead resume id after chat process restart — soft-fail, mint a new session.
-            if (/unknown session/i.test(message)) {
+            if (/unknown session/i.test(String(data['message'] ?? ''))) {
               fail();
               return;
             }
             if (!settled) {
-              this.error.set(message);
+              if (this.open()) {
+                this.error.set(message);
+              }
               fail();
               return;
+            }
+            if (this.open()) {
+              this.error.set(message);
             }
           }
           this.onEvent(data);
@@ -361,8 +379,8 @@ export class ChatService {
       ws.onerror = () => {
         if (!settled) {
           fail();
-        } else {
-          this.error.set('Connection error');
+        } else if (this.open()) {
+          this.error.set(humanizeChatError('Connection error'));
         }
       };
       ws.onclose = () => {
@@ -409,11 +427,10 @@ export class ChatService {
         this.typing.set(Boolean(data['active']));
         break;
       case 'error': {
-        const message = String(data['message'] ?? 'Error');
-        if (/unknown session/i.test(message)) {
+        if (!this.open()) {
           break;
         }
-        this.error.set(message);
+        this.error.set(humanizeChatError(data['message'] ?? 'Chat error'));
         break;
       }
       default:
@@ -481,4 +498,32 @@ function sanitizeStoredMessages(messages: ChatMessage[]): ChatMessage[] {
     }
     return msg;
   });
+}
+
+/** Visitor-facing copy only — never browser "Failed to fetch" / undefined. */
+export function humanizeChatError(err: unknown): string {
+  const raw =
+    typeof err === 'string'
+      ? err
+      : err instanceof Error
+        ? err.message
+        : err && typeof err === 'object' && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : '';
+  const text = raw.trim();
+  if (
+    !text ||
+    text === 'undefined' ||
+    text === 'null' ||
+    /failed to fetch|networkerror|load failed|network request failed/i.test(text)
+  ) {
+    return 'Chat is temporarily unavailable. Please try again.';
+  }
+  if (/session failed|could not open chat socket|could not connect/i.test(text)) {
+    return 'Chat is temporarily unavailable. Please try again.';
+  }
+  if (/unknown session/i.test(text)) {
+    return 'Session expired. Please try again.';
+  }
+  return text;
 }

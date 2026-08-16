@@ -182,7 +182,7 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected onRetry(): void {
-    void this.chat.connect();
+    void this.chat.connect({ silent: false });
   }
 
   protected onDraftInput(event: Event): void {

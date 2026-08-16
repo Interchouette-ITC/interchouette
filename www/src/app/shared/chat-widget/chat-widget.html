@@ -8,7 +8,7 @@
     ></button>
   }
 
-  @if (chat.ready() || chat.open() || chat.connecting() || chat.error()) {
+  @if (chat.ready() || chat.open() || chat.connecting()) {
     <div
       class="chat-fab-dock"
       [class.chat-fab-dock--enter]="fabEnter()"
@@ -288,7 +288,7 @@
           </article>
         }
 
-        @if (chat.error(); as err) {
+        @if (chat.open() && chat.error(); as err) {
           <div class="chat-panel__error-card">
             <p>{{ err }}</p>
             <button type="button" title="Try again" (click)="onRetry()">Try again</button>

@@ -17,7 +17,9 @@ Website visitor chat: WebSocket sessions, Slack DM for live replies, remote Inte
 | `OPENROUTER_MODEL`   | Override free model                                                            |
 | `KNOWLEDGE_MCP_URL`  | Knowledge MCP Streamable HTTP URL (away mode)                                  |
 
-Bot OAuth scopes for DM + presence: `im:write`, `chat:write`, `users:read`, `dnd:read` (paused notifications / DND => away), plus `im:history` for Socket Mode inbound.
+Bot OAuth scopes for DM + presence: `im:write`, `chat:write`, `users:read`, `dnd:read`, plus `im:history` for Socket Mode inbound.
+
+Chat live when Slack presence is `active` and DND is not in effect now (inside `next_dnd_*` window and/or snooze). Bare `dnd_enabled` outside that window is ignored.
 
 Live replies: Greg answers in the bot DM with the session short code from the bot line.
 
