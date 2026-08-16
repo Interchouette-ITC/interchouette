@@ -59,6 +59,14 @@ jobs:
       - name: Verify static publish layout
         run: node scripts/verify-static-dist.mjs
 
+      - name: Deploy to Render
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          test -n "$RENDER_DEPLOY_HOOK_URL"
+          curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK_URL"
+
       - name: Upload browser publish dir
         if: failure()
         uses: actions/upload-artifact@v4
