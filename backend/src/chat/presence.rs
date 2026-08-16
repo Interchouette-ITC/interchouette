@@ -57,8 +57,28 @@ impl PresenceSnapshot {
 pub enum PresenceSource {
     /// Fixed mode (local / tests / missing Slack token).
     Fixed(PresenceMode),
-    /// Slack `users.getPresence` + status text (Z / away / DND => away).
+    /// Slack `users.getPresence` + status text (Z / away / DND / meeting => away).
     Slack(Arc<SlackPresence>),
+}
+
+/// True when Slack custom status should treat Greg as away despite `presence=active`.
+#[must_use]
+pub fn status_text_means_away(status_text: &str, status_emoji: &str) -> bool {
+    let status = status_text.trim().to_ascii_lowercase();
+    let emoji = status_emoji.trim().to_ascii_lowercase();
+    if status.is_empty() && emoji.is_empty() {
+        return false;
+    }
+    // Standalone Z / sleep markers (not every status that merely contains the letter "z").
+    if status == "z" || status == "zzz" || emoji == ":z:" || emoji.contains("zzz") {
+        return true;
+    }
+    let blob = format!("{status} {emoji}");
+    blob.contains("away")
+        || blob.contains("dnd")
+        || blob.contains("do not disturb")
+        || blob.contains("meeting")
+        || blob.contains("in a call")
 }
 
 impl PresenceSource {
@@ -157,17 +177,47 @@ impl SlackPresence {
         }
         let status = body["user"]["profile"]["status_text"]
             .as_str()
-            .unwrap_or("")
-            .to_ascii_lowercase();
+            .unwrap_or("");
         let emoji = body["user"]["profile"]["status_emoji"]
             .as_str()
-            .unwrap_or("")
-            .to_ascii_lowercase();
-        let blob = format!("{status} {emoji}");
-        blob.contains('z')
-            || blob.contains("away")
-            || blob.contains("dnd")
-            || blob.contains("zzz")
-            || emoji.contains("zzz")
+            .unwrap_or("");
+        status_text_means_away(status, emoji)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::status_text_means_away;
+
+    #[test]
+    fn empty_status_is_live() {
+        assert!(!status_text_means_away("", ""));
+        assert!(!status_text_means_away("  ", "  "));
+    }
+
+    #[test]
+    fn letter_z_in_normal_words_is_not_away() {
+        assert!(!status_text_means_away("organizing", ""));
+        assert!(!status_text_means_away("amazing progress", ""));
+        assert!(!status_text_means_away("focusing", ""));
+    }
+
+    #[test]
+    fn z_and_zzz_are_away() {
+        assert!(status_text_means_away("Z", ""));
+        assert!(status_text_means_away("zzz", ""));
+        assert!(status_text_means_away("", ":zzz:"));
+        assert!(status_text_means_away("", ":Zzz:"));
+    }
+
+    #[test]
+    fn away_dnd_meeting_are_away() {
+        assert!(status_text_means_away("Away", ""));
+        assert!(status_text_means_away("brb - away", ""));
+        assert!(status_text_means_away("DND", ""));
+        assert!(status_text_means_away("Do not disturb", ""));
+        assert!(status_text_means_away("In a meeting", ""));
+        assert!(status_text_means_away("On a meeting call", ":calendar:"));
+        assert!(status_text_means_away("In a call", ""));
     }
 }
