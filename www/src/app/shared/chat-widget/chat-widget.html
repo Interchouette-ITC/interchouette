@@ -36,27 +36,15 @@
         <span class="chat-fab__ring" aria-hidden="true"></span>
         <span class="chat-fab__aura" aria-hidden="true"></span>
         <span class="chat-fab__face" aria-hidden="true">
-          @if (chat.open()) {
-            <svg class="chat-fab__svg" viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M7 7l10 10M17 7 7 17"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2.4"
-                stroke-linecap="round"
-              />
-            </svg>
-          } @else {
-            <img
-              class="chat-fab__owl"
-              [class.chat-fab__owl--itcy]="chat.hero() === 'itcy'"
-              [src]="fabFaceSrc()"
-              width="40"
-              height="40"
-              alt=""
-              decoding="async"
-            />
-          }
+          <img
+            class="chat-fab__owl"
+            [class.chat-fab__owl--itcy]="chat.hero() === 'itcy'"
+            [src]="fabFaceSrc()"
+            width="40"
+            height="40"
+            alt=""
+            decoding="async"
+          />
         </span>
         @if (!chat.open() && chat.hero() === 'greg') {
           <span class="chat-fab__badge" aria-hidden="true"></span>

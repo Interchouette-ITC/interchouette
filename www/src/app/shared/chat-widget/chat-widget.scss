@@ -138,9 +138,9 @@
   place-items: center;
   isolation: isolate;
   transition:
-    border-radius 0.28s ease,
     box-shadow 0.28s ease,
-    background 0.28s ease;
+    background 0.28s ease,
+    filter 0.28s ease;
 }
 
 .chat-fab-dock:not(.chat-fab-dock--nudge) .chat-fab:hover {
@@ -157,10 +157,13 @@
     0 1px 0 rgba(255, 228, 236, 0.42) inset;
 }
 
+/* Open: same owl face; slight dim so it reads as dismiss without morphing to an X. */
 .chat-fab--open {
-  border-radius: 999px;
-  background: var(--chat-brand-deep);
-  box-shadow: 0 16px 36px rgba(10, 4, 20, 0.45);
+  filter: brightness(0.92);
+}
+
+.chat-fab--open:hover {
+  filter: brightness(1);
 }
 
 .chat-fab__ring {
@@ -195,13 +198,6 @@
   height: 100%;
 }
 
-.chat-fab__svg {
-  width: 1.6rem;
-  height: 1.6rem;
-  display: block;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
 .chat-fab__owl {
   width: 2.9rem;
   height: auto;
@@ -234,12 +230,19 @@
 .chat-panel {
   position: fixed;
   right: max(var(--chat-fab-right), calc(env(safe-area-inset-right) + 0.9rem));
+  /* Sit just above the owl FAB; tighter gap now that open state keeps the same face. */
   bottom: calc(
-    var(--chat-fab-size) + var(--chat-fab-bottom) + 0.85rem + env(safe-area-inset-bottom)
+    var(--chat-fab-size) + var(--chat-fab-bottom) + 0.45rem + env(safe-area-inset-bottom)
   );
   z-index: 49;
-  width: min(27.5rem, calc(100vw - 4rem));
-  height: min(42rem, calc(100vh - 8.5rem));
+  width: min(28.5rem, calc(100vw - 3.5rem));
+  height: min(
+    46rem,
+    calc(
+      100dvh - var(--chat-fab-size) - var(--chat-fab-bottom) - 1.35rem - env(safe-area-inset-top) -
+        env(safe-area-inset-bottom)
+    )
+  );
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -255,12 +258,12 @@
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(1.75rem) scale(0.92);
+  transform: translateY(0.9rem) scale(0.97);
   transform-origin: bottom right;
   transition:
-    opacity 0.36s ease,
-    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0.36s;
+    opacity 0.32s ease,
+    transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.32s;
 }
 
 .chat-panel--open {
@@ -1089,9 +1092,15 @@
     left: max(0.65rem, env(safe-area-inset-left));
     width: auto;
     bottom: calc(
-      var(--chat-fab-size) + var(--chat-fab-bottom) + 0.85rem + env(safe-area-inset-bottom)
+      var(--chat-fab-size) + var(--chat-fab-bottom) + 0.4rem + env(safe-area-inset-bottom)
     );
-    height: min(78vh, 40rem);
+    height: min(
+      82vh,
+      calc(
+        100dvh - var(--chat-fab-size) - var(--chat-fab-bottom) - 1.1rem - env(safe-area-inset-top) -
+          env(safe-area-inset-bottom)
+      )
+    );
     border-radius: 1.35rem;
   }
 }
