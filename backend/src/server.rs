@@ -1,6 +1,8 @@
 //! MCP tools + HTTP listener (`/interchouette`, `/health`, admin).
 
+#![allow(unknown_lints)]
 #![allow(clippy::unused_async)]
+#![allow(clippy::unused_async_trait_impl)]
 
 use std::fmt::Write as _;
 use std::path::PathBuf;
@@ -154,13 +156,14 @@ impl ServerHandler for KnowledgeMcp {
 pub async fn run_http(
     addr: &str,
     data_dir: PathBuf,
-    knowledge_dir: PathBuf,
+    seed_knowledge_dir: PathBuf,
     admin_token: Option<String>,
     cors_origin: String,
 ) -> Result<()> {
     let store = Arc::new(Store::open(&data_dir)?);
+    let knowledge_dir = ingest::ensure_live_knowledge(&data_dir, &seed_knowledge_dir)?;
     let n = ingest::ingest_dir(&store, &knowledge_dir)?;
-    tracing::info!(documents = n, "knowledge ingested");
+    tracing::info!(documents = n, live = %knowledge_dir.display(), "knowledge ready");
     let _ = store.bot_schema_version()?;
 
     let mcp = KnowledgeMcp {

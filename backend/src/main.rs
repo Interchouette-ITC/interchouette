@@ -21,7 +21,7 @@ struct Cli {
     #[arg(long, env = "DATA_DIR", default_value = "./data")]
     data_dir: PathBuf,
 
-    /// Markdown corpus root (`en/`, `nl/`).
+    /// Seed markdown bundle (`en/`, `nl/`). Copied once into `$DATA_DIR/knowledge`.
     #[arg(long, env = "KNOWLEDGE_DIR", default_value = "../knowledge")]
     knowledge_dir: PathBuf,
 

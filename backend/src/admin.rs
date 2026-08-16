@@ -17,6 +17,7 @@ use crate::ingest;
 pub struct AppState {
     pub store: Arc<Store>,
     pub admin_token: Option<String>,
+    /// Live markdown tree on disk (`$DATA_DIR/knowledge`).
     pub knowledge_dir: std::path::PathBuf,
 }
 
@@ -29,7 +30,7 @@ pub struct UpsertQuery {
 
 type AuthError = (StatusCode, Json<Value>);
 
-/// Re-ingest bundled markdown from `KNOWLEDGE_DIR`.
+/// Rebuild FTS from the live disk markdown tree (not the image bundle).
 pub async fn reingest_handler(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -47,7 +48,7 @@ pub async fn reingest_handler(
     }
 }
 
-/// Upsert one markdown document (raw body).
+/// Upsert one markdown document: write live disk file + SQLite/FTS.
 pub async fn upsert_handler(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -66,17 +67,33 @@ pub async fn upsert_handler(
             .into_response();
     }
     let lang = q.lang.unwrap_or_else(|| "en".into());
-    let title = q.title.unwrap_or_else(|| q.slug.clone());
+    let title = q.title.clone().unwrap_or_else(|| q.slug.clone());
+    let slug = if q.slug.contains('/') {
+        q.slug
+    } else {
+        format!("{lang}/{}", q.slug)
+    };
     let doc = KnowledgeDoc {
-        slug: q.slug,
+        slug,
         lang,
         title,
         body: text,
     };
+    if let Err(err) = ingest::write_markdown_doc(&state.knowledge_dir, &doc) {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(json!({ "error": err.to_string() })),
+        )
+            .into_response();
+    }
     match state.store.upsert_doc(&doc) {
         Ok(()) => (
             StatusCode::OK,
-            Json(json!({ "ok": true, "slug": doc.slug })),
+            Json(json!({
+                "ok": true,
+                "slug": doc.slug,
+                "path": format!("{}.md", doc.slug),
+            })),
         )
             .into_response(),
         Err(err) => (
