@@ -1,7 +1,15 @@
-/* Font Awesome 4.7 subset: only glyphs used on the home page. */
+/* Font Awesome subsets: only glyphs used on the home page. */
 @font-face {
   font-family: 'FontAwesome';
   src: url('/fonts/fontawesome-subset.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'FontAwesomeBrands';
+  src: url('/fonts/fontawesome-brands-subset.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -50,30 +58,47 @@
 .fa-envelope-o:before {
   content: '\f003';
 }
+
+.fa-comments:before {
+  content: '\f086';
+}
+
 .fa-twitter:before {
   content: '\f099';
 }
+
 .fa-github:before {
   content: '\f09b';
 }
+
 .fa-linkedin:before {
   content: '\f0e1';
 }
+
 .fa-slack:before {
   content: '\f198';
 }
+
 .fa-file-pdf-o:before {
   content: '\f1c1';
 }
+
 .fa-circle-thin:before {
   content: '\f1db';
 }
+
 .fa-whatsapp:before {
   content: '\f232';
 }
+
 .fa-amazon:before {
   content: '\f270';
 }
-.fa-telegram:before {
-  content: '\f2c6';
+
+.fa.fa-signal-messenger {
+  font-family: 'FontAwesomeBrands';
+}
+
+.fa-signal-messenger:before {
+  content: '\e663';
 }

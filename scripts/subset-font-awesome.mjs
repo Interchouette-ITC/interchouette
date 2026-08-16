@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 /**
- * Regenerate public/fonts/fontawesome-subset.woff2 from Font Awesome 4.7.
- * Requires: npm install --no-save subset-font font-awesome
+ * Regenerate Font Awesome subsets used on the home page:
+ * - public/fonts/fontawesome-subset.woff2 (FA 4.7 glyphs)
+ * - public/fonts/fontawesome-brands-subset.woff2 (FA brands: Signal Messenger)
+ *
+ * Requires: npm install --no-save subset-font font-awesome @fortawesome/fontawesome-free
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -15,12 +18,15 @@ let subsetFont;
 try {
   subsetFont = (await import('subset-font')).default;
 } catch {
-  console.error('Install subset-font first: npm install --no-save subset-font font-awesome');
+  console.error(
+    'Install deps first: npm install --no-save subset-font font-awesome @fortawesome/fontawesome-free',
+  );
   process.exit(1);
 }
 
-const unicodes = [
+const fa4Unicodes = [
   0xf003, // envelope-o
+  0xf086, // comments
   0xf099, // twitter
   0xf09b, // github
   0xf0e1, // linkedin
@@ -29,16 +35,31 @@ const unicodes = [
   0xf1db, // circle-thin
   0xf232, // whatsapp
   0xf270, // amazon
-  0xf2c6, // telegram
 ];
 
-const faRoot = dirname(require.resolve('font-awesome/package.json'));
-const ttfPath = join(faRoot, 'fonts/fontawesome-webfont.ttf');
-const outPath = join(root, 'public/fonts/fontawesome-subset.woff2');
+const brandsUnicodes = [
+  0xe663, // signal-messenger (Font Awesome Brands)
+];
 
-mkdirSync(dirname(outPath), { recursive: true });
-const woff2 = await subsetFont(readFileSync(ttfPath), String.fromCodePoint(...unicodes), {
+const fontsDir = join(root, 'public/fonts');
+mkdirSync(fontsDir, { recursive: true });
+
+const faRoot = dirname(require.resolve('font-awesome/package.json'));
+const fa4Ttf = join(faRoot, 'fonts/fontawesome-webfont.ttf');
+const fa4Out = join(fontsDir, 'fontawesome-subset.woff2');
+const fa4Woff2 = await subsetFont(readFileSync(fa4Ttf), String.fromCodePoint(...fa4Unicodes), {
   targetFormat: 'woff2',
 });
-writeFileSync(outPath, woff2);
-console.log(`wrote ${outPath} (${woff2.length} bytes)`);
+writeFileSync(fa4Out, fa4Woff2);
+console.log(`wrote ${fa4Out} (${fa4Woff2.length} bytes)`);
+
+const brandsRoot = dirname(require.resolve('@fortawesome/fontawesome-free/package.json'));
+const brandsSrc = join(brandsRoot, 'webfonts/fa-brands-400.woff2');
+const brandsOut = join(fontsDir, 'fontawesome-brands-subset.woff2');
+const brandsWoff2 = await subsetFont(
+  readFileSync(brandsSrc),
+  String.fromCodePoint(...brandsUnicodes),
+  { targetFormat: 'woff2' },
+);
+writeFileSync(brandsOut, brandsWoff2);
+console.log(`wrote ${brandsOut} (${brandsWoff2.length} bytes)`);

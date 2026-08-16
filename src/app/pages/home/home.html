@@ -15,14 +15,49 @@
       height="353"
       decoding="async"
       fetchpriority="high"
+      [class.avatar--chat]="chat.ready()"
+      [attr.tabindex]="chat.ready() ? 0 : null"
+      (click)="openChat()"
+      (keydown.enter)="openChat()"
+      (keydown.space)="$event.preventDefault(); openChat()"
     />
   </div>
   <hr />
   <div class="name">Gregory Roussac</div>
   <p class="subtitle">Rust - Wasm Freelance Developer</p>
-  <p class="location">
-    <a id="contact" class="icons" [href]="mailHref" aria-label="Interchouette - ITC">
-      <i class="fa fa-envelope-o"></i> Interchouette - ITC
+  <p
+    class="location"
+    [attr.title]="copied() ? 'Email copied' : email"
+    (click)="onContactClick($event)"
+  >
+    <a
+      id="contact"
+      class="icons"
+      [attr.href]="chat.ready() ? null : mailHref"
+      [attr.role]="chat.ready() ? 'button' : null"
+      aria-label="Interchouette - ITC"
+    >
+      <span class="location__cluster" [class.location__cluster--mail-end]="chatEnabled">
+        @if (chat.ready()) {
+          <img
+            class="location__point"
+            src="/img/hand-right2.png"
+            width="28"
+            height="23"
+            alt=""
+            decoding="async"
+            aria-hidden="true"
+          />
+          <i class="fa fa-comments" aria-hidden="true" data-chat></i>
+        }
+        @if (!chatEnabled) {
+          <i class="fa fa-envelope-o" aria-hidden="true" data-mail></i>
+        }
+        <span class="location__label">Interchouette - ITC</span>
+        @if (chatEnabled) {
+          <i class="fa fa-envelope-o" aria-hidden="true" data-mail></i>
+        }
+      </span>
     </a>
   </p>
   <p class="icons animated pulse">
@@ -70,15 +105,15 @@
       </span>
     </a>
     <a
-      href="https://t.me/Interchouette"
+      href="https://signal.me/#u/interchouette.42"
       target="_blank"
       rel="noopener noreferrer"
-      title="Telegram - Interchouette"
-      aria-label="Telegram - Interchouette"
+      title="Signal - interchouette.42"
+      aria-label="Signal - interchouette.42"
     >
       <span class="fa-stack fa-lg">
         <i class="fa fa-circle-thin fa-stack-2x"></i>
-        <i class="fa fa-telegram fa-stack-1x"></i>
+        <i class="fa fa-signal-messenger fa-stack-1x"></i>
       </span>
     </a>
     <a

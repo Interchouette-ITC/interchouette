@@ -135,7 +135,7 @@ impl KnowledgeMcp {
              CV: https://interchouette.net/CV\n\
              GitHub org: https://github.com/Interchouette-ITC\n\
              LinkedIn: https://www.linkedin.com/in/gregoryroussac/\n\
-             Telegram: https://t.me/Interchouette\n\
+             Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)\n\
              Twitter: https://twitter.com/interchouette",
         ))
     }

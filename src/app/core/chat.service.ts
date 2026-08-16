@@ -1,6 +1,6 @@
-import { Injectable, effect, signal } from '@angular/core';
+import { Injectable, computed, effect, signal } from '@angular/core';
 
-import { CHAT_STORAGE_KEY, chatApiBase, chatWsUrl } from './chat.constants';
+import { CHAT_STORAGE_KEY, CHAT_WIDGET_ENABLED, chatApiBase, chatWsUrl } from './chat.constants';
 
 export type ChatMode = 'live' | 'away' | 'connecting';
 export type ChatRole = 'visitor' | 'greg' | 'itcy' | 'system';
@@ -42,9 +42,15 @@ export class ChatService {
   readonly error = signal<string | null>(null);
   readonly connecting = signal(false);
   readonly wsReady = signal(false);
+  /** True once the session socket is up (live or away). False while disabled, warming, or failed. */
+  readonly ready = computed(
+    () =>
+      CHAT_WIDGET_ENABLED && this.wsReady() && (this.mode() === 'live' || this.mode() === 'away'),
+  );
 
   private socket: WebSocket | null = null;
   private sessionId: string | null = null;
+  private warming = false;
 
   constructor() {
     effect(() => {
@@ -66,6 +72,22 @@ export class ChatService {
         savedAt: Date.now(),
       });
     });
+  }
+
+  /** Background connect without opening the panel (contact bar / FAB readiness). */
+  async warm(): Promise<void> {
+    if (!CHAT_WIDGET_ENABLED || this.warming) {
+      return;
+    }
+    if (this.ready()) {
+      return;
+    }
+    this.warming = true;
+    try {
+      await this.connect();
+    } finally {
+      this.warming = false;
+    }
   }
 
   toggle(): void {

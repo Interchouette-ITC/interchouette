@@ -51,7 +51,7 @@ export function contactText(): string {
     'Email: contact@interchouette.net',
     'GitHub org: https://github.com/Interchouette-ITC',
     'LinkedIn: https://www.linkedin.com/in/gregoryroussac/',
-    'Telegram: https://t.me/Interchouette',
+    'Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)',
     'Twitter: https://twitter.com/interchouette',
   ].join('\n');
 }

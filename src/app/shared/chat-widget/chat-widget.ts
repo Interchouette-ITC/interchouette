@@ -30,7 +30,10 @@ export class ChatWidget {
   protected showEmail = false;
 
   constructor() {
-    afterNextRender(() => this.mounted.set(true));
+    afterNextRender(() => {
+      this.mounted.set(true);
+      void this.chat.warm();
+    });
     effect(() => {
       this.chat.messages();
       this.chat.typing();

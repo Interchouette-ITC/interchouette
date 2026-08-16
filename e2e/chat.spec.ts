@@ -8,7 +8,8 @@ test.describe('chat widget', () => {
 
     await page.goto('/');
     const fab = page.getByRole('button', { name: 'Open chat' });
-    await expect(fab).toBeVisible();
+    // FAB appears after background warm connects the session socket.
+    await expect(fab).toBeVisible({ timeout: 15_000 });
     await fab.click();
     const panel = page.locator('#interchouette-chat-panel');
     await expect(panel).toHaveClass(/chat-panel--open/);
