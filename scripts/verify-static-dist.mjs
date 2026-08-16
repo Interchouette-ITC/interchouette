@@ -15,6 +15,8 @@ const required = [
   'terms/index.html',
   '_redirects',
   'sitemap.xml',
+  'llms.txt',
+  'fonts/fontawesome-subset.woff2',
   'CV/Gregory_Roussac.pdf',
 ];
 

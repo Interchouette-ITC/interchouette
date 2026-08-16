@@ -13,6 +13,15 @@ test.describe('responsive rendering', () => {
     expect(overflowX, `horizontal overflow on ${testInfo.project.name}`).toBe(false);
   });
 
+  test('document exposes a single main landmark', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('main#main')).toHaveCount(1);
+    await expect(page.getByRole('main')).toHaveCount(1);
+
+    await page.goto('/CV');
+    await expect(page.getByRole('main')).toHaveCount(1);
+  });
+
   test('home icons pulse once and avatar keeps aspect ratio', async ({ page }) => {
     await page.goto('/');
     await page.waitForTimeout(1200);
