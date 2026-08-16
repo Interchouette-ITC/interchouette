@@ -2,6 +2,8 @@ import { Injectable, computed, effect, signal } from '@angular/core';
 
 import { CHAT_STORAGE_KEY, CHAT_WIDGET_ENABLED, chatApiBase, chatWsUrl } from './chat.constants';
 
+const CHAT_OPENED_KEY = 'ic.chat.opened';
+
 export type ChatMode = 'live' | 'away' | 'connecting';
 export type ChatRole = 'visitor' | 'greg' | 'itcy' | 'system';
 
@@ -104,12 +106,36 @@ export class ChatService {
 
   async openPanel(): Promise<void> {
     this.open.set(true);
+    this.markOpened();
     this.error.set(null);
     if (this.sessionId && this.socket?.readyState === WebSocket.OPEN) {
       this.wsReady.set(true);
       return;
     }
     await this.connect();
+  }
+
+  /** True after the visitor opened the chat panel at least once this browser session. */
+  hasOpenedThisSession(): boolean {
+    if (typeof sessionStorage === 'undefined') {
+      return false;
+    }
+    try {
+      return sessionStorage.getItem(CHAT_OPENED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  private markOpened(): void {
+    if (typeof sessionStorage === 'undefined') {
+      return;
+    }
+    try {
+      sessionStorage.setItem(CHAT_OPENED_KEY, '1');
+    } catch {
+      /* private mode */
+    }
   }
 
   async connect(): Promise<void> {

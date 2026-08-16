@@ -32,6 +32,31 @@ export class HomePage {
     void this.chat.openPanel();
   }
 
+  protected avatarAriaLabel(): string | null {
+    if (!this.chat.ready()) {
+      return null;
+    }
+    return this.chat.hero() === 'greg' ? 'Open chat with Greg' : 'Open chat with ITCy';
+  }
+
+  protected contactAriaLabel(): string {
+    if (this.chat.ready()) {
+      const who = this.chat.hero() === 'greg' ? 'Greg' : 'ITCy';
+      return `Open chat with ${who}. Also copies ${this.email} to the clipboard.`;
+    }
+    if (this.chatEnabled) {
+      return `Email ${this.email}. Chat is connecting.`;
+    }
+    return `Email Interchouette - ITC at ${this.email}`;
+  }
+
+  protected contactTitle(): string {
+    if (this.copied()) {
+      return 'Email copied to clipboard';
+    }
+    return this.contactAriaLabel();
+  }
+
   /**
    * Whole purple bar: always copy email.
    * Chat ready → no mailto; open chat instead.

@@ -9,45 +9,60 @@
   }
 
   @if (chat.ready() || chat.open()) {
-    <button
-      type="button"
-      class="chat-fab"
-      [class.chat-fab--open]="chat.open()"
-      [class.chat-fab--busy]="chat.connecting()"
-      [class.chat-fab--live]="chat.hero() === 'greg' && !chat.open()"
-      (click)="onFab()"
-      [attr.aria-expanded]="chat.open()"
-      aria-controls="interchouette-chat-panel"
-      [attr.aria-label]="chat.open() ? 'Close chat' : 'Open chat'"
-    >
-      <span class="chat-fab__ring" aria-hidden="true"></span>
-      <span class="chat-fab__aura" aria-hidden="true"></span>
-      <span class="chat-fab__face" aria-hidden="true">
-        @if (chat.open()) {
-          <svg class="chat-fab__svg" viewBox="0 0 24 24">
-            <path
-              d="M7 7l10 10M17 7 7 17"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.4"
-              stroke-linecap="round"
-            />
-          </svg>
-        } @else {
-          <img
-            class="chat-fab__owl"
-            src="/img/avatar-1x.webp"
-            width="40"
-            height="37"
-            alt=""
-            decoding="async"
-          />
-        }
-      </span>
-      @if (!chat.open() && chat.hero() === 'greg') {
-        <span class="chat-fab__badge" aria-hidden="true"></span>
+    <div class="chat-fab-dock" [class.chat-fab-dock--nudge]="nudgeBounce()">
+      @if (nudgeHint() && !chat.open()) {
+        <button
+          type="button"
+          class="chat-nudge"
+          (click)="onNudgeClick()"
+          [attr.aria-label]="nudgeCopy()"
+        >
+          <span class="chat-nudge__text">{{ nudgeCopy() }}</span>
+          <span class="chat-nudge__arrow" aria-hidden="true"></span>
+        </button>
       }
-    </button>
+      <button
+        type="button"
+        class="chat-fab"
+        [class.chat-fab--open]="chat.open()"
+        [class.chat-fab--busy]="chat.connecting()"
+        [class.chat-fab--live]="chat.hero() === 'greg' && !chat.open()"
+        (click)="onFab()"
+        [attr.aria-expanded]="chat.open()"
+        aria-controls="interchouette-chat-panel"
+        [attr.aria-label]="fabAriaLabel()"
+        [attr.title]="fabAriaLabel()"
+      >
+        <span class="chat-fab__ring" aria-hidden="true"></span>
+        <span class="chat-fab__aura" aria-hidden="true"></span>
+        <span class="chat-fab__face" aria-hidden="true">
+          @if (chat.open()) {
+            <svg class="chat-fab__svg" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M7 7l10 10M17 7 7 17"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+              />
+            </svg>
+          } @else {
+            <img
+              class="chat-fab__owl"
+              [class.chat-fab__owl--itcy]="chat.hero() === 'itcy'"
+              [src]="fabFaceSrc()"
+              width="40"
+              height="40"
+              alt=""
+              decoding="async"
+            />
+          }
+        </span>
+        @if (!chat.open() && chat.hero() === 'greg') {
+          <span class="chat-fab__badge" aria-hidden="true"></span>
+        }
+      </button>
+    </div>
 
     <section
       id="interchouette-chat-panel"
@@ -71,7 +86,14 @@
               @if (chat.hero() === 'neutral') {
                 <span class="chat-panel__orbit"><i></i></span>
               } @else {
-                <img src="/img/avatar-2x.webp" width="72" height="67" alt="" decoding="async" />
+                <img
+                  [src]="panelFaceSrc()"
+                  [class.chat-panel__avatar-img--itcy]="chat.hero() === 'itcy'"
+                  width="72"
+                  height="72"
+                  alt=""
+                  decoding="async"
+                />
               }
             </div>
             <span class="chat-panel__presence" [attr.data-mode]="chat.mode()"></span>
@@ -114,7 +136,14 @@
           <div class="chat-welcome">
             <div class="chat-welcome__halo" aria-hidden="true"></div>
             <div class="chat-welcome__mark" aria-hidden="true">
-              <img src="/img/avatar-2x.webp" width="88" height="82" alt="" decoding="async" />
+              <img
+                [src]="panelFaceSrc()"
+                [class.chat-welcome__mark-img--itcy]="chat.hero() === 'itcy'"
+                width="88"
+                height="88"
+                alt=""
+                decoding="async"
+              />
             </div>
             <p class="chat-welcome__kicker">{{ emptyKicker() }}</p>
             <h3>{{ emptyTitle() }}</h3>
@@ -126,7 +155,14 @@
           <article class="chat-row" [attr.data-role]="msg.role" [style.--i]="i">
             @if (msg.role === 'greg' || msg.role === 'itcy') {
               <div class="chat-row__avatar" aria-hidden="true">
-                <img src="/img/avatar-1x.webp" width="32" height="30" alt="" decoding="async" />
+                <img
+                  [src]="rowFaceSrc(msg.role)"
+                  [class.chat-row__avatar-img--itcy]="msg.role === 'itcy'"
+                  width="32"
+                  height="32"
+                  alt=""
+                  decoding="async"
+                />
               </div>
             }
             <div class="chat-bubble" [attr.data-role]="msg.role">
@@ -139,13 +175,26 @@
         }
 
         @if (chat.typing()) {
-          <article class="chat-row" data-role="itcy">
+          <article class="chat-row" [attr.data-role]="chat.hero() === 'greg' ? 'greg' : 'itcy'">
             <div class="chat-row__avatar" aria-hidden="true">
-              <img src="/img/avatar-1x.webp" width="32" height="30" alt="" decoding="async" />
+              <img
+                [src]="fabFaceSrc()"
+                [class.chat-row__avatar-img--itcy]="chat.hero() !== 'greg'"
+                width="32"
+                height="32"
+                alt=""
+                decoding="async"
+              />
             </div>
-            <div class="chat-bubble chat-bubble--typing" data-role="itcy">
-              <span class="chat-bubble__who">ITCy</span>
-              <div class="chat-bubble__dots" aria-label="ITCy is typing">
+            <div
+              class="chat-bubble chat-bubble--typing"
+              [attr.data-role]="chat.hero() === 'greg' ? 'greg' : 'itcy'"
+            >
+              <span class="chat-bubble__who">{{ chat.hero() === 'greg' ? 'Greg' : 'ITCy' }}</span>
+              <div
+                class="chat-bubble__dots"
+                [attr.aria-label]="chat.hero() === 'greg' ? 'Greg is typing' : 'ITCy is typing'"
+              >
                 <span></span><span></span><span></span>
               </div>
             </div>

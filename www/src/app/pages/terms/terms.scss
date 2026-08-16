@@ -7,9 +7,16 @@
 }
 
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
   font-family: 'Montserrat', sans-serif;
   font-weight: 400;
+}
+
+:host > app-site-footer {
+  margin-top: auto;
 }
 
 .legal {

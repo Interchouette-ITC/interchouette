@@ -1,11 +1,23 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
   font-family: 'Montserrat', sans-serif;
   width: 100%;
   margin: 0;
   /* Desktop: light greys as before. Mobile overrides below for WCAG AA. */
   --home-title: #808080;
   --home-muted: #a9a9a9;
+}
+
+/* Split leftover height above/below the card; footer stays on the bottom edge. */
+:host > .card {
+  margin-top: auto;
+}
+
+:host > app-site-footer {
+  margin-top: auto;
 }
 
 /* Lighthouse mobile / narrow viewports: darker muted text on white. */
@@ -129,7 +141,6 @@
   }
 
   .card {
-    margin-top: 10%;
     margin-left: 5%;
     margin-right: 5%;
     padding: 0 1.35rem 1.5rem;
@@ -207,7 +218,6 @@
   }
 
   .card {
-    margin-top: 6%;
     margin-left: 9%;
     margin-right: 0;
     padding: 0 1.1rem 1.1rem;
@@ -287,7 +297,6 @@
   }
 
   .card {
-    margin-top: 4%;
     margin-left: auto;
     margin-right: auto;
     background-color: white;
@@ -348,13 +357,12 @@
 }
 
 /*
- * Wide desktop (1500+): exact previous live desktop look (was min-width 1001).
- * Do not restyle this band.
+ * Wide desktop (1500+): same card width as before, horizontally centered.
  */
 @media screen and (min-width: 1500px) {
   .card {
-    margin-left: 32%;
-    margin-top: 5%;
+    margin-left: auto;
+    margin-right: auto;
     padding: 0;
     background-color: white;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);

@@ -5,11 +5,38 @@ import {
   effect,
   ElementRef,
   inject,
+  OnDestroy,
   signal,
   viewChild,
 } from '@angular/core';
 
 import { ChatRole, ChatService } from '../../core/chat.service';
+
+const NUDGE_EVERY_MS = 2 * 60 * 1000;
+const NUDGE_BOUNCE_MS = 1100;
+
+const NUDGE_HOOKS = [
+  "Don't be a stranger",
+  'The owl noticed you',
+  'Psst… over here',
+  'Rust never sleeps',
+  'Say hi before the coffee cools',
+  'Your cursor looks lonely',
+  'Plot twist: you can talk to us',
+  'This bubble has feelings',
+  'Free high-fives available',
+  'We brought snacks (metaphorically)',
+  'No ticket required',
+  'The FAQ is jealous of chat',
+  'Hot take welcome',
+  'Silence is overrated',
+  'One click, zero awkwardness',
+  'Greg / ITCy miss you already',
+  'Scrolling is optional; chatting is fun',
+  'Permission to be curious granted',
+  'Even Wasm needs a hello',
+  'Come say boop',
+] as const;
 
 @Component({
   selector: 'app-chat-widget',
@@ -20,19 +47,29 @@ import { ChatRole, ChatService } from '../../core/chat.service';
     ngSkipHydration: 'true',
   },
 })
-export class ChatWidget {
+export class ChatWidget implements OnDestroy {
   protected readonly chat = inject(ChatService);
   protected readonly mounted = signal(false);
+  /** Soft invite bubble next to the chat button. */
+  protected readonly nudgeHint = signal(false);
+  /** One-shot bounce on the chat button. */
+  protected readonly nudgeBounce = signal(false);
+  /** Stable copy for the current nudge pulse. */
+  protected readonly nudgeCopy = signal('');
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
 
   protected draft = '';
   protected emailDraft = '';
   protected showEmail = false;
 
+  private nudgeTimer: ReturnType<typeof setInterval> | null = null;
+  private bounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private bubbleDismissed = false;
+
   constructor() {
     afterNextRender(() => {
       this.mounted.set(true);
-      void this.chat.warm();
+      void this.chat.warm().then(() => this.tryStartNudge());
     });
     effect(() => {
       this.chat.messages();
@@ -40,10 +77,29 @@ export class ChatWidget {
       this.chat.open();
       queueMicrotask(() => this.scrollToBottom());
     });
+    effect(() => {
+      if (this.chat.open() || this.chat.hasOpenedThisSession()) {
+        this.dismissBubbleAndBounce();
+        return;
+      }
+      if (this.mounted() && this.chat.ready()) {
+        this.tryStartNudge();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.clearBounceTimers();
   }
 
   protected onFab(): void {
+    this.dismissBubbleAndBounce();
     this.chat.toggle();
+  }
+
+  protected onNudgeClick(): void {
+    this.dismissBubbleAndBounce();
+    void this.chat.openPanel();
   }
 
   protected onClose(): void {
@@ -111,6 +167,31 @@ export class ChatWidget {
     }
   }
 
+  private buildNudgeCopy(): string {
+    const hook = NUDGE_HOOKS[Math.floor(Math.random() * NUDGE_HOOKS.length)] ?? NUDGE_HOOKS[0];
+    const who =
+      this.chat.hero() === 'greg'
+        ? 'Chat with Greg!'
+        : this.chat.hero() === 'itcy'
+          ? 'Chat with ITCy!'
+          : 'Chat with Greg / ITCy!';
+    return `${hook}! ${who}`;
+  }
+
+  protected fabAriaLabel(): string {
+    if (this.chat.open()) {
+      return 'Close chat';
+    }
+    switch (this.chat.hero()) {
+      case 'greg':
+        return 'Open chat with Greg';
+      case 'itcy':
+        return 'Open chat with ITCy';
+      default:
+        return 'Open chat with Greg or ITCy';
+    }
+  }
+
   protected subtitle(): string {
     switch (this.chat.hero()) {
       case 'greg':
@@ -165,6 +246,84 @@ export class ChatWidget {
         return 'System';
       default:
         return 'You';
+    }
+  }
+
+  /** Small face for the floating chat button. */
+  protected fabFaceSrc(): string {
+    return this.chat.hero() === 'itcy' ? '/img/itcy-mascot-1x.webp' : '/img/avatar-1x.webp';
+  }
+
+  /** Header / welcome mark in the open panel. */
+  protected panelFaceSrc(): string {
+    return this.chat.hero() === 'itcy' ? '/img/itcy-mascot-2x.webp' : '/img/avatar-2x.webp';
+  }
+
+  /** Message row avatar for Greg or ITCy. */
+  protected rowFaceSrc(role: ChatRole): string {
+    return role === 'itcy' ? '/img/itcy-mascot-1x.webp' : '/img/avatar-1x.webp';
+  }
+
+  private tryStartNudge(): void {
+    if (this.bubbleDismissed || this.chat.hasOpenedThisSession() || this.chat.open()) {
+      return;
+    }
+    if (!this.chat.ready()) {
+      return;
+    }
+    this.revealBubble();
+    this.startBounceLoop();
+  }
+
+  private revealBubble(): void {
+    if (this.bubbleDismissed || this.nudgeHint()) {
+      return;
+    }
+    this.nudgeCopy.set(this.buildNudgeCopy());
+    this.nudgeHint.set(true);
+  }
+
+  private startBounceLoop(): void {
+    if (this.nudgeTimer || this.bubbleDismissed || this.chat.hasOpenedThisSession()) {
+      return;
+    }
+    this.nudgeTimer = setInterval(() => this.pulseBounce(), NUDGE_EVERY_MS);
+  }
+
+  private pulseBounce(): void {
+    if (this.chat.open() || this.chat.hasOpenedThisSession() || !this.chat.ready()) {
+      return;
+    }
+    if (this.nudgeHint()) {
+      this.nudgeCopy.set(this.buildNudgeCopy());
+    }
+    // Drop the class for a frame so the dock bounce animation can restart.
+    this.nudgeBounce.set(false);
+    if (this.bounceTimer) {
+      clearTimeout(this.bounceTimer);
+    }
+    requestAnimationFrame(() => {
+      this.nudgeBounce.set(true);
+      this.bounceTimer = setTimeout(() => this.nudgeBounce.set(false), NUDGE_BOUNCE_MS);
+    });
+  }
+
+  /** Hide invite bubble forever this session; stop bounce when chat was opened. */
+  private dismissBubbleAndBounce(): void {
+    this.bubbleDismissed = true;
+    this.nudgeHint.set(false);
+    this.nudgeBounce.set(false);
+    this.clearBounceTimers();
+  }
+
+  private clearBounceTimers(): void {
+    if (this.nudgeTimer) {
+      clearInterval(this.nudgeTimer);
+      this.nudgeTimer = null;
+    }
+    if (this.bounceTimer) {
+      clearTimeout(this.bounceTimer);
+      this.bounceTimer = null;
     }
   }
 
