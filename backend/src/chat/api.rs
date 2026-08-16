@@ -93,23 +93,7 @@ async fn get_presence(State(state): State<ChatState>) -> impl IntoResponse {
 async fn create_session(State(state): State<ChatState>) -> impl IntoResponse {
     let snap = state.presence.snapshot().await;
     let session = state.sessions.create(snap.mode).await;
-    if state.slack.enabled() {
-        match state
-            .slack
-            .start_session_thread(&session.short_code, snap.mode.as_str())
-            .await
-        {
-            Ok(thread) => {
-                state
-                    .sessions
-                    .set_slack_thread(&session.id, thread.channel, thread.thread_ts)
-                    .await;
-            }
-            Err(err) => {
-                tracing::warn!(error = %err, "failed to start Slack session thread");
-            }
-        }
-    }
+    // Slack thread starts on the first visitor message (avoid flood on open/refresh).
     Json(CreateSessionResponse {
         session_id: session.id,
         short_code: session.short_code,

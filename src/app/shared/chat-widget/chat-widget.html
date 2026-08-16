@@ -33,15 +33,14 @@
           />
         </svg>
       } @else {
-        <svg class="chat-fab__svg chat-fab__svg--bubble" viewBox="0 0 24 24">
-          <path
-            d="M5 7.2A2.2 2.2 0 0 1 7.2 5h9.6A2.2 2.2 0 0 1 19 7.2v6.1a2.2 2.2 0 0 1-2.2 2.2H11l-3.7 2.9a.7.7 0 0 1-1.1-.6v-2.3H7.2A2.2 2.2 0 0 1 5 13.3Z"
-            fill="currentColor"
-          />
-          <circle cx="9.2" cy="10.2" r="0.95" fill="#27084e" />
-          <circle cx="12" cy="10.2" r="0.95" fill="#27084e" />
-          <circle cx="14.8" cy="10.2" r="0.95" fill="#27084e" />
-        </svg>
+        <img
+          class="chat-fab__owl"
+          src="/img/avatar-1x.webp"
+          width="40"
+          height="37"
+          alt=""
+          decoding="async"
+        />
       }
     </span>
     @if (!chat.open() && chat.hero() === 'greg') {
@@ -68,35 +67,10 @@
       <div class="chat-panel__identity">
         <div class="chat-panel__avatar-wrap" aria-hidden="true">
           <div class="chat-panel__avatar">
-            @if (chat.hero() === 'greg') {
-              <img src="/img/avatar-2x.webp" width="72" height="72" alt="" />
-            } @else if (chat.hero() === 'itcy') {
-              <svg class="chat-panel__owl-mark" viewBox="0 0 64 64" aria-hidden="true">
-                <ellipse cx="32" cy="38" rx="20" ry="18" fill="rgba(255,255,255,0.16)" />
-                <path
-                  d="M20 16c3.5-7 8.5-10 12-10s8.5 3 12 10"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.75)"
-                  stroke-width="2.4"
-                  stroke-linecap="round"
-                />
-                <circle cx="22" cy="32" r="9" fill="#fff" />
-                <circle cx="42" cy="32" r="9" fill="#fff" />
-                <circle cx="22" cy="32" r="4" fill="#27084e" />
-                <circle cx="42" cy="32" r="4" fill="#27084e" />
-                <circle cx="23.4" cy="30.6" r="1.1" fill="#fff" />
-                <circle cx="43.4" cy="30.6" r="1.1" fill="#fff" />
-                <path d="M30 40.5 32 43.5 34 40.5Z" fill="#ffd089" />
-                <path
-                  d="M26 47c3.2 2.6 8.8 2.6 12 0"
-                  fill="none"
-                  stroke="#fff"
-                  stroke-width="2.2"
-                  stroke-linecap="round"
-                />
-              </svg>
-            } @else {
+            @if (chat.hero() === 'neutral') {
               <span class="chat-panel__orbit"><i></i></span>
+            } @else {
+              <img src="/img/avatar-2x.webp" width="72" height="67" alt="" decoding="async" />
             }
           </div>
           <span class="chat-panel__presence" [attr.data-mode]="chat.mode()"></span>
@@ -139,34 +113,7 @@
         <div class="chat-welcome">
           <div class="chat-welcome__halo" aria-hidden="true"></div>
           <div class="chat-welcome__mark" aria-hidden="true">
-            @if (chat.hero() === 'greg') {
-              <img src="/img/avatar-2x.webp" width="88" height="88" alt="" />
-            } @else {
-              <svg class="chat-welcome__owl" viewBox="0 0 64 64" aria-hidden="true">
-                <ellipse cx="32" cy="38" rx="20" ry="18" fill="#efe8f8" />
-                <path
-                  d="M20 16c3.5-7 8.5-10 12-10s8.5 3 12 10"
-                  fill="none"
-                  stroke="#6a2fb0"
-                  stroke-width="2.4"
-                  stroke-linecap="round"
-                />
-                <circle cx="22" cy="32" r="9" fill="#fff" />
-                <circle cx="42" cy="32" r="9" fill="#fff" />
-                <circle cx="22" cy="32" r="4" fill="#27084e" />
-                <circle cx="42" cy="32" r="4" fill="#27084e" />
-                <circle cx="23.4" cy="30.6" r="1.1" fill="#fff" />
-                <circle cx="43.4" cy="30.6" r="1.1" fill="#fff" />
-                <path d="M30 40.5 32 43.5 34 40.5Z" fill="#c98a2e" />
-                <path
-                  d="M26 47c3.2 2.6 8.8 2.6 12 0"
-                  fill="none"
-                  stroke="#4b1d86"
-                  stroke-width="2.2"
-                  stroke-linecap="round"
-                />
-              </svg>
-            }
+            <img src="/img/avatar-2x.webp" width="88" height="82" alt="" decoding="async" />
           </div>
           <p class="chat-welcome__kicker">{{ emptyKicker() }}</p>
           <h3>{{ emptyTitle() }}</h3>
@@ -178,17 +125,7 @@
         <article class="chat-row" [attr.data-role]="msg.role" [style.--i]="i">
           @if (msg.role === 'greg' || msg.role === 'itcy') {
             <div class="chat-row__avatar" aria-hidden="true">
-              @if (msg.role === 'greg') {
-                <img src="/img/avatar-1x.webp" width="32" height="32" alt="" />
-              } @else {
-                <svg viewBox="0 0 32 32" aria-hidden="true">
-                  <circle cx="16" cy="18" r="10" fill="#efe8f8" />
-                  <circle cx="11" cy="15" r="4" fill="#fff" />
-                  <circle cx="21" cy="15" r="4" fill="#fff" />
-                  <circle cx="11" cy="15" r="1.8" fill="#27084e" />
-                  <circle cx="21" cy="15" r="1.8" fill="#27084e" />
-                </svg>
-              }
+              <img src="/img/avatar-1x.webp" width="32" height="30" alt="" decoding="async" />
             </div>
           }
           <div class="chat-bubble" [attr.data-role]="msg.role">
@@ -203,13 +140,7 @@
       @if (chat.typing()) {
         <article class="chat-row" data-role="itcy">
           <div class="chat-row__avatar" aria-hidden="true">
-            <svg viewBox="0 0 32 32" aria-hidden="true">
-              <circle cx="16" cy="18" r="10" fill="#efe8f8" />
-              <circle cx="11" cy="15" r="4" fill="#fff" />
-              <circle cx="21" cy="15" r="4" fill="#fff" />
-              <circle cx="11" cy="15" r="1.8" fill="#27084e" />
-              <circle cx="21" cy="15" r="1.8" fill="#27084e" />
-            </svg>
+            <img src="/img/avatar-1x.webp" width="32" height="30" alt="" decoding="async" />
           </div>
           <div class="chat-bubble chat-bubble--typing" data-role="itcy">
             <span class="chat-bubble__who">ITCy</span>
@@ -229,10 +160,15 @@
     </div>
 
     <footer class="chat-panel__footer">
-      @if (chat.messages().length === 0 && !chat.error() && !chat.connecting()) {
+      @if (chat.open() && chat.messages().length === 0 && !chat.error() && !chat.connecting()) {
         <div class="chat-panel__chips">
           @for (chip of quickChips(); track chip) {
-            <button type="button" class="chat-chip" (click)="onChip(chip)" [disabled]="!chat.wsReady()">
+            <button
+              type="button"
+              class="chat-chip"
+              (click)="onChip(chip)"
+              [disabled]="!chat.wsReady()"
+            >
               <span>{{ chip }}</span>
             </button>
           }
