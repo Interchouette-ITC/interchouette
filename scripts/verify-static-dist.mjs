@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /**
  * Assert production static publish layout after `npm run build`.
- * Fail CI if prerender / public assets expected by the host are missing.
+ * Fail CI if prerender / public assets expected by the host are missing,
+ * or if HTML was left pretty-printed (minify-static-html must have run).
  */
-import { access, constants } from 'node:fs/promises';
+import { access, constants, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const root = join(process.cwd(), 'dist', 'interchouette', 'browser');
@@ -26,6 +27,8 @@ const required = [
   'CV/Gregory_Roussac.pdf',
 ];
 
+const htmlPages = ['index.html', 'CV/index.html', 'privacy/index.html', 'terms/index.html'];
+
 async function mustExist(rel) {
   const full = join(root, rel);
   try {
@@ -36,7 +39,23 @@ async function mustExist(rel) {
   }
 }
 
+async function mustBeMinified(rel) {
+  const html = await readFile(join(root, rel), 'utf8');
+  if (/\n\s{2,}</.test(html)) {
+    console.error(`HTML still pretty-printed (run minify after build): ${rel}`);
+    process.exitCode = 1;
+  }
+  const ld = html.match(
+    /<script\b[^>]*\btype=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i,
+  );
+  if (ld && /\n/.test(ld[1])) {
+    console.error(`JSON-LD still pretty-printed: ${rel}`);
+    process.exitCode = 1;
+  }
+}
+
 await Promise.all(required.map(mustExist));
+await Promise.all(htmlPages.map(mustBeMinified));
 if (process.exitCode) {
   console.error(`static publish check failed under ${root}`);
   process.exit(process.exitCode);
