@@ -17,6 +17,8 @@ const required = [
   'sitemap.xml',
   'llms.txt',
   'fonts/fontawesome-subset.woff2',
+  'img/avatar-1x.webp',
+  'img/avatar-2x.webp',
   'CV/Gregory_Roussac.pdf',
 ];
 

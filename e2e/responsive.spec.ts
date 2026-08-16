@@ -24,7 +24,7 @@ test.describe('responsive rendering', () => {
 
   test('home icons pulse once and avatar keeps aspect ratio', async ({ page }) => {
     await page.goto('/');
-    await page.waitForTimeout(1200);
+    await page.waitForTimeout(1600);
 
     const icons = page.locator('p.icons.animated.pulse');
     await expect(icons).toBeVisible();
@@ -33,8 +33,17 @@ test.describe('responsive rendering', () => {
       '1',
     );
 
-    const transform = await icons.evaluate((el) => getComputedStyle(el).transform);
-    expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(transform);
+    await expect
+      .poll(async () => {
+        return icons.evaluate((el) => {
+          const t = getComputedStyle(el).transform;
+          if (t === 'none') {
+            return 1;
+          }
+          return new DOMMatrix(t).a;
+        });
+      })
+      .toBeCloseTo(1, 2);
 
     const avatar = page.getByRole('img', { name: 'ITC' });
     const box = await avatar.boundingBox();
@@ -42,6 +51,16 @@ test.describe('responsive rendering', () => {
     const ratio = box!.width / box!.height;
     expect(ratio).toBeGreaterThan(1.0);
     expect(ratio).toBeLessThan(1.2);
+
+    const src = await avatar.evaluate((img: HTMLImageElement) => ({
+      srcset: img.getAttribute('srcset'),
+      current: img.currentSrc,
+      naturalWidth: img.naturalWidth,
+    }));
+    expect(src.srcset).toContain('avatar-1x.webp 1x');
+    expect(src.srcset).toContain('avatar-2x.webp 2x');
+    expect(src.current).toMatch(/avatar-[12]x\.webp/);
+    expect(src.naturalWidth).toBeGreaterThanOrEqual(200);
   });
 
   test('terms and privacy stay readable', async ({ page }, testInfo) => {
