@@ -1,0 +1,51 @@
+name: MCP Rust CI
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "backend/**"
+      - "knowledge/**"
+      - "docker/Dockerfile"
+      - "Makefile"
+      - ".github/workflows/mcp-ci.yml"
+  push:
+    branches: [dev]
+    paths:
+      - "backend/**"
+      - "knowledge/**"
+      - "docker/Dockerfile"
+      - "Makefile"
+      - ".github/workflows/mcp-ci.yml"
+
+concurrency:
+  group: mcp-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  CARGO_TERM_COLOR: always
+
+jobs:
+  mcp:
+    name: fmt · clippy · test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@1.97.0
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+
+      - name: Lint + test
+        run: make mcp-lint mcp-test

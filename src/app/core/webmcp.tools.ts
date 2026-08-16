@@ -62,6 +62,14 @@ export function listPagesText(): string {
   ).join('\n');
 }
 
+export function remoteMcpText(): string {
+  return [
+    'Official remote MCP (Streamable HTTP): https://mcp.interchouette.net/interchouette',
+    'Transport: streamable-http',
+    'Discovery: https://interchouette.net/.well-known/mcp.json and https://interchouette.net/llms.txt',
+  ].join('\n');
+}
+
 /**
  * No-arg WebMCP tools (same empty input schema).
  * Angular `provideExperimentalWebMcpTools` requires one schema per provider call.
@@ -86,6 +94,13 @@ export function createSiteInfoWebMcpTools() {
       description: 'Lists public site pages with absolute URLs.',
       inputSchema: EMPTY_INPUT_SCHEMA,
       execute: () => listPagesText(),
+    },
+    {
+      name: 'get_remote_mcp',
+      description:
+        'Returns the official remote Streamable HTTP MCP endpoint for Interchouette knowledge (not this in-page WebMCP).',
+      inputSchema: EMPTY_INPUT_SCHEMA,
+      execute: () => remoteMcpText(),
     },
   ];
 }

@@ -16,8 +16,19 @@ Gregory Roussac is a Rust and Wasm freelance developer operating Interchouette I
 - Organization: [Interchouette-ITC on GitHub](https://github.com/Interchouette-ITC)
 - Profile: [Gregory Roussac on LinkedIn](https://www.linkedin.com/in/gregoryroussac/)
 
+## Remote MCP
+
+Streamable HTTP MCP for Interchouette knowledge (Gregory Roussac, CV, public projects, Rust / Wasm / MCP / API topics):
+
+- Endpoint: https://mcp.interchouette.net/interchouette
+- Transport: streamable-http
+- Discovery: /.well-known/mcp.json
+
+There is no MCP path on https://interchouette.net/mcp and no mcp:// URI for this site yet.
+
 ## Browser agents (WebMCP)
 
 When the browser supports WebMCP, this site registers read-only tools:
-`get_site_overview`, `get_contact`, `list_public_pages`, and `open_public_page`.
-This is in-page browser context, not a remote MCP HTTP endpoint.
+`get_site_overview`, `get_contact`, `list_public_pages`, `open_public_page`, and `get_remote_mcp`.
+`get_remote_mcp` returns the official Streamable HTTP MCP URL above.
+In-page WebMCP is not the remote MCP HTTP endpoint.
