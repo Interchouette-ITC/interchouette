@@ -17,6 +17,7 @@ const required = [
   '_redirects',
   'sitemap.xml',
   'llms.txt',
+  '.well-known/mcp.json',
   'fonts/fontawesome-subset.woff2',
   'fonts/montserrat-latin-700.woff2',
   'fonts/montserrat-latin-400.woff2',

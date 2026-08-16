@@ -1,0 +1,8 @@
+{
+  "name": "Interchouette knowledge",
+  "description": "Read-only MCP for Gregory Roussac, Interchouette ITC, CV summary, Rust/Wasm/MCP/API public knowledge, and project blurbs.",
+  "endpoint": "https://mcp.interchouette.net/interchouette",
+  "transport": "streamable-http",
+  "websiteUrl": "https://interchouette.net/",
+  "version": "0.1.0"
+}
