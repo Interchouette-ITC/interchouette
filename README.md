@@ -40,6 +40,6 @@ Full local gate (same shape as GitHub Actions):
 npm run ci
 ```
 
-CI (GitHub Actions on `dev` / PRs into `dev`): Prettier, `npm audit --audit-level=high`, production build + prerender, unit tests, and a static publish layout check. Pin Node with `.nvmrc` (**24.19.0**). On Render, set Auto-Deploy to **After CI Checks Pass** so deploys wait for this workflow.
+CI (GitHub Actions on `dev` / PRs into `dev`): Prettier, `npm audit --audit-level=high`, production build + prerender, unit tests, and a static publish layout check. Pin Node with `.nvmrc` (**24.19.0**). On push to `dev` after those steps succeed, CI calls the Render deploy hook (`RENDER_DEPLOY_HOOK_URL` org secret). Keep Render Auto-Deploy **Off** so only that hook triggers production.
 
 E2E: Playwright **specs** live in `e2e/`; config is `.cursor/scripts/playwright.config.ts` (`npm run e2e`). Use the shared Playwright MCP / host Chrome. **Do not** run `playwright install` or download browsers in this repo. If you install npm deps in an environment that would fetch browsers, set `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`.
