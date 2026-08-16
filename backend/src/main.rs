@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use anyhow::Result;
 use clap::Parser;
-use interchouette_mcp::server::{run_http, DEFAULT_HTTP_LISTEN};
+use interchouette_mcp::server::{run_http, DEFAULT_ALLOWED_HOSTS, DEFAULT_HTTP_LISTEN};
 
 #[derive(Debug, Parser)]
 #[command(
@@ -34,7 +34,7 @@ struct Cli {
         long,
         env = "MCP_ALLOWED_HOSTS",
         value_delimiter = ',',
-        default_value = "localhost,127.0.0.1,::1,mcp.interchouette.net,interchouette-mcp-latest.onrender.com"
+        default_values = DEFAULT_ALLOWED_HOSTS
     )]
     allowed_hosts: Vec<String>,
 }

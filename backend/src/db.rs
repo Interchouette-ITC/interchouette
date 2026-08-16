@@ -345,4 +345,14 @@ mod tests {
         let hits = store.search("Gregory Roussac", None, 5).unwrap();
         assert!(!hits.is_empty());
     }
+
+    #[test]
+    fn sanitize_empty_and_tokens() {
+        assert_eq!(sanitize_fts_query("   "), "");
+        assert_eq!(
+            sanitize_fts_query("Gregory Roussac"),
+            "\"Gregory\" OR \"Roussac\""
+        );
+        assert_eq!(sanitize_fts_query("Rust-MCP"), "\"Rust-MCP\"");
+    }
 }

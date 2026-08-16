@@ -66,7 +66,8 @@ export function remoteMcpText(): string {
   return [
     'Official remote MCP (Streamable HTTP): https://mcp.interchouette.net/interchouette',
     'Transport: streamable-http',
-    'Discovery: https://interchouette.net/.well-known/mcp.json and https://interchouette.net/llms.txt',
+    'Server card: https://interchouette.net/.well-known/mcp.json',
+    'Site map: https://interchouette.net/llms.txt',
   ].join('\n');
 }
 
