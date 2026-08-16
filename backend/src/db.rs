@@ -4,9 +4,9 @@ use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
 
 use anyhow::{bail, Context, Result};
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OpenFlags};
 
-/// Opened knowledge + bot databases.
+/// Opened knowledge (read-only product DB) + bot stub.
 pub struct Store {
     knowledge: Mutex<Connection>,
     bot: Mutex<Connection>,
@@ -14,24 +14,58 @@ pub struct Store {
 }
 
 impl Store {
-    /// Open or create DBs under `data_dir` and ensure schema.
+    /// Open the committed knowledge `.db` read-only, plus a writable bot stub under `data_dir`.
     ///
     /// # Errors
-    /// Returns when directories or `SQLite` open/migrate fail.
-    pub fn open(data_dir: impl Into<PathBuf>) -> Result<Self> {
+    /// Returns when the knowledge file is missing or `SQLite` open fails.
+    pub fn open_readonly(
+        knowledge_db: impl AsRef<Path>,
+        data_dir: impl Into<PathBuf>,
+    ) -> Result<Self> {
+        let knowledge_db = knowledge_db.as_ref();
         let data_dir = data_dir.into();
         std::fs::create_dir_all(&data_dir)
             .with_context(|| format!("create data dir {}", data_dir.display()))?;
 
-        let knowledge_path = data_dir.join("knowledge.sqlite");
+        let knowledge = Connection::open_with_flags(
+            knowledge_db,
+            OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+        )
+        .with_context(|| format!("open read-only {}", knowledge_db.display()))?;
+
         let bot_path = data_dir.join("bot.sqlite");
-
-        let knowledge = Connection::open(&knowledge_path)
-            .with_context(|| format!("open {}", knowledge_path.display()))?;
-        migrate_knowledge(&knowledge)?;
-
         let bot =
             Connection::open(&bot_path).with_context(|| format!("open {}", bot_path.display()))?;
+        migrate_bot(&bot)?;
+
+        Ok(Self {
+            knowledge: Mutex::new(knowledge),
+            bot: Mutex::new(bot),
+            data_dir,
+        })
+    }
+
+    /// Create/open a writable knowledge DB (tests / local rebuild of the committed file).
+    ///
+    /// # Errors
+    /// Returns when directories or `SQLite` open/migrate fail.
+    pub fn open_writable(
+        knowledge_db: impl AsRef<Path>,
+        data_dir: impl Into<PathBuf>,
+    ) -> Result<Self> {
+        let knowledge_db = knowledge_db.as_ref();
+        let data_dir = data_dir.into();
+        if let Some(parent) = knowledge_db.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::create_dir_all(&data_dir)?;
+
+        let knowledge = Connection::open(knowledge_db)
+            .with_context(|| format!("open writable {}", knowledge_db.display()))?;
+        migrate_knowledge(&knowledge)?;
+
+        let bot_path = data_dir.join("bot.sqlite");
+        let bot = Connection::open(&bot_path)?;
         migrate_bot(&bot)?;
 
         Ok(Self {
@@ -62,7 +96,7 @@ impl Store {
         Ok(v)
     }
 
-    /// Replace all knowledge rows from prepared docs.
+    /// Replace all knowledge rows from prepared docs (writable DB only).
     ///
     /// # Errors
     /// Returns when `SQLite` write fails.
@@ -86,6 +120,17 @@ impl Store {
         }
         drop(conn);
         Ok(())
+    }
+
+    /// Document count.
+    ///
+    /// # Errors
+    /// Returns when the query fails.
+    pub fn doc_count(&self) -> Result<i64> {
+        let conn = lock(&self.knowledge, "knowledge")?;
+        let n: i64 = conn.query_row("SELECT COUNT(*) FROM documents", [], |row| row.get(0))?;
+        drop(conn);
+        Ok(n)
     }
 
     /// Full-text search.
@@ -269,20 +314,35 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn ingest_and_search_gregory_roussac() {
+    fn writable_then_readonly_search() {
         let dir = tempdir().unwrap();
-        let store = Store::open(dir.path()).unwrap();
+        let db = dir.path().join("interchouette.db");
+        let store = Store::open_writable(&db, dir.path()).unwrap();
         store
             .replace_all(&[KnowledgeDoc {
-                slug: "gregory-roussac".into(),
+                slug: "en/gregory-roussac".into(),
                 lang: "en".into(),
                 title: "Gregory Roussac".into(),
                 body: "Gregory Roussac Interchouette Rust MCP API freelance".into(),
             }])
             .unwrap();
-        let hits = store.search("Gregory Roussac", Some("en"), 5).unwrap();
+        drop(store);
+
+        let ro = Store::open_readonly(&db, dir.path()).unwrap();
+        let hits = ro.search("Gregory Roussac", Some("en"), 5).unwrap();
         assert!(!hits.is_empty());
-        assert_eq!(hits[0].slug, "gregory-roussac");
-        assert_eq!(store.bot_schema_version().unwrap(), 1);
+        assert_eq!(hits[0].slug, "en/gregory-roussac");
+        assert_eq!(ro.doc_count().unwrap(), 1);
+        assert_eq!(ro.bot_schema_version().unwrap(), 1);
+    }
+
+    #[test]
+    fn committed_repo_db_searches() {
+        let db = Path::new(env!("CARGO_MANIFEST_DIR")).join("../db/interchouette.db");
+        let dir = tempdir().unwrap();
+        let store = Store::open_readonly(&db, dir.path()).unwrap();
+        assert!(store.doc_count().unwrap() >= 6);
+        let hits = store.search("Gregory Roussac", None, 5).unwrap();
+        assert!(!hits.is_empty());
     }
 }
