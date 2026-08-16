@@ -1,4 +1,4 @@
-//! Load markdown knowledge files into `SQLite`.
+//! Load committed markdown knowledge into a derived `SQLite` FTS index.
 
 use std::path::Path;
 
@@ -8,6 +8,8 @@ use walkdir::WalkDir;
 use crate::db::{KnowledgeDoc, Store};
 
 /// Ingest all `*.md` under `knowledge_dir` (expects `en/` and `nl/` trees).
+///
+/// The markdown tree is the source of truth (git). `SQLite` is rebuilt from it.
 ///
 /// # Errors
 /// Returns when the directory is missing or a file cannot be read.

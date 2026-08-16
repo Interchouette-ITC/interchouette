@@ -21,7 +21,7 @@ struct Cli {
     #[arg(long, env = "DATA_DIR", default_value = "./data")]
     data_dir: PathBuf,
 
-    /// Markdown corpus root (`en/`, `nl/`).
+    /// Committed markdown corpus (`en/`, `nl/`) baked into the image.
     #[arg(long, env = "KNOWLEDGE_DIR", default_value = "../knowledge")]
     knowledge_dir: PathBuf,
 

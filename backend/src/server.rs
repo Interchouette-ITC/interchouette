@@ -1,6 +1,8 @@
 //! MCP tools + HTTP listener (`/interchouette`, `/health`, admin).
 
+#![allow(unknown_lints)]
 #![allow(clippy::unused_async)]
+#![allow(clippy::unused_async_trait_impl)]
 
 use std::fmt::Write as _;
 use std::path::PathBuf;
@@ -160,7 +162,7 @@ pub async fn run_http(
 ) -> Result<()> {
     let store = Arc::new(Store::open(&data_dir)?);
     let n = ingest::ingest_dir(&store, &knowledge_dir)?;
-    tracing::info!(documents = n, "knowledge ingested");
+    tracing::info!(documents = n, from = %knowledge_dir.display(), "knowledge index ready");
     let _ = store.bot_schema_version()?;
 
     let mcp = KnowledgeMcp {
@@ -202,7 +204,6 @@ pub async fn run_http(
             "/v1/admin/knowledge/reingest",
             post(admin::reingest_handler),
         )
-        .route("/v1/admin/knowledge", post(admin::upsert_handler))
         .with_state(state);
 
     let app = Router::new()
