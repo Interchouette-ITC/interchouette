@@ -54,12 +54,15 @@ test.describe('responsive rendering', () => {
 
     const src = await avatar.evaluate((img: HTMLImageElement) => ({
       srcset: img.getAttribute('srcset'),
+      sizes: img.getAttribute('sizes'),
       current: img.currentSrc,
       naturalWidth: img.naturalWidth,
     }));
-    expect(src.srcset).toContain('avatar-1x.webp 1x');
-    expect(src.srcset).toContain('avatar-2x.webp 2x');
-    expect(src.current).toMatch(/avatar-[12]x\.webp/);
+    expect(src.srcset).toContain('avatar-1x.webp 200w');
+    expect(src.srcset).toContain('avatar-360.webp 360w');
+    expect(src.srcset).toContain('avatar-2x.webp 379w');
+    expect(src.sizes).toContain('30vw');
+    expect(src.current).toMatch(/avatar-(1x|360|2x)\.webp/);
     expect(src.naturalWidth).toBeGreaterThanOrEqual(200);
   });
 
