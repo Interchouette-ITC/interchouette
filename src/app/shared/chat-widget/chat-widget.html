@@ -1,0 +1,171 @@
+@if (mounted()) {
+  <button
+    type="button"
+    class="chat-fab"
+    [class.chat-fab--open]="chat.open()"
+    [class.chat-fab--busy]="chat.connecting()"
+    (click)="onFab()"
+    [attr.aria-expanded]="chat.open()"
+    aria-controls="interchouette-chat-panel"
+    [attr.aria-label]="chat.open() ? 'Close chat' : 'Open chat'"
+  >
+    <span class="chat-fab__ring" aria-hidden="true"></span>
+    @if (chat.open()) {
+      <svg class="chat-fab__svg" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M6.4 6.4 17.6 17.6M17.6 6.4 6.4 17.6"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+        />
+      </svg>
+    } @else {
+      <svg class="chat-fab__svg" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M4.5 6.5c0-1.1.9-2 2-2h11c1.1 0 2 .9 2 2v7c0 1.1-.9 2-2 2H10l-3.8 3.2c-.4.3-1 .1-1-.4V15.5h-.7c-1.1 0-2-.9-2-2v-7Z"
+          fill="currentColor"
+        />
+        <circle cx="9" cy="10" r="1.1" fill="#27084e" />
+        <circle cx="12" cy="10" r="1.1" fill="#27084e" />
+        <circle cx="15" cy="10" r="1.1" fill="#27084e" />
+      </svg>
+    }
+  </button>
+
+  <section
+    id="interchouette-chat-panel"
+    class="chat-panel"
+    [class.chat-panel--open]="chat.open()"
+    [attr.role]="chat.open() ? 'dialog' : null"
+    [attr.aria-hidden]="chat.open() ? null : 'true'"
+    [attr.aria-modal]="chat.open() ? 'true' : null"
+    [attr.aria-label]="title()"
+    [attr.inert]="chat.open() ? null : ''"
+  >
+    <header class="chat-panel__hero" [attr.data-hero]="chat.hero()">
+      <div class="chat-panel__avatar" aria-hidden="true">
+        @if (chat.hero() === 'greg') {
+          <img src="/img/avatar-1x.webp" width="56" height="56" alt="" />
+        } @else if (chat.hero() === 'itcy') {
+          <span class="chat-panel__owl">🦉</span>
+        } @else {
+          <span class="chat-panel__pulse"></span>
+        }
+      </div>
+      <div class="chat-panel__titles">
+        <h2>{{ title() }}</h2>
+        <p>
+          <span class="chat-panel__dot" [attr.data-mode]="chat.mode()"></span>
+          {{ subtitle() }}
+        </p>
+      </div>
+      <button type="button" class="chat-panel__close" (click)="onClose()" aria-label="Close chat">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M6.4 6.4 17.6 17.6M17.6 6.4 6.4 17.6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+    </header>
+
+    <div #scroller class="chat-panel__messages" tabindex="0">
+      @if (chat.connecting() && chat.messages().length === 0) {
+        <div class="chat-skel" aria-hidden="true">
+          <div class="chat-skel__line"></div>
+          <div class="chat-skel__line chat-skel__line--short"></div>
+          <div class="chat-skel__line chat-skel__line--mid"></div>
+        </div>
+      } @else if (chat.messages().length === 0 && !chat.error()) {
+        <div class="chat-panel__empty">
+          <p class="chat-panel__empty-title">{{ emptyTitle() }}</p>
+          <p>{{ emptyBody() }}</p>
+        </div>
+      }
+      @for (msg of chat.messages(); track msg.id) {
+        <div class="chat-bubble" [attr.data-role]="msg.role">
+          @if (msg.role !== 'visitor') {
+            <span class="chat-bubble__who">{{ whoLabel(msg.role) }}</span>
+          }
+          <p>{{ msg.text }}</p>
+        </div>
+      }
+      @if (chat.typing()) {
+        <div class="chat-bubble chat-bubble--typing" data-role="itcy">
+          <span class="chat-bubble__who">ITCy</span>
+          <div class="chat-bubble__dots" aria-label="ITCy is typing">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      }
+      @if (chat.error(); as err) {
+        <p class="chat-panel__error">{{ err }}</p>
+        <button type="button" class="chat-panel__retry" (click)="onRetry()">Try again</button>
+      }
+    </div>
+
+    <footer class="chat-panel__footer">
+      @if (showEmail) {
+        <form class="chat-panel__email" (submit)="onEmailSubmit($event)">
+          <input
+            type="email"
+            name="email"
+            [value]="emailDraft"
+            (input)="onEmailInput($event)"
+            placeholder="you@example.com"
+            autocomplete="email"
+            aria-label="Email for Greg to follow up"
+          />
+          <button type="submit">Save</button>
+        </form>
+      }
+      <form class="chat-panel__compose" (submit)="onSubmit($event)">
+        <button
+          type="button"
+          class="chat-panel__email-toggle"
+          (click)="toggleEmail()"
+          [attr.aria-pressed]="showEmail"
+          title="Leave email"
+          aria-label="Leave email for follow-up"
+        >
+          @
+        </button>
+        <input
+          type="text"
+          name="message"
+          [value]="draft"
+          (input)="onDraftInput($event)"
+          placeholder="Write a message…"
+          autocomplete="off"
+          maxlength="2000"
+          aria-label="Message"
+          [disabled]="!chat.wsReady() || !!chat.error()"
+        />
+        <button
+          type="submit"
+          class="chat-panel__send"
+          [disabled]="!draft.trim() || !chat.wsReady() || !!chat.error()"
+          aria-label="Send"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M4 12h12M12 6l6 6-6 6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </button>
+      </form>
+      @if (chat.shortCode()) {
+        <p class="chat-panel__code">Session {{ chat.shortCode() }}</p>
+      }
+    </footer>
+  </section>
+}

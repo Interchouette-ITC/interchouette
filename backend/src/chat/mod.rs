@@ -1,0 +1,20 @@
+//! Website visitor chat: WebSocket + Slack DM (no chat database).
+//!
+//! Active sessions live in memory. Durable retrieval is Slack only.
+//! Knowledge DB is read-only for away-mode RAG.
+
+mod api;
+mod hub;
+mod llm;
+mod presence;
+mod reply_parse;
+mod sessions;
+mod slack;
+mod socket;
+
+pub use api::{chat_router, ChatState};
+pub use llm::AwayBrain;
+pub use presence::{PresenceMode, PresenceSnapshot};
+pub use reply_parse::parse_session_reply;
+pub use sessions::SessionRegistry;
+pub use socket::{forward_greg_reply, socket_configured, spawn_inbound};

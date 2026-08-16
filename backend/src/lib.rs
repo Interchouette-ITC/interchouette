@@ -1,5 +1,6 @@
-//! Interchouette knowledge MCP library.
+//! Interchouette knowledge MCP + website chat (Slack-backed).
 
+pub mod chat;
 pub mod db;
 pub mod server;
 

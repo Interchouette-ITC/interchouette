@@ -21,6 +21,7 @@ use serde::Deserialize;
 use serde_json::json;
 use tower_http::cors::{Any, CorsLayer};
 
+use crate::chat::{chat_router, AwayBrain, ChatState};
 use crate::db::Store;
 
 /// Default bind address (Render sets `PORT`).
@@ -164,7 +165,7 @@ impl ServerHandler for KnowledgeMcp {
     }
 }
 
-/// Build the HTTP router (health + Streamable HTTP MCP).
+/// Build the HTTP router (health + Streamable HTTP MCP + chat).
 ///
 /// # Errors
 /// Returns when the knowledge DB cannot be opened.
@@ -174,6 +175,19 @@ pub fn build_app(
     cors_origin: &str,
     allowed_hosts: Vec<String>,
 ) -> Result<Router> {
+    Ok(build_app_parts(knowledge_db, data_dir, cors_origin, allowed_hosts)?.0)
+}
+
+/// Build router + chat state (caller may spawn Slack inbound).
+///
+/// # Errors
+/// Returns when the knowledge DB cannot be opened.
+pub fn build_app_parts(
+    knowledge_db: &std::path::Path,
+    data_dir: &std::path::Path,
+    cors_origin: &str,
+    allowed_hosts: Vec<String>,
+) -> Result<(Router, ChatState)> {
     let store = Arc::new(Store::open_readonly(knowledge_db, data_dir)?);
     let n = store.doc_count()?;
     tracing::info!(documents = n, db = %knowledge_db.display(), "interchouette.db ready (read-only)");
@@ -192,22 +206,34 @@ pub fn build_app(
     );
     let mcp_router = axum::routing::any_service(mcp_service);
 
-    let cors = CorsLayer::new()
-        .allow_origin(
-            cors_origin
-                .parse::<axum::http::HeaderValue>()
-                .unwrap_or_else(|_| {
-                    axum::http::HeaderValue::from_static("https://interchouette.net")
-                }),
-        )
-        .allow_methods(Any)
-        .allow_headers(Any);
+    let cors = build_cors(cors_origin);
+    let chat = ChatState::new(AwayBrain::new(Arc::clone(&store)));
 
-    Ok(Router::new()
+    let app = Router::new()
         .route("/health", get(|| async { Json(json!({ "ok": true })) }))
         .route("/interchouette", mcp_router.clone())
         .route("/interchouette/", mcp_router)
-        .layer(cors))
+        .merge(chat_router(chat.clone()))
+        .layer(cors);
+    Ok((app, chat))
+}
+
+fn build_cors(cors_origin: &str) -> CorsLayer {
+    use axum::http::{HeaderValue, Method};
+    let mut origins = vec![
+        HeaderValue::from_static("https://interchouette.net"),
+        HeaderValue::from_static("http://127.0.0.1:4200"),
+        HeaderValue::from_static("http://localhost:4200"),
+    ];
+    if let Ok(extra) = cors_origin.parse::<HeaderValue>() {
+        if !origins.contains(&extra) {
+            origins.push(extra);
+        }
+    }
+    CorsLayer::new()
+        .allow_origin(origins)
+        .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
+        .allow_headers(Any)
 }
 
 /// Run Streamable HTTP MCP + health on `addr`.
@@ -221,7 +247,8 @@ pub async fn run_http(
     cors_origin: String,
     allowed_hosts: Vec<String>,
 ) -> Result<()> {
-    let app = build_app(&knowledge_db, &data_dir, &cors_origin, allowed_hosts)?;
+    let (app, chat) = build_app_parts(&knowledge_db, &data_dir, &cors_origin, allowed_hosts)?;
+    chat.spawn_background_tasks();
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!(%addr, "interchouette-mcp listening");
     axum::serve(listener, app).await?;

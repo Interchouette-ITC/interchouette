@@ -1,0 +1,389 @@
+//! HTTP + WebSocket chat routes.
+
+use axum::extract::ws::{Message, WebSocket};
+use axum::extract::{Path, State, WebSocketUpgrade};
+use axum::response::IntoResponse;
+use axum::routing::{get, post};
+use axum::{Json, Router};
+use futures_util::{SinkExt, StreamExt};
+use serde::{Deserialize, Serialize};
+use serde_json::json;
+use uuid::Uuid;
+
+use crate::chat::hub::{ChatEvent, Hub};
+use crate::chat::llm::AwayBrain;
+use crate::chat::presence::{PresenceMode, PresenceSource};
+use crate::chat::sessions::SessionRegistry;
+use crate::chat::slack::SlackRelay;
+
+/// Shared chat runtime.
+#[derive(Clone)]
+pub struct ChatState {
+    pub sessions: SessionRegistry,
+    pub hub: Hub,
+    pub presence: PresenceSource,
+    pub slack: SlackRelay,
+    pub away: AwayBrain,
+}
+
+impl ChatState {
+    /// Build chat state from knowledge store + env.
+    #[must_use]
+    pub fn new(away: AwayBrain) -> Self {
+        Self {
+            sessions: SessionRegistry::default(),
+            hub: Hub::default(),
+            presence: PresenceSource::from_env(),
+            slack: SlackRelay::from_env(),
+            away,
+        }
+    }
+
+    /// Start Slack Socket Mode so Greg DM replies reach live browsers.
+    pub fn spawn_background_tasks(&self) {
+        crate::chat::socket::spawn_inbound(self.clone());
+    }
+}
+
+#[derive(Debug, Serialize)]
+struct CreateSessionResponse {
+    session_id: String,
+    short_code: String,
+    mode: PresenceMode,
+    label: &'static str,
+    hero: &'static str,
+}
+
+#[derive(Debug, Deserialize)]
+struct ClientWsMessage {
+    #[serde(rename = "type")]
+    kind: String,
+    text: Option<String>,
+    email: Option<String>,
+}
+
+/// Mount chat routes under `/v1`.
+pub fn chat_router(state: ChatState) -> Router {
+    Router::new()
+        .route("/v1/presence", get(get_presence))
+        .route("/v1/sessions", post(create_session))
+        .route("/v1/sessions/{id}/ws", get(ws_upgrade))
+        .route("/ready", get(ready))
+        .with_state(state)
+}
+
+async fn ready(State(state): State<ChatState>) -> impl IntoResponse {
+    Json(json!({
+        "ok": true,
+        "chat": true,
+        "slack": state.slack.enabled(),
+        "slack_socket": crate::chat::socket_configured(),
+    }))
+}
+
+async fn get_presence(State(state): State<ChatState>) -> impl IntoResponse {
+    let snap = state.presence.snapshot().await;
+    Json(json!({
+        "mode": snap.mode,
+        "label": snap.label,
+        "hero": snap.hero,
+    }))
+}
+
+async fn create_session(State(state): State<ChatState>) -> impl IntoResponse {
+    let snap = state.presence.snapshot().await;
+    let session = state.sessions.create(snap.mode).await;
+    let _ = state
+        .slack
+        .post_session_line(
+            &session.short_code,
+            "SESSION",
+            &format!("opened mode={}", snap.mode.as_str()),
+        )
+        .await;
+    Json(CreateSessionResponse {
+        session_id: session.id,
+        short_code: session.short_code,
+        mode: snap.mode,
+        label: snap.label,
+        hero: snap.hero,
+    })
+}
+
+async fn ws_upgrade(
+    ws: WebSocketUpgrade,
+    Path(id): Path<String>,
+    State(state): State<ChatState>,
+) -> impl IntoResponse {
+    ws.on_upgrade(move |socket| handle_socket(socket, id, state))
+}
+
+async fn handle_socket(socket: WebSocket, session_id: String, state: ChatState) {
+    let Some(session) = state.sessions.get(&session_id).await else {
+        let (mut sender, _) = socket.split();
+        let _ = sender
+            .send(Message::Text(
+                serde_json::to_string(&ChatEvent::Error {
+                    message: "unknown session".into(),
+                })
+                .unwrap_or_default()
+                .into(),
+            ))
+            .await;
+        return;
+    };
+
+    let mut rx = state.hub.subscribe(&session_id).await;
+    let (mut sender, mut receiver) = socket.split();
+
+    let ready = ChatEvent::Ready {
+        session_id: session.id.clone(),
+        short_code: session.short_code.clone(),
+        mode: session.mode.as_str().into(),
+    };
+    let _ = sender
+        .send(Message::Text(
+            serde_json::to_string(&ready).unwrap_or_default().into(),
+        ))
+        .await;
+    let _ = sender
+        .send(Message::Text(
+            serde_json::to_string(&ChatEvent::Presence {
+                mode: session.mode.as_str().into(),
+                label: session.mode.label().into(),
+            })
+            .unwrap_or_default()
+            .into(),
+        ))
+        .await;
+
+    let mut send_task = tokio::spawn(async move {
+        while let Ok(event) = rx.recv().await {
+            let Ok(text) = serde_json::to_string(&event) else {
+                continue;
+            };
+            if sender.send(Message::Text(text.into())).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    let recv_state = state.clone();
+    let recv_id = session_id;
+    let mut recv_task = tokio::spawn(async move {
+        while let Some(Ok(msg)) = receiver.next().await {
+            match msg {
+                Message::Text(text) => {
+                    if let Ok(parsed) = serde_json::from_str::<ClientWsMessage>(&text) {
+                        handle_client_msg(&recv_state, &recv_id, parsed).await;
+                    }
+                }
+                Message::Close(_) => break,
+                _ => {}
+            }
+        }
+    });
+
+    tokio::select! {
+        _ = &mut send_task => recv_task.abort(),
+        _ = &mut recv_task => send_task.abort(),
+    }
+}
+
+async fn handle_client_msg(state: &ChatState, session_id: &str, msg: ClientWsMessage) {
+    let Some(session) = state.sessions.get(session_id).await else {
+        return;
+    };
+    match msg.kind.as_str() {
+        "email" => {
+            if let Some(email) = msg.email.filter(|e| !e.trim().is_empty()) {
+                state.sessions.set_email(session_id, email.clone()).await;
+                let _ = state
+                    .slack
+                    .post_session_line(&session.short_code, "EMAIL", &email)
+                    .await;
+            }
+        }
+        "message" => {
+            let Some(text) = msg
+                .text
+                .map(|t| t.trim().to_string())
+                .filter(|t| !t.is_empty())
+            else {
+                return;
+            };
+            publish_role(state, session_id, "visitor", &text).await;
+            match session.mode {
+                PresenceMode::Live => {
+                    handle_live(state, &session.short_code, session_id, &text).await;
+                }
+                PresenceMode::Away => {
+                    handle_away(state, &session.short_code, session_id, &text).await;
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+async fn publish_role(state: &ChatState, session_id: &str, role: &str, text: &str) {
+    state
+        .hub
+        .publish(
+            session_id,
+            ChatEvent::Message {
+                id: Uuid::new_v4().to_string(),
+                role: role.into(),
+                text: text.into(),
+            },
+        )
+        .await;
+}
+
+async fn handle_live(state: &ChatState, short_code: &str, session_id: &str, text: &str) {
+    let _ = state
+        .slack
+        .post_session_line(
+            short_code,
+            "VISITOR",
+            &format!("{text}\n(Reply with [{short_code}] your message)"),
+        )
+        .await;
+    publish_role(
+        state,
+        session_id,
+        "system",
+        "Message sent to Greg. He will reply here when he answers in Slack (tagged with your session code).",
+    )
+    .await;
+}
+
+async fn handle_away(state: &ChatState, short_code: &str, session_id: &str, text: &str) {
+    state
+        .hub
+        .publish(
+            session_id,
+            ChatEvent::Typing {
+                who: "itcy".into(),
+                active: true,
+            },
+        )
+        .await;
+    let reply = state.away.reply(text).await;
+    state
+        .hub
+        .publish(
+            session_id,
+            ChatEvent::Typing {
+                who: "itcy".into(),
+                active: false,
+            },
+        )
+        .await;
+    publish_role(state, session_id, "itcy", &reply).await;
+    let email = state
+        .sessions
+        .get(session_id)
+        .await
+        .and_then(|s| s.visitor_email);
+    let _ = state
+        .slack
+        .post_lead(short_code, text, &reply, email.as_deref())
+        .await;
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use super::*;
+    use crate::db::{KnowledgeDoc, Store};
+    use axum::body::Body;
+    use axum::http::{Request, StatusCode};
+    use http_body_util::BodyExt;
+    use tempfile::tempdir;
+    use tower::ServiceExt;
+
+    fn test_state() -> ChatState {
+        let dir = tempdir().unwrap();
+        let db = dir.path().join("k.db");
+        let store = Store::open_writable(&db, dir.path()).unwrap();
+        store
+            .replace_all(&[KnowledgeDoc {
+                slug: "en/test".into(),
+                lang: "en".into(),
+                title: "Test".into(),
+                body: "Interchouette Rust chat test knowledge.".into(),
+            }])
+            .unwrap();
+        drop(store);
+        // Keep tempdir alive via leak for test process lifetime of this state.
+        let data = dir.keep();
+        let knowledge = Arc::new(Store::open_readonly(&db, &data).unwrap());
+        ChatState {
+            sessions: SessionRegistry::default(),
+            hub: Hub::default(),
+            presence: PresenceSource::Fixed(PresenceMode::Away),
+            slack: SlackRelay::from_env(),
+            away: AwayBrain::new(knowledge),
+        }
+    }
+
+    #[tokio::test]
+    async fn create_session_returns_away() {
+        let state = test_state();
+        let app = chat_router(state);
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/v1/sessions")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(body["mode"], "away");
+        assert!(body["session_id"].as_str().unwrap().len() > 10);
+        assert!(body["short_code"].as_str().unwrap().starts_with("S-"));
+    }
+
+    #[tokio::test]
+    async fn presence_endpoint() {
+        let state = test_state();
+        let app = chat_router(state);
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/v1/presence")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(body["hero"], "itcy");
+    }
+
+    #[tokio::test]
+    async fn greg_tagged_reply_reaches_hub() {
+        let state = test_state();
+        let session = state.sessions.create(PresenceMode::Live).await;
+        let mut rx = state.hub.subscribe(&session.id).await;
+        let tagged = format!("[{}] hello from Greg", session.short_code);
+        assert!(crate::chat::forward_greg_reply(&state, &tagged).await);
+        let event = rx.recv().await.expect("hub event");
+        match event {
+            ChatEvent::Message { role, text, .. } => {
+                assert_eq!(role, "greg");
+                assert_eq!(text, "hello from Greg");
+            }
+            other => panic!("unexpected event: {other:?}"),
+        }
+    }
+}

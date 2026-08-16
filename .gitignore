@@ -43,6 +43,9 @@ __screenshots__/
 /blob-report/
 /playwright/.cache/
 
+# Local auth (never commit)
+.github_credentials
+
 # System files
 .DS_Store
 Thumbs.db
@@ -50,3 +53,4 @@ Thumbs.db
 # Rust MCP backend
 /backend/target/
 /backend/data/
+/data/
