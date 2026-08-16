@@ -11,7 +11,8 @@
     "format:check": "prettier --check .",
     "ci": "npm run format:check && npm run build && npm test && node scripts/verify-static-dist.mjs",
     "e2e": "playwright test --config e2e/playwright.config.ts",
-    "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui"
+    "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
+    "preflight": "bash .cursor/scripts/preflight-before-merge.sh"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
