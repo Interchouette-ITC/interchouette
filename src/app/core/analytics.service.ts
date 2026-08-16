@@ -12,32 +12,58 @@ declare global {
   }
 }
 
+/** First user gesture — keep gtag off FCP/LCP. Late timer covers no-interaction sessions. */
+const INTERACTION_EVENTS = ['pointerdown', 'keydown', 'touchstart', 'scroll'] as const;
+const NO_INTERACTION_FALLBACK_MS = 12_000;
+
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
   private booted = false;
+  private arming = false;
 
   /**
    * Same GA4 tag as live interchouette.net (`G-TGZKWJK2D3`).
-   * Loads gtag in the browser only (skipped during prerender), after idle.
+   * Browser only: first interaction, or a late fallback if nobody interacts.
    */
   init(): void {
-    if (this.booted || !isPlatformBrowser(this.platformId)) {
+    if (this.booted || this.arming || !isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    this.arming = true;
+    this.armDeferredBoot();
+  }
+
+  private armDeferredBoot(): void {
+    let fallbackId = 0;
+
+    const bootOnce = () => {
+      if (this.booted) {
+        return;
+      }
+      window.clearTimeout(fallbackId);
+      for (const type of INTERACTION_EVENTS) {
+        window.removeEventListener(type, bootOnce, { capture: true });
+      }
+      this.bootGtag();
+    };
+
+    for (const type of INTERACTION_EVENTS) {
+      window.addEventListener(type, bootOnce, { capture: true, passive: true, once: true });
+    }
+
+    // Do not use requestIdleCallback here: it fires as soon as the main thread
+    // is quiet and pulls gtag into the Lighthouse "unused JS" window.
+    fallbackId = window.setTimeout(bootOnce, NO_INTERACTION_FALLBACK_MS);
+  }
+
+  private bootGtag(): void {
+    if (this.booted) {
       return;
     }
     this.booted = true;
 
-    const boot = () => this.bootGtag();
-    const ric = window.requestIdleCallback?.bind(window);
-    if (ric) {
-      ric(() => boot(), { timeout: 3000 });
-    } else {
-      setTimeout(boot, 1);
-    }
-  }
-
-  private bootGtag(): void {
     window.dataLayer = window.dataLayer ?? [];
     window.gtag = function gtag(...args: unknown[]) {
       window.dataLayer.push(args);
