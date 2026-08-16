@@ -54,3 +54,8 @@ Thumbs.db
 /backend/target/
 /backend/data/
 /data/
+
+# Local secrets
+.env
+.env.*
+!.env.example
