@@ -21,7 +21,7 @@ env:
 
 jobs:
   ci:
-    name: format · audit · build · test · publish layout
+    name: format · audit · build · test · publish · console
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -58,6 +58,17 @@ jobs:
 
       - name: Verify static publish layout
         run: node scripts/verify-static-dist.mjs
+
+      - name: Install Chromium for static console gate
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '0'
+        run: npx playwright install --with-deps chromium
+
+      - name: Console errors on packed dist
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '0'
+          CI: 'true'
+        run: node scripts/check-static-console.mjs
 
       - name: Deploy to Render
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
