@@ -350,11 +350,13 @@ async fn post_to_session_thread(
 }
 
 async fn handle_live(state: &ChatState, session: &Session, text: &str) {
-    let _ = post_to_session_thread(state, session, &format!("Prospect: {text}")).await;
+    let env = crate::chat::chat_env_label();
+    let _ = post_to_session_thread(state, session, &format!("Prospect ({env}): {text}")).await;
 }
 
 async fn handle_away(state: &ChatState, session: &Session, session_id: &str, text: &str) {
-    let _ = post_to_session_thread(state, session, &format!("Prospect: {text}")).await;
+    let env = crate::chat::chat_env_label();
+    let _ = post_to_session_thread(state, session, &format!("Prospect ({env}): {text}")).await;
     state
         .hub
         .publish(

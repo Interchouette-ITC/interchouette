@@ -86,7 +86,8 @@ impl SlackRelay {
         mode: &str,
     ) -> anyhow::Result<ThreadRef> {
         let channel = self.open_dm().await?;
-        let text = format!("[{short_code}] mode={mode}");
+        let env = crate::chat::chat_env_label();
+        let text = format!("[{short_code}] mode={mode} env={env}");
         let ts = self.post_raw(&channel, None, &text).await?;
         Ok(ThreadRef {
             channel,

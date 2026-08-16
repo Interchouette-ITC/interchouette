@@ -8,6 +8,7 @@ Website visitor chat: WebSocket sessions, Slack DM for live replies, remote Inte
 
 | Variable             | Role                                                                           |
 | -------------------- | ------------------------------------------------------------------------------ |
+| `CHAT_ENV`           | Slack label: `local` / `e2e` / `prod` (default: `prod` if `PORT` set, else `local`) |
 | `CHAT_LISTEN`        | Bind address (default `0.0.0.0:8080`)                                          |
 | `CHAT_FORCE_MODE`    | `live` or `away` (local/tests)                                                 |
 | `SLACK_BOT_TOKEN`    | Bot token for presence + DM                                                    |
@@ -29,7 +30,7 @@ Website static site stays separate. Chat needs its **own** always-on web service
 
 1. Build `backend/Dockerfile` (context = repo root) → image or native Render Docker/Rust service.
 2. Custom domain **`chat.interchouette.net`** → that service.
-3. Env on the chat service: `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `GREG_SLACK_USER_ID`, `OPENROUTER_API_KEY` (away), `KNOWLEDGE_MCP_URL` (default remote MCP), `CORS_ORIGIN=https://interchouette.net`. Prefer `PORT` from the host (binary picks it up when `CHAT_LISTEN` is unset).
+3. Env on the chat service: `CHAT_ENV=prod`, `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `GREG_SLACK_USER_ID`, `OPENROUTER_API_KEY` (away), `KNOWLEDGE_MCP_URL` (default remote MCP), `CORS_ORIGIN=https://interchouette.net`. Prefer `PORT` from the host (binary picks it up when `CHAT_LISTEN` is unset). Slack thread headers include `env=prod|local|e2e`.
 4. Slack app: Socket Mode on; scopes include `dnd:read`.
 5. Static site build: `CHAT_WIDGET_ENABLED=true` (default). Widget calls `https://chat.interchouette.net`.
 
