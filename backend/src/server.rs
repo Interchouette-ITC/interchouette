@@ -207,7 +207,7 @@ pub fn build_app_parts(
     let mcp_router = axum::routing::any_service(mcp_service);
 
     let cors = build_cors(cors_origin);
-    let chat = ChatState::new(AwayBrain::new(Arc::clone(&store)));
+    let chat = ChatState::new(AwayBrain::from_env());
 
     let app = Router::new()
         .route("/health", get(|| async { Json(json!({ "ok": true })) }))

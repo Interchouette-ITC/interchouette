@@ -1,4 +1,6 @@
 <main id="main">
   <router-outlet />
 </main>
-<app-chat-widget ngSkipHydration />
+@if (chatEnabled) {
+  <app-chat-widget ngSkipHydration />
+}

@@ -67,6 +67,18 @@ export class ChatWidget {
     queueMicrotask(() => this.scrollToBottom());
   }
 
+  protected onChip(text: string): void {
+    if (text === 'Leave my email') {
+      this.showEmail = true;
+      return;
+    }
+    if (!this.chat.wsReady()) {
+      return;
+    }
+    this.chat.send(text);
+    queueMicrotask(() => this.scrollToBottom());
+  }
+
   protected onEmailSubmit(event: Event): void {
     event.preventDefault();
     this.chat.sendEmail(this.emailDraft);
@@ -76,6 +88,13 @@ export class ChatWidget {
 
   protected toggleEmail(): void {
     this.showEmail = !this.showEmail;
+  }
+
+  protected quickChips(): string[] {
+    if (this.chat.hero() === 'greg') {
+      return ['Hi Greg', 'Rust / Wasm project?', 'Availability this month?'];
+    }
+    return ['What is Interchouette?', 'Who is Gregory Roussac?', 'Leave my email'];
   }
 
   protected title(): string {
@@ -92,20 +111,31 @@ export class ChatWidget {
   protected subtitle(): string {
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Greg is online';
+        return 'Usually replies in a few minutes';
       case 'itcy':
-        return 'Greg is away · ITCy can help';
+        return 'Greg is away · ITCy can help now';
       default:
-        return 'Warming up the line…';
+        return 'Opening a private line…';
+    }
+  }
+
+  protected emptyKicker(): string {
+    switch (this.chat.hero()) {
+      case 'greg':
+        return 'Live with Gregory';
+      case 'itcy':
+        return 'AI on duty';
+      default:
+        return 'Establishing link';
     }
   }
 
   protected emptyTitle(): string {
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Say hello';
+        return 'Greg is online';
       case 'itcy':
-        return 'Ask about Interchouette';
+        return 'Ask ITCy anything';
       default:
         return 'One moment';
     }
@@ -114,18 +144,18 @@ export class ChatWidget {
   protected emptyBody(): string {
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Your message goes to Greg on Slack. He can reply here live.';
+        return 'Your message reaches Greg live. Ask about Rust, Wasm, or a collaboration.';
       case 'itcy':
-        return "I am ITCy, Greg's AI assistant. Ask about projects, Rust, or how to reach him.";
+        return "Greg's AI, powered by Interchouette public knowledge. Leave a note anytime.";
       default:
-        return 'Connecting to the chat line…';
+        return 'Opening a private Interchouette line…';
     }
   }
 
   protected whoLabel(role: ChatRole): string {
     switch (role) {
       case 'greg':
-        return 'Greg';
+        return 'Gregory Roussac';
       case 'itcy':
         return 'ITCy';
       case 'system':

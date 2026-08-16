@@ -1,34 +1,36 @@
-//! Away-mode `ITCy` replies: read-only knowledge FTS + optional `OpenRouter`.
+//! Away-mode `ITCy`: `OpenRouter` + remote Interchouette knowledge MCP (HTTP).
+//!
+//! Chat never opens `interchouette.db`. Knowledge comes from the live MCP only.
 
-use std::sync::Arc;
-
-use serde_json::json;
-
-use crate::db::Store;
+use serde_json::{json, Value};
 
 const SYSTEM_PROMPT: &str = "You are ITCy, the Linux owl assistant for Interchouette ITC \
-(Gregory Roussac). Speak English only. You are an AI, never pretend to be Greg. \
-Be concise, friendly, and helpful. Prefer inviting the visitor to leave an email \
-so Greg can follow up. Use only the knowledge context provided.";
+    (Gregory Roussac). Speak English only. You are an AI, never pretend to be Greg. \
+    Be concise, friendly, and helpful. Prefer inviting the visitor to leave an email \
+    so Greg can follow up. Use only the knowledge context provided.";
 
-/// Away LLM / RAG helper.
+const DEFAULT_MCP_URL: &str = "https://mcp.interchouette.net/interchouette";
+
+/// Away LLM helper backed by remote MCP search.
 #[derive(Clone)]
 pub struct AwayBrain {
-    knowledge: Arc<Store>,
+    mcp_url: String,
     openrouter_key: Option<String>,
     model: String,
     client: reqwest::Client,
+    /// Test-only static context (skips MCP HTTP).
+    static_context: Option<String>,
 }
 
 impl AwayBrain {
-    /// Build from knowledge store + env (`OPENROUTER_API_KEY`, `OPENROUTER_MODEL`).
+    /// From env: `KNOWLEDGE_MCP_URL`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`.
     #[must_use]
-    pub fn new(knowledge: Arc<Store>) -> Self {
+    pub fn from_env() -> Self {
+        let mcp_url = std::env::var("KNOWLEDGE_MCP_URL").unwrap_or_else(|_| DEFAULT_MCP_URL.into());
         let openrouter_key = std::env::var("OPENROUTER_API_KEY")
             .ok()
             .filter(|s| !s.is_empty());
         let model = std::env::var("OPENROUTER_MODEL").unwrap_or_else(|_| "openrouter/auto".into());
-        // Prefer a free model when unset is auto; allow override.
         let model = if model == "openrouter/auto" {
             "meta-llama/llama-3.2-3b-instruct:free".into()
         } else {
@@ -39,16 +41,30 @@ impl AwayBrain {
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
         Self {
-            knowledge,
+            mcp_url,
             openrouter_key,
             model,
             client,
+            static_context: None,
         }
     }
 
-    /// Answer as `ITCy` using RAG context.
+    /// Test helper with fixed knowledge context (no MCP / `OpenRouter`).
+    #[cfg(test)]
+    #[must_use]
+    pub fn with_static_context(context: impl Into<String>) -> Self {
+        Self {
+            mcp_url: "http://127.0.0.1/unused".into(),
+            openrouter_key: None,
+            model: "none".into(),
+            client: reqwest::Client::new(),
+            static_context: Some(context.into()),
+        }
+    }
+
+    /// Answer as `ITCy` using remote MCP context (+ optional `OpenRouter`).
     pub async fn reply(&self, visitor_text: &str) -> String {
-        let context = self.rag_context(visitor_text);
+        let context = self.rag_context(visitor_text).await;
         if let Some(key) = &self.openrouter_key {
             match self.call_openrouter(key, &context, visitor_text).await {
                 Ok(text) if !text.trim().is_empty() => return text,
@@ -59,19 +75,93 @@ impl AwayBrain {
         rag_fallback(&context, visitor_text)
     }
 
-    fn rag_context(&self, query: &str) -> String {
-        match self.knowledge.search(query, Some("en"), 4) {
-            Ok(hits) if !hits.is_empty() => hits
-                .into_iter()
-                .map(|h| format!("### {} ({})\n{}", h.title, h.slug, h.snippet))
-                .collect::<Vec<_>>()
-                .join("\n\n"),
+    async fn rag_context(&self, query: &str) -> String {
+        if let Some(ctx) = &self.static_context {
+            return ctx.clone();
+        }
+        match self.mcp_search(query).await {
+            Ok(text) if !text.trim().is_empty() => text,
             Ok(_) => String::from("(no knowledge hits)"),
             Err(err) => {
-                tracing::warn!(error = %err, "knowledge search failed");
+                tracing::warn!(error = %err, mcp = %self.mcp_url, "remote MCP search failed");
                 String::from("(knowledge unavailable)")
             }
         }
+    }
+
+    async fn mcp_search(&self, query: &str) -> anyhow::Result<String> {
+        let session_id = self.mcp_initialize().await?;
+        let _ = self
+            .client
+            .post(&self.mcp_url)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json, text/event-stream")
+            .header("mcp-session-id", &session_id)
+            .json(&json!({
+                "jsonrpc": "2.0",
+                "method": "notifications/initialized"
+            }))
+            .send()
+            .await;
+        let resp = self
+            .client
+            .post(&self.mcp_url)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json, text/event-stream")
+            .header("mcp-session-id", &session_id)
+            .json(&json!({
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/call",
+                "params": {
+                    "name": "search_knowledge",
+                    "arguments": { "query": query }
+                }
+            }))
+            .send()
+            .await?;
+        let status = resp.status();
+        let body = resp.text().await?;
+        if !status.is_success() {
+            anyhow::bail!("MCP tools/call HTTP {status}: {body}");
+        }
+        let payload = parse_sse_jsonrpc(&body)?;
+        if let Some(err) = payload.get("error") {
+            anyhow::bail!("MCP tools/call error: {err}");
+        }
+        extract_tool_text(&payload)
+    }
+
+    async fn mcp_initialize(&self) -> anyhow::Result<String> {
+        let resp = self
+            .client
+            .post(&self.mcp_url)
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json, text/event-stream")
+            .json(&json!({
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2025-03-26",
+                    "capabilities": {},
+                    "clientInfo": { "name": "interchouette-chat", "version": "0.2.0" }
+                }
+            }))
+            .send()
+            .await?;
+        let session = resp
+            .headers()
+            .get("mcp-session-id")
+            .and_then(|v| v.to_str().ok())
+            .map(str::to_string)
+            .ok_or_else(|| anyhow::anyhow!("MCP initialize missing mcp-session-id"))?;
+        let status = resp.status();
+        let body = resp.text().await?;
+        if !status.is_success() {
+            anyhow::bail!("MCP initialize HTTP {status}: {body}");
+        }
+        Ok(session)
     }
 
     async fn call_openrouter(
@@ -98,7 +188,7 @@ impl AwayBrain {
             .send()
             .await?;
         let status = resp.status();
-        let body: serde_json::Value = resp.json().await?;
+        let body: Value = resp.json().await?;
         if !status.is_success() {
             anyhow::bail!("openrouter HTTP {status}: {body}");
         }
@@ -109,51 +199,128 @@ impl AwayBrain {
     }
 }
 
+fn parse_sse_jsonrpc(body: &str) -> anyhow::Result<Value> {
+    for line in body.lines() {
+        let Some(data) = line.strip_prefix("data:") else {
+            continue;
+        };
+        let data = data.trim();
+        if data.is_empty() {
+            continue;
+        }
+        if let Ok(v) = serde_json::from_str::<Value>(data) {
+            if v.get("jsonrpc").is_some() {
+                return Ok(v);
+            }
+        }
+    }
+    if let Ok(v) = serde_json::from_str::<Value>(body) {
+        return Ok(v);
+    }
+    anyhow::bail!("no JSON-RPC payload in MCP SSE body")
+}
+
+fn extract_tool_text(payload: &Value) -> anyhow::Result<String> {
+    let content = &payload["result"]["content"];
+    if let Some(arr) = content.as_array() {
+        let texts: Vec<&str> = arr
+            .iter()
+            .filter_map(|item| item["text"].as_str())
+            .collect();
+        if !texts.is_empty() {
+            return Ok(texts.join("\n\n"));
+        }
+    }
+    if let Some(text) = content.as_str() {
+        return Ok(text.to_string());
+    }
+    anyhow::bail!("MCP tools/call missing text content")
+}
+
 fn rag_fallback(context: &str, visitor_text: &str) -> String {
     if context.contains("(no knowledge") || context.contains("(knowledge unavailable)") {
+        return String::from(
+            "Hi, I am ITCy, Greg's AI. Greg is away and I could not match that to our public notes yet. \
+             Leave your email here or write contact@interchouette.net and he will follow up.",
+        );
+    }
+    let snippet = synthesize_brief(context);
+    if snippet.is_empty() {
         return format!(
-            "Hi, I am ITCy 🦉, Greg's AI assistant. Greg is away right now. \
-             I could not match that to our public notes yet. \
-             Leave your email or write to contact@interchouette.net and Greg will follow up. \
-             (You asked: {visitor_text})"
+            "Hi, I am ITCy, Greg's AI. Greg is away. Ask me about Interchouette, Rust, Wasm, or leave \
+             your email so Greg can follow up. (You asked about: {visitor_text})"
         );
     }
     format!(
-        "Hi, I am ITCy 🦉 (AI assistant). Greg is away, so here is what I know from our public notes:\n\n\
-         {context}\n\n\
-         Greg will follow up if you leave a message or email contact@interchouette.net."
+        "Hi, I am ITCy, Greg's AI. {snippet} Want Greg personally? Leave your email here or write \
+         contact@interchouette.net."
     )
+}
+
+/// Turn raw MCP markdown into one short visitor-facing sentence (never dump headings).
+fn synthesize_brief(context: &str) -> String {
+    let preferred = context
+        .split("## ")
+        .find(|block| {
+            let lower = block.to_ascii_lowercase();
+            lower.contains("interchouette itc (english)")
+                || lower.contains("gregory roussac\n")
+                || lower.starts_with("gregory roussac")
+        })
+        .unwrap_or(context);
+
+    let plain = preferred
+        .lines()
+        .map(str::trim)
+        .filter(|line| {
+            !line.is_empty()
+                && !line.starts_with('#')
+                && !line.eq_ignore_ascii_case("keywords")
+                && !line.starts_with("Keywords")
+        })
+        .map(|line| line.replace("**", ""))
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    let plain = plain.replace("…", " ").replace("  ", " ");
+    let sentence = plain
+        .split(". ")
+        .next()
+        .unwrap_or(plain.as_str())
+        .trim()
+        .trim_end_matches('.');
+
+    if sentence.is_empty() {
+        return String::new();
+    }
+    let mut out = sentence.to_string();
+    if out.chars().count() > 220 {
+        out = out.chars().take(217).collect();
+        out.push('…');
+    } else {
+        out.push('.');
+    }
+    out
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::{KnowledgeDoc, Store};
-    use tempfile::tempdir;
 
     #[tokio::test]
-    async fn fallback_uses_fts_without_openrouter() {
-        let dir = tempdir().unwrap();
-        let db = dir.path().join("k.db");
-        let store = Store::open_writable(&db, dir.path()).unwrap();
-        store
-            .replace_all(&[KnowledgeDoc {
-                slug: "en/gregory-roussac".into(),
-                lang: "en".into(),
-                title: "Gregory".into(),
-                body: "Gregory Roussac does Rust and Wasm freelance work.".into(),
-            }])
-            .unwrap();
-        drop(store);
-        let knowledge = Arc::new(Store::open_readonly(&db, dir.path()).unwrap());
-        let brain = AwayBrain {
-            knowledge,
-            openrouter_key: None,
-            model: "none".into(),
-            client: reqwest::Client::new(),
-        };
+    async fn fallback_uses_static_context_without_openrouter() {
+        let brain = AwayBrain::with_static_context(
+            "### Gregory\nGregory Roussac does Rust and Wasm freelance work.",
+        );
         let reply = brain.reply("Rust Wasm").await;
         assert!(reply.contains("ITCy"));
         assert!(reply.contains("Gregory") || reply.contains("Rust"));
+    }
+
+    #[test]
+    fn parses_sse_tool_result() {
+        let body = "data: \nid: 0\n\ndata: {\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"hello knowledge\"}]}}\n\n";
+        let v = parse_sse_jsonrpc(body).unwrap();
+        assert_eq!(extract_tool_text(&v).unwrap(), "hello knowledge");
     }
 }

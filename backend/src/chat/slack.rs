@@ -1,4 +1,4 @@
-//! Slack DM relay to Greg (durable store for chat).
+//! Slack DM + per-session threads (durable store for chat).
 
 use std::sync::Arc;
 
@@ -14,6 +14,13 @@ struct SlackInner {
     token: String,
     greg_user_id: String,
     client: reqwest::Client,
+}
+
+/// Result of opening / posting into a session thread.
+#[derive(Debug, Clone)]
+pub struct ThreadRef {
+    pub channel: String,
+    pub thread_ts: String,
 }
 
 impl SlackRelay {
@@ -72,27 +79,71 @@ impl SlackRelay {
             .ok_or_else(|| anyhow::anyhow!("conversations.open missing channel.id"))
     }
 
-    /// Post a tagged line into Greg's DM.
+    /// Start a Slack thread for a visitor session (parent message).
+    pub async fn start_session_thread(
+        &self,
+        short_code: &str,
+        mode: &str,
+    ) -> anyhow::Result<ThreadRef> {
+        let channel = self.open_dm().await?;
+        let text = format!(
+            "[{short_code}] New website chat · mode={mode}\nReply in this thread - no tag needed."
+        );
+        let ts = self.post_raw(&channel, None, &text).await?;
+        Ok(ThreadRef {
+            channel,
+            thread_ts: ts,
+        })
+    }
+
+    /// Post into an existing session thread (or top-level if no thread yet).
+    pub async fn post_in_thread(
+        &self,
+        channel: &str,
+        thread_ts: Option<&str>,
+        text: &str,
+    ) -> anyhow::Result<String> {
+        self.post_raw(channel, thread_ts, text).await
+    }
+
+    /// Convenience: open DM and post a top-level tagged line (resume / probes).
     pub async fn post_session_line(
         &self,
         short_code: &str,
         kind: &str,
         text: &str,
     ) -> anyhow::Result<()> {
-        let Some(inner) = &self.inner else {
+        let Some(_inner) = &self.inner else {
             tracing::debug!(%short_code, %kind, "slack skipped (disabled)");
             return Ok(());
         };
         let channel = self.open_dm().await?;
         let message = format!("[{short_code}] {kind}: {text}");
+        let _ = self.post_raw(&channel, None, &message).await?;
+        Ok(())
+    }
+
+    async fn post_raw(
+        &self,
+        channel: &str,
+        thread_ts: Option<&str>,
+        text: &str,
+    ) -> anyhow::Result<String> {
+        let Some(inner) = &self.inner else {
+            anyhow::bail!("slack relay not configured");
+        };
+        let mut payload = json!({
+            "channel": channel,
+            "text": text,
+        });
+        if let Some(ts) = thread_ts {
+            payload["thread_ts"] = json!(ts);
+        }
         let resp = inner
             .client
             .post("https://slack.com/api/chat.postMessage")
             .bearer_auth(&inner.token)
-            .json(&json!({
-                "channel": channel,
-                "text": message,
-            }))
+            .json(&payload)
             .send()
             .await?;
         let body: serde_json::Value = resp.json().await?;
@@ -102,20 +153,9 @@ impl SlackRelay {
                 body["error"].as_str().unwrap_or("unknown")
             );
         }
-        Ok(())
-    }
-
-    /// Away-mode lead summary so nothing is lost when `ITCy` answers.
-    pub async fn post_lead(
-        &self,
-        short_code: &str,
-        visitor_text: &str,
-        itcy_reply: &str,
-        email: Option<&str>,
-    ) -> anyhow::Result<()> {
-        let email_bit = email.unwrap_or("(none)");
-        let summary =
-            format!("Away lead\nVisitor: {visitor_text}\nITCy: {itcy_reply}\nEmail: {email_bit}");
-        self.post_session_line(short_code, "LEAD", &summary).await
+        body["ts"]
+            .as_str()
+            .map(str::to_string)
+            .ok_or_else(|| anyhow::anyhow!("chat.postMessage missing ts"))
     }
 }

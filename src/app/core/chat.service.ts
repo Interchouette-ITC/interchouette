@@ -1,6 +1,6 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, effect, signal } from '@angular/core';
 
-import { chatApiBase, chatWsUrl } from './chat.constants';
+import { CHAT_STORAGE_KEY, chatApiBase, chatWsUrl } from './chat.constants';
 
 export type ChatMode = 'live' | 'away' | 'connecting';
 export type ChatRole = 'visitor' | 'greg' | 'itcy' | 'system';
@@ -19,6 +19,16 @@ interface SessionResponse {
   hero: 'greg' | 'itcy';
 }
 
+interface StoredChat {
+  sessionId: string;
+  resumeCode: string;
+  messages: ChatMessage[];
+  mode: 'live' | 'away';
+  hero: 'greg' | 'itcy';
+  label: string;
+  savedAt: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ChatService {
   readonly open = signal(false);
@@ -27,6 +37,7 @@ export class ChatService {
   readonly statusLabel = signal('Connecting…');
   readonly messages = signal<ChatMessage[]>([]);
   readonly typing = signal(false);
+  /** Opaque resume code for Slack/support only; not shown in the visitor UI. */
   readonly shortCode = signal('');
   readonly error = signal<string | null>(null);
   readonly connecting = signal(false);
@@ -34,6 +45,28 @@ export class ChatService {
 
   private socket: WebSocket | null = null;
   private sessionId: string | null = null;
+
+  constructor() {
+    effect(() => {
+      const messages = this.messages();
+      const sessionId = this.sessionId;
+      const resumeCode = this.shortCode();
+      const mode = this.mode();
+      const hero = this.hero();
+      if (!sessionId || !resumeCode || mode === 'connecting' || hero === 'neutral') {
+        return;
+      }
+      this.persist({
+        sessionId,
+        resumeCode,
+        messages,
+        mode,
+        hero,
+        label: this.statusLabel(),
+        savedAt: Date.now(),
+      });
+    });
+  }
 
   toggle(): void {
     if (this.open()) {
@@ -60,11 +93,28 @@ export class ChatService {
   async connect(): Promise<void> {
     this.connecting.set(true);
     this.wsReady.set(false);
+    this.error.set(null);
+
+    const stored = this.readStore();
+    if (stored?.sessionId) {
+      this.sessionId = stored.sessionId;
+      this.shortCode.set(stored.resumeCode);
+      this.messages.set(stored.messages);
+      this.applyPresence(stored.mode, stored.label, stored.hero);
+      const resumed = await this.tryResumeSocket(stored.sessionId);
+      if (resumed) {
+        this.connecting.set(false);
+        return;
+      }
+    }
+
     this.mode.set('connecting');
     this.hero.set('neutral');
     this.statusLabel.set('Connecting…');
-    this.error.set(null);
-    this.messages.set([]);
+    if (!stored?.messages.length) {
+      this.messages.set([]);
+    }
+
     try {
       const res = await fetch(`${chatApiBase()}/v1/sessions`, { method: 'POST' });
       if (!res.ok) {
@@ -103,24 +153,53 @@ export class ChatService {
     this.socket.send(JSON.stringify({ type: 'email', email: trimmed }));
   }
 
+  private async tryResumeSocket(sessionId: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      this.bindSocket(sessionId, {
+        onReady: () => resolve(true),
+        onFail: () => resolve(false),
+      });
+      window.setTimeout(() => {
+        if (!this.wsReady()) {
+          this.socket?.close();
+          resolve(false);
+        }
+      }, 2500);
+    });
+  }
+
   private applyPresence(mode: 'live' | 'away', label: string, hero: 'greg' | 'itcy'): void {
     this.mode.set(mode);
     this.hero.set(hero);
     this.statusLabel.set(label);
   }
 
-  private bindSocket(sessionId: string): void {
+  private bindSocket(
+    sessionId: string,
+    hooks?: { onReady?: () => void; onFail?: () => void },
+  ): void {
     this.socket?.close();
     this.wsReady.set(false);
     const ws = new WebSocket(chatWsUrl(sessionId));
     this.socket = ws;
+    let settled = false;
     ws.onopen = () => {
       this.wsReady.set(true);
       this.error.set(null);
+      if (!settled) {
+        settled = true;
+        hooks?.onReady?.();
+      }
     };
     ws.onmessage = (ev) => {
       try {
         const data = JSON.parse(String(ev.data)) as Record<string, unknown>;
+        if (data['type'] === 'error') {
+          if (!settled) {
+            settled = true;
+            hooks?.onFail?.();
+          }
+        }
         this.onEvent(data);
       } catch {
         /* ignore malformed */
@@ -128,11 +207,19 @@ export class ChatService {
     };
     ws.onerror = () => {
       this.wsReady.set(false);
-      this.error.set('Connection error');
+      if (!settled) {
+        settled = true;
+        hooks?.onFail?.();
+      } else {
+        this.error.set('Connection error');
+      }
     };
     ws.onclose = () => {
       this.wsReady.set(false);
-      if (this.open() && !this.error()) {
+      if (!settled) {
+        settled = true;
+        hooks?.onFail?.();
+      } else if (this.open() && !this.error()) {
         this.statusLabel.set('Disconnected');
       }
     };
@@ -150,14 +237,14 @@ export class ChatService {
         break;
       case 'message': {
         const role = String(data['role'] ?? 'system') as ChatRole;
-        this.messages.update((list) => [
-          ...list,
-          {
-            id: String(data['id'] ?? crypto.randomUUID()),
-            role,
-            text: String(data['text'] ?? ''),
-          },
-        ]);
+        const id = String(data['id'] ?? crypto.randomUUID());
+        const text = String(data['text'] ?? '');
+        this.messages.update((list) => {
+          if (list.some((m) => m.id === id)) {
+            return list;
+          }
+          return [...list, { id, role, text }];
+        });
         break;
       }
       case 'typing':
@@ -168,6 +255,41 @@ export class ChatService {
         break;
       default:
         break;
+    }
+  }
+
+  private persist(payload: StoredChat): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+    try {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      /* quota / private mode */
+    }
+  }
+
+  private readStore(): StoredChat | null {
+    if (typeof localStorage === 'undefined') {
+      return null;
+    }
+    try {
+      const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+      const parsed = JSON.parse(raw) as StoredChat;
+      if (!parsed.sessionId || !Array.isArray(parsed.messages)) {
+        return null;
+      }
+      // Drop stale transcripts after 7 days.
+      if (Date.now() - (parsed.savedAt || 0) > 7 * 24 * 60 * 60 * 1000) {
+        localStorage.removeItem(CHAT_STORAGE_KEY);
+        return null;
+      }
+      return parsed;
+    } catch {
+      return null;
     }
   }
 }

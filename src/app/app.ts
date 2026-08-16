@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { CHAT_WIDGET_ENABLED } from './core/chat.constants';
 import { ChatWidget } from './shared/chat-widget/chat-widget';
 
 @Component({
@@ -10,4 +11,6 @@ import { ChatWidget } from './shared/chat-widget/chat-widget';
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App {}
+export class App {
+  protected readonly chatEnabled = CHAT_WIDGET_ENABLED;
+}

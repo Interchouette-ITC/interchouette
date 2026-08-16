@@ -1,4 +1,4 @@
-//! Slack Socket Mode inbound: Greg DM replies → live WebSocket sessions.
+//! Slack Socket Mode inbound: Greg thread replies → live WebSocket sessions.
 
 use std::time::Duration;
 
@@ -11,12 +11,28 @@ use crate::chat::hub::ChatEvent;
 use crate::chat::reply_parse::parse_session_reply;
 use crate::chat::ChatState;
 
-/// Apply a Greg Slack message body to a live session when tagged `[S-XXXX]`.
+/// Apply a Greg Slack message to a live session.
+///
+/// Prefer thread parent `ts` (normal flow). Fall back to `[S-XXXX]` tags for
+/// resume / general-chat replies.
 ///
 /// Returns `true` when a live session received the reply.
-pub async fn forward_greg_reply(state: &ChatState, text: &str) -> bool {
+pub async fn forward_greg_reply(state: &ChatState, text: &str, thread_ts: Option<&str>) -> bool {
+    if let Some(ts) = thread_ts.filter(|t| !t.is_empty()) {
+        if let Some(session) = state.sessions.get_by_thread(ts).await {
+            publish_greg(state, &session.id, text).await;
+            tracing::info!(
+                code = %session.short_code,
+                session = %session.id,
+                %ts,
+                "forwarded Greg thread reply to WS"
+            );
+            return true;
+        }
+    }
+
     let Some((code, body)) = parse_session_reply(text) else {
-        tracing::debug!("Greg DM without [S-XXXX] tag; ignored");
+        tracing::debug!("Greg DM without thread match or [S-XXXX] tag; ignored");
         return false;
     };
     let Some(session) = state.sessions.get_by_code(&code).await else {
@@ -31,19 +47,23 @@ pub async fn forward_greg_reply(state: &ChatState, text: &str) -> bool {
             .await;
         return false;
     };
+    publish_greg(state, &session.id, &body).await;
+    tracing::info!(%code, session = %session.id, "forwarded Greg tagged reply to WS");
+    true
+}
+
+async fn publish_greg(state: &ChatState, session_id: &str, text: &str) {
     state
         .hub
         .publish(
-            &session.id,
+            session_id,
             ChatEvent::Message {
                 id: Uuid::new_v4().to_string(),
                 role: "greg".into(),
-                text: body,
+                text: text.trim().to_string(),
             },
         )
         .await;
-    tracing::info!(%code, session = %session.id, "forwarded Greg Slack reply to WS");
-    true
 }
 
 /// Spawn the Socket Mode loop when `SLACK_APP_TOKEN` + bot + Greg id are set.
@@ -161,7 +181,9 @@ async fn handle_envelope(state: &ChatState, cfg: &SocketConfig, envelope: &Value
     let Some(text) = event["text"].as_str() else {
         return;
     };
-    let _ = forward_greg_reply(state, text).await;
+    // Thread replies carry `thread_ts`. Parent messages use their own `ts`.
+    let thread_ts = event["thread_ts"].as_str().or_else(|| event["ts"].as_str());
+    let _ = forward_greg_reply(state, text, thread_ts).await;
 }
 
 /// Whether Socket Mode env is complete.
