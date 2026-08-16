@@ -2,13 +2,13 @@
 
 Streamable HTTP MCP. **Read-only** committed SQLite file:
 
-**`db/knowledge.db`**
+**`db/interchouette.db`**
 
 Official URL: `https://mcp.interchouette.net/interchouette`
 
 ## How to update content
 
-1. Edit `db/knowledge.db` (DB Browser for SQLite, `sqlite3`, etc.)
+1. Edit `db/interchouette.db` (DB Browser for SQLite, `sqlite3`, etc.)
 2. Commit + merge to `dev`
 3. CI publishes `interchouette/interchouette-mcp:latest`
 4. Render redeploys
@@ -23,5 +23,5 @@ No content inserts at runtime. No Postgres.
 
 ```bash
 make mcp-lint mcp-test
-cargo run --manifest-path backend/Cargo.toml -- --knowledge-db db/knowledge.db
+cargo run --manifest-path backend/Cargo.toml -- --knowledge-db db/interchouette.db
 ```

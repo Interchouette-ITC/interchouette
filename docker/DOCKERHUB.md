@@ -1,6 +1,6 @@
 # interchouette-mcp
 
-Streamable HTTP MCP. Content is the committed SQLite file `db/knowledge.db` (read-only at runtime).
+Streamable HTTP MCP. Content is the committed SQLite file `db/interchouette.db` (read-only at runtime).
 
 - Official endpoint: https://mcp.interchouette.net/interchouette
 - Port: 8080

@@ -18,7 +18,7 @@ struct Cli {
     listen: String,
 
     /// Committed read-only knowledge database.
-    #[arg(long, env = "KNOWLEDGE_DB", default_value = "../db/knowledge.db")]
+    #[arg(long, env = "KNOWLEDGE_DB", default_value = "../db/interchouette.db")]
     knowledge_db: PathBuf,
 
     /// Directory for writable `bot.sqlite` only.

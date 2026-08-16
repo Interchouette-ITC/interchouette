@@ -316,7 +316,7 @@ mod tests {
     #[test]
     fn writable_then_readonly_search() {
         let dir = tempdir().unwrap();
-        let db = dir.path().join("knowledge.db");
+        let db = dir.path().join("interchouette.db");
         let store = Store::open_writable(&db, dir.path()).unwrap();
         store
             .replace_all(&[KnowledgeDoc {
@@ -338,7 +338,7 @@ mod tests {
 
     #[test]
     fn committed_repo_db_searches() {
-        let db = Path::new(env!("CARGO_MANIFEST_DIR")).join("../db/knowledge.db");
+        let db = Path::new(env!("CARGO_MANIFEST_DIR")).join("../db/interchouette.db");
         let dir = tempdir().unwrap();
         let store = Store::open_readonly(&db, dir.path()).unwrap();
         assert!(store.doc_count().unwrap() >= 6);

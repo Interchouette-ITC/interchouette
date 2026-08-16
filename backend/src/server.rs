@@ -159,7 +159,7 @@ pub async fn run_http(
 ) -> Result<()> {
     let store = Arc::new(Store::open_readonly(&knowledge_db, &data_dir)?);
     let n = store.doc_count()?;
-    tracing::info!(documents = n, db = %knowledge_db.display(), "knowledge.db ready (read-only)");
+    tracing::info!(documents = n, db = %knowledge_db.display(), "interchouette.db ready (read-only)");
     let _ = store.bot_schema_version()?;
 
     let mcp = KnowledgeMcp {
