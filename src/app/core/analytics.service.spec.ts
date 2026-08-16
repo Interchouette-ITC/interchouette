@@ -7,6 +7,15 @@ import { GA_MEASUREMENT_ID } from './analytics.constants';
 import { AnalyticsService } from './analytics.service';
 
 describe('AnalyticsService', () => {
+  beforeEach(() => {
+    (window as Window & { requestIdleCallback?: unknown }).requestIdleCallback = (
+      cb: IdleRequestCallback,
+    ) => {
+      cb({ didTimeout: false, timeRemaining: () => 50 } as IdleDeadline);
+      return 0;
+    };
+  });
+
   afterEach(() => {
     document.head
       .querySelectorAll('script[src*="googletagmanager.com"]')

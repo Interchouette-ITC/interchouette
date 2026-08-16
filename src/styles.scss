@@ -1,19 +1,58 @@
-/* Global layout + npm CSS libraries (built into the bundle).
- * Home matches live: only Montserrat 700 (live Google Fonts link was weight 700).
- * CV uses Playfair Display + Source Sans 3. */
+/* Global layout + shared CSS. CV fonts load from the CV page styles only. */
 @import '@fontsource/montserrat/latin-400.css';
 @import '@fontsource/montserrat/latin-700.css';
-@import '@fontsource/playfair-display/latin-400.css';
-@import '@fontsource/playfair-display/latin-400-italic.css';
-@import '@fontsource/playfair-display/latin-600.css';
-@import '@fontsource/playfair-display/latin-700.css';
-@import '@fontsource/source-sans-3/latin-400.css';
-@import '@fontsource/source-sans-3/latin-400-italic.css';
-@import '@fontsource/source-sans-3/latin-500.css';
-@import '@fontsource/source-sans-3/latin-600.css';
-@import '@fontsource/source-sans-3/latin-700.css';
 @import 'font-awesome/css/font-awesome.css';
-@import 'animate.css/animate.css';
+
+/* Minimal animate.css subset used by the home/footer (fadeIn, rollIn, pulse). */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes rollIn {
+  from {
+    opacity: 0;
+    transform: translate3d(-100%, 0, 0) rotate3d(0, 0, 1, -120deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes pulse {
+  from {
+    transform: scale3d(1, 1, 1);
+  }
+  50% {
+    transform: scale3d(1.05, 1.05, 1.05);
+  }
+  to {
+    transform: scale3d(1, 1, 1);
+  }
+}
+
+.animated {
+  animation-duration: 1s;
+  animation-fill-mode: both;
+}
+
+.fadeIn {
+  animation-name: fadeIn;
+}
+
+.rollIn {
+  animation-name: rollIn;
+}
+
+.pulse {
+  animation-name: pulse;
+  animation-iteration-count: infinite;
+}
 
 html,
 body {
