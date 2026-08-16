@@ -8,7 +8,7 @@
     ></button>
   }
 
-  @if (chat.ready() || chat.open()) {
+  @if (chat.ready() || chat.open() || chat.connecting() || chat.error()) {
     <div
       class="chat-fab-dock"
       [class.chat-fab-dock--nudge]="nudgeBounce()"
@@ -173,8 +173,36 @@
             </div>
             <p class="chat-welcome__kicker">{{ emptyKicker() }}</p>
             <h3>{{ emptyTitle() }}</h3>
-            <p>{{ emptyBody() }}</p>
+            <p class="chat-welcome__hint">{{ emptyHint() }}</p>
           </div>
+
+          <article class="chat-row chat-row--intro" [attr.data-role]="introRole()">
+            <div class="chat-row__avatar" aria-hidden="true">
+              <img
+                [src]="rowFaceSrc(introRole())"
+                [class.chat-row__avatar-img--itcy]="introRole() === 'itcy'"
+                width="32"
+                height="32"
+                alt=""
+                decoding="async"
+              />
+            </div>
+            <div class="chat-bubble" [attr.data-role]="introRole()">
+              <span class="chat-bubble__who">{{ whoLabel(introRole()) }}</span>
+              <p>{{ introLead() }}</p>
+              <p>{{ introCan() }}</p>
+              <p>
+                {{ introSlackBefore()
+                }}<a
+                  class="chat-bubble__link"
+                  [href]="slackJoinUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >{{ introSlackLinkLabel() }}</a
+                >{{ introSlackAfter() }}
+              </p>
+            </div>
+          </article>
         }
 
         @for (msg of chat.messages(); track msg.id; let i = $index) {
@@ -230,7 +258,7 @@
         @if (chat.error(); as err) {
           <div class="chat-panel__error-card">
             <p>{{ err }}</p>
-            <button type="button" (click)="onRetry()">Try again</button>
+            <button type="button" title="Try again" (click)="onRetry()">Try again</button>
           </div>
         }
       </div>
@@ -244,6 +272,7 @@
                 class="chat-chip"
                 (click)="onChip(chip)"
                 [disabled]="!chat.wsReady()"
+                [attr.title]="chip"
               >
                 <span>{{ chip }}</span>
               </button>
@@ -262,7 +291,14 @@
               autocomplete="email"
               aria-label="Email for Greg to follow up"
             />
-            <button type="submit" class="chat-panel__email-save">Save</button>
+            <button
+              type="submit"
+              class="chat-panel__email-save"
+              title="Save email"
+              aria-label="Save email"
+            >
+              Save
+            </button>
           </form>
         }
         <form class="chat-panel__compose" (submit)="onSubmit($event)">
@@ -295,7 +331,8 @@
             type="submit"
             class="chat-panel__send"
             [disabled]="!canSend() || !chat.wsReady() || !!chat.error()"
-            aria-label="Send"
+            title="Send message"
+            aria-label="Send message"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -310,7 +347,10 @@
           </button>
         </form>
         <p class="chat-panel__fineprint">
-          <span>Private · Encrypted in transit</span>
+          <a routerLink="/privacy" class="chat-panel__fineprint-link"
+            >Private · Encrypted in transit</a
+          >
+          <span class="chat-panel__fineprint-powered">Powered by Rust, Node &amp; ITC</span>
         </p>
       </footer>
     </section>

@@ -158,11 +158,14 @@ export class ChatService {
       this.shortCode.set(stored.resumeCode);
       this.messages.set(stored.messages);
       this.applyPresence(stored.mode, stored.label, stored.hero);
-      const resumed = await this.tryResumeSocket(stored.sessionId);
+      const resumed = await this.bindSocket(stored.sessionId);
       if (resumed) {
         this.connecting.set(false);
         return;
       }
+      // Stale id after chat restart: drop it and mint a fresh session (keep transcript).
+      this.clearStore();
+      this.error.set(null);
     }
 
     this.mode.set('connecting');
@@ -181,7 +184,10 @@ export class ChatService {
       this.sessionId = body.session_id;
       this.shortCode.set(body.short_code);
       this.applyPresence(body.mode, body.label, body.hero);
-      this.bindSocket(body.session_id);
+      const linked = await this.bindSocket(body.session_id);
+      if (!linked) {
+        throw new Error('Could not open chat socket');
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not connect';
       this.error.set(message);
@@ -270,82 +276,105 @@ export class ChatService {
     }
   }
 
-  private async tryResumeSocket(sessionId: string): Promise<boolean> {
-    return new Promise((resolve) => {
-      this.bindSocket(sessionId, {
-        onReady: () => resolve(true),
-        onFail: () => resolve(false),
-      });
-      window.setTimeout(() => {
-        if (!this.wsReady()) {
-          this.socket?.close();
-          resolve(false);
-        }
-      }, 2500);
-    });
-  }
-
   private applyPresence(mode: 'live' | 'away', label: string, hero: 'greg' | 'itcy'): void {
     this.mode.set(mode);
     this.hero.set(hero);
     this.statusLabel.set(label);
   }
 
-  private bindSocket(
-    sessionId: string,
-    hooks?: { onReady?: () => void; onFail?: () => void },
-  ): void {
+  /** Open WS and resolve only after the server `ready` event (not merely TCP open). */
+  private bindSocket(sessionId: string): Promise<boolean> {
     this.socket?.close();
     this.wsReady.set(false);
     this.lastPostedEmail = '';
     const ws = new WebSocket(chatWsUrl(sessionId));
     this.socket = ws;
     let settled = false;
-    ws.onopen = () => {
-      this.wsReady.set(true);
-      this.error.set(null);
-      if (!settled) {
-        settled = true;
-        hooks?.onReady?.();
-      }
-    };
-    ws.onmessage = (ev) => {
-      try {
-        const data = JSON.parse(String(ev.data)) as Record<string, unknown>;
-        if (data['type'] === 'error') {
-          if (!settled) {
-            settled = true;
-            hooks?.onFail?.();
-          }
+
+    return new Promise((resolve) => {
+      const succeed = (): void => {
+        if (settled) {
+          return;
         }
-        this.onEvent(data);
-      } catch {
-        /* ignore malformed */
-      }
-    };
-    ws.onerror = () => {
-      this.wsReady.set(false);
-      if (!settled) {
         settled = true;
-        hooks?.onFail?.();
-      } else {
-        this.error.set('Connection error');
-      }
-    };
-    ws.onclose = () => {
-      this.wsReady.set(false);
-      if (!settled) {
+        this.wsReady.set(true);
+        this.error.set(null);
+        resolve(true);
+      };
+
+      const fail = (): void => {
+        if (settled) {
+          return;
+        }
         settled = true;
-        hooks?.onFail?.();
-      } else if (this.open() && !this.error()) {
-        this.statusLabel.set('Disconnected');
-      }
-    };
+        this.wsReady.set(false);
+        try {
+          ws.close();
+        } catch {
+          /* ignore */
+        }
+        resolve(false);
+      };
+
+      ws.onmessage = (ev) => {
+        try {
+          const data = JSON.parse(String(ev.data)) as Record<string, unknown>;
+          const type = String(data['type'] ?? '');
+          if (type === 'ready') {
+            if (typeof data['session_id'] === 'string' && data['session_id']) {
+              this.sessionId = data['session_id'];
+            }
+            if (typeof data['short_code'] === 'string' && data['short_code']) {
+              this.shortCode.set(data['short_code']);
+            }
+            succeed();
+          }
+          if (type === 'error') {
+            const message = String(data['message'] ?? 'Error');
+            // Dead resume id after chat process restart — soft-fail, mint a new session.
+            if (/unknown session/i.test(message)) {
+              fail();
+              return;
+            }
+            if (!settled) {
+              this.error.set(message);
+              fail();
+              return;
+            }
+          }
+          this.onEvent(data);
+        } catch {
+          /* ignore malformed */
+        }
+      };
+      ws.onerror = () => {
+        if (!settled) {
+          fail();
+        } else {
+          this.error.set('Connection error');
+        }
+      };
+      ws.onclose = () => {
+        this.wsReady.set(false);
+        if (!settled) {
+          fail();
+        } else if (this.open() && !this.error()) {
+          this.statusLabel.set('Disconnected');
+        }
+      };
+      window.setTimeout(() => {
+        if (!settled) {
+          fail();
+        }
+      }, 2500);
+    });
   }
 
   private onEvent(data: Record<string, unknown>): void {
     const type = String(data['type'] ?? '');
     switch (type) {
+      case 'ready':
+        break;
       case 'presence':
         this.applyPresence(
           data['mode'] === 'live' ? 'live' : 'away',
@@ -368,11 +397,27 @@ export class ChatService {
       case 'typing':
         this.typing.set(Boolean(data['active']));
         break;
-      case 'error':
-        this.error.set(String(data['message'] ?? 'Error'));
+      case 'error': {
+        const message = String(data['message'] ?? 'Error');
+        if (/unknown session/i.test(message)) {
+          break;
+        }
+        this.error.set(message);
         break;
+      }
       default:
         break;
+    }
+  }
+
+  private clearStore(): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+    try {
+      localStorage.removeItem(CHAT_STORAGE_KEY);
+    } catch {
+      /* private mode */
     }
   }
 

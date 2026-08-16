@@ -6,8 +6,9 @@ export function chatApiBase(): string {
     return 'http://127.0.0.1:8080';
   }
   const host = window.location.hostname;
+  // Same hostname as the page so Chromium does not treat localhost vs 127.0.0.1 as cross-site.
   if (host === 'localhost' || host === '127.0.0.1') {
-    return 'http://127.0.0.1:8080';
+    return `http://${host}:8080`;
   }
   return 'https://mcp.interchouette.net';
 }
@@ -33,6 +34,10 @@ export const CHAT_EMAIL_KEY = 'ic.chat.email';
 export const CHAT_EMAIL_ANNOUNCED_KEY = 'ic.chat.email.announced';
 
 export const CONTACT_EMAIL = 'contact@interchouette.net';
+
+/** Public Slack invite (home / about / chat intro). */
+export const SLACK_JOIN_URL =
+  'https://join.slack.com/t/interchouette/shared_invite/zt-2urug9dmr-PYzageTbj8bxD5c3n39QuA';
 
 /** Non-essential cookie / analytics consent choice. */
 export const CONSENT_STORAGE_KEY = 'ic.consent.v1';

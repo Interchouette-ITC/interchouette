@@ -9,10 +9,20 @@
       .
     </p>
     <div class="consent__actions">
-      <button type="button" class="consent__btn consent__btn--ghost" (click)="reject()">
+      <button
+        type="button"
+        class="consent__btn consent__btn--ghost"
+        title="Decline non-essential cookies"
+        (click)="reject()"
+      >
         Decline
       </button>
-      <button type="button" class="consent__btn consent__btn--primary" (click)="accept()">
+      <button
+        type="button"
+        class="consent__btn consent__btn--primary"
+        title="Accept non-essential cookies"
+        (click)="accept()"
+      >
         Accept
         <img
           class="consent__cookie"

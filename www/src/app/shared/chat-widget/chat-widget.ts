@@ -12,6 +12,8 @@ import {
 } from '@angular/core';
 
 import { ChatRole, ChatService } from '../../core/chat.service';
+import { SLACK_JOIN_URL } from '../../core/chat.constants';
+import { RouterLink } from '@angular/router';
 
 const NUDGE_EVERY_MS = 2 * 60 * 1000;
 const NUDGE_BOUNCE_MS = 1100;
@@ -48,6 +50,7 @@ const NUDGE_HOOKS = [
 
 @Component({
   selector: 'app-chat-widget',
+  imports: [RouterLink],
   templateUrl: './chat-widget.html',
   styleUrl: './chat-widget.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -75,6 +78,7 @@ export class ChatWidget implements OnDestroy {
   /** Always a string — never leave compose bindings as undefined. */
   protected draft = '';
   protected showEmail = false;
+  protected readonly slackJoinUrl = SLACK_JOIN_URL;
 
   private nudgeTimer: ReturnType<typeof setInterval> | null = null;
   private bounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -211,7 +215,7 @@ export class ChatWidget implements OnDestroy {
     if (this.chat.hero() === 'greg') {
       return ['Hi Greg', 'Rust / Wasm project?', 'Availability this month?'];
     }
-    return ['What is Interchouette?', 'Who is Gregory Roussac?', 'Leave my email'];
+    return ['What is Interchouette?', 'Who is Greg?', 'Leave my email'];
   }
 
   protected title(): string {
@@ -261,7 +265,7 @@ export class ChatWidget implements OnDestroy {
   protected emptyKicker(): string {
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Live with Gregory';
+        return 'Live with Greg';
       case 'itcy':
         return 'AI on duty';
       default:
@@ -272,23 +276,56 @@ export class ChatWidget implements OnDestroy {
   protected emptyTitle(): string {
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Greg is online';
+        return 'Ask me anything';
       case 'itcy':
-        return 'Ask ITCy anything';
+        return 'Ask me anything';
       default:
         return 'One moment';
     }
   }
 
-  protected emptyBody(): string {
+  protected emptyHint(): string {
     switch (this.chat.hero()) {
       case 'greg':
         return 'Your message reaches Greg live. Ask about Rust, Wasm, or a collaboration.';
       case 'itcy':
-        return "Greg's AI, powered by Interchouette MCP. Leave a note anytime.";
+        return 'ITCy, powered by Interchouette MCP. Leave a note anytime.';
       default:
         return 'Opening a private Interchouette line…';
     }
+  }
+
+  protected introRole(): ChatRole {
+    return this.chat.hero() === 'greg' ? 'greg' : 'itcy';
+  }
+
+  protected introLead(): string {
+    if (this.chat.hero() === 'greg') {
+      return 'Welcome to Interchouette’s service desk. Greg is live here.';
+    }
+    return "Welcome to Interchouette's service desk. Hi, I'm ITCy, an AI chatbot powered by Rust, Node, and ITC.";
+  }
+
+  protected introCan(): string {
+    if (this.chat.hero() === 'greg') {
+      return 'Ask about Rust, Wasm, collaborations, or Interchouette ITC.';
+    }
+    return 'I can help with ITC questions, project calendars, mail, events, and more.';
+  }
+
+  protected introSlackBefore(): string {
+    if (this.chat.hero() === 'greg') {
+      return 'Prefer Slack? ';
+    }
+    return 'Interested in Slack? You can join ';
+  }
+
+  protected introSlackLinkLabel(): string {
+    return this.chat.hero() === 'greg' ? 'Join here' : 'here';
+  }
+
+  protected introSlackAfter(): string {
+    return '.';
   }
 
   protected whoLabel(role: ChatRole): string {
