@@ -3,11 +3,22 @@
   font-family: 'Montserrat', sans-serif;
   width: 100%;
   margin: 0;
+  /* Desktop: light greys as before. Mobile overrides below for WCAG AA. */
+  --home-title: #808080;
+  --home-muted: #a9a9a9;
+}
+
+/* Lighthouse mobile / narrow viewports: darker muted text on white. */
+@media (max-width: 727px) {
+  :host {
+    --home-title: #595959;
+    --home-muted: #666666;
+  }
 }
 
 .icons > a {
   text-decoration: none;
-  color: darkgray;
+  color: var(--home-muted);
   /* Live HTML keeps trailing whitespace inside each <a>; Angular strips it. */
   margin-inline-end: 0.28em;
 }
@@ -92,7 +103,7 @@
     padding-left: 4px;
     text-align: center;
     font-size: 2.5em;
-    color: grey;
+    color: var(--home-title);
     margin-top: 16%;
     margin-bottom: 0.15em;
     text-transform: capitalize;
@@ -101,7 +112,7 @@
   .subtitle {
     text-align: center;
     font-size: 1.2em;
-    color: darkgray;
+    color: var(--home-muted);
     margin: 0 0 1em;
   }
 
@@ -110,7 +121,7 @@
     text-align: center;
     margin-right: 0;
     margin-left: 0;
-    color: darkgray;
+    color: var(--home-muted);
     margin-bottom: 40px;
   }
 
@@ -164,7 +175,7 @@
     padding-left: 4px;
     text-align: center;
     font-size: 2.8em;
-    color: grey;
+    color: var(--home-title);
     margin-top: 16%;
     margin-bottom: 0.15em;
     text-transform: capitalize;
@@ -173,7 +184,7 @@
   .subtitle {
     text-align: center;
     font-size: 1.9em;
-    color: darkgray;
+    color: var(--home-muted);
     margin: 0 0 1em;
   }
 
@@ -182,7 +193,7 @@
     text-align: center;
     margin-right: 0;
     margin-left: 0;
-    color: darkgray;
+    color: var(--home-muted);
     margin-bottom: 40px;
   }
 
@@ -238,7 +249,7 @@
   .name {
     text-align: center;
     font-size: clamp(2rem, 3.2vw, 2.55em);
-    color: grey;
+    color: var(--home-title);
     margin-top: 14%;
     margin-bottom: 0.35em;
     text-transform: capitalize;
@@ -247,7 +258,7 @@
   .subtitle {
     text-align: center;
     font-size: clamp(1.15rem, 1.8vw, 1.35em);
-    color: darkgray;
+    color: var(--home-muted);
     margin: 0 0 1.6em;
     padding-inline: 0.75rem;
   }
@@ -260,7 +271,7 @@
     font-size: clamp(14px, 1.35vw, 17px);
     text-align: center;
     margin: 1rem 0 2.5rem;
-    color: darkgray;
+    color: var(--home-muted);
     padding-inline: 0.5rem;
   }
 
@@ -304,7 +315,7 @@
   .name {
     text-align: center;
     font-size: 2.8em;
-    color: grey;
+    color: var(--home-title);
     margin-top: 15%;
     margin-bottom: auto;
     text-transform: capitalize;
@@ -320,7 +331,7 @@
   .subtitle {
     text-align: center;
     font-size: 1.5em;
-    color: gray;
+    color: var(--home-muted);
   }
 
   p.icons {
@@ -328,7 +339,7 @@
     text-align: center;
     margin-right: 0;
     margin-left: 0;
-    color: darkgray;
+    color: var(--home-muted);
     margin-bottom: 40px;
   }
 
@@ -355,7 +366,7 @@
 .icons.animated.pulse .fa-stack-1x:hover {
   border-radius: 50%;
   color: white;
-  background-color: grey;
+  background-color: #808080;
 }
 
 .icons.animated.pulse .fa-twitter:hover {
