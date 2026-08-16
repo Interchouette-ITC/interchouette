@@ -8,12 +8,7 @@
   <url>
     <loc>https://interchouette.net/CV</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://interchouette.net/CV%20-%20Gregory%20Roussac/</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://interchouette.net/CV/Gregory_Roussac.pdf</loc>
@@ -23,11 +18,11 @@
   <url>
     <loc>https://interchouette.net/privacy</loc>
     <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.4</priority>
   </url>
   <url>
     <loc>https://interchouette.net/terms</loc>
     <changefreq>yearly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.4</priority>
   </url>
 </urlset>

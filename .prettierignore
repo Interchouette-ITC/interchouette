@@ -19,3 +19,5 @@ public/_redirects
 public/css
 public/cover
 public/**/*.min.css
+public/sitemap.xml
+public/robots.txt
