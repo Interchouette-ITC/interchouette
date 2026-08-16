@@ -22,7 +22,7 @@ Streamable HTTP MCP for Interchouette knowledge (Gregory Roussac, CV, public pro
 
 - Endpoint: https://mcp.interchouette.net/interchouette
 - Transport: streamable-http
-- Discovery: /.well-known/mcp.json
+- Server card: /.well-known/mcp.json
 
 There is no MCP path on https://interchouette.net/mcp and no mcp:// URI for this site yet.
 

@@ -11,7 +11,7 @@ Official URL: `https://mcp.interchouette.net/interchouette`
 1. Edit `db/interchouette.db` (DB Browser for SQLite, `sqlite3`, etc.)
 2. Commit + merge to `dev`
 3. CI publishes `interchouette/interchouette-mcp:latest`
-4. Render redeploys
+4. CI calls the Render deploy hook for the MCP service
 
 No content inserts at runtime. No Postgres.
 

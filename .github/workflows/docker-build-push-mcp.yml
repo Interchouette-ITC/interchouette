@@ -61,3 +61,10 @@ jobs:
 
       - name: Push to ghcr.io/interchouette and interchouette-itc
         run: make mcp-docker-push-ghcr-itc
+
+      - name: Deploy MCP on Render
+        env:
+          RENDER_DEPLOY_HOOK_URL_MCP: ${{ secrets.RENDER_DEPLOY_HOOK_URL_MCP }}
+        run: |
+          test -n "$RENDER_DEPLOY_HOOK_URL_MCP"
+          curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK_URL_MCP"

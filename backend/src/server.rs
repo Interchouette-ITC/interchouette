@@ -26,10 +26,27 @@ use crate::db::Store;
 /// Default bind address (Render sets `PORT`).
 pub const DEFAULT_HTTP_LISTEN: &str = "0.0.0.0:8080";
 
+/// Hosts allowed by the Streamable HTTP transport by default.
+pub const DEFAULT_ALLOWED_HOSTS: &[&str] = &[
+    "localhost",
+    "127.0.0.1",
+    "::1",
+    "mcp.interchouette.net",
+    "interchouette-mcp-latest.onrender.com",
+];
+
 /// Shared MCP server state.
 #[derive(Clone)]
 pub struct KnowledgeMcp {
     store: Arc<Store>,
+}
+
+impl KnowledgeMcp {
+    /// Build an MCP handler over an opened store.
+    #[must_use]
+    pub const fn new(store: Arc<Store>) -> Self {
+        Self { store }
+    }
 }
 
 fn text_ok(text: impl Into<String>) -> CallToolResult {
@@ -147,33 +164,27 @@ impl ServerHandler for KnowledgeMcp {
     }
 }
 
-/// Run Streamable HTTP MCP + health on `addr`.
+/// Build the HTTP router (health + Streamable HTTP MCP).
 ///
 /// # Errors
-/// Returns when bind or serve fails.
-pub async fn run_http(
-    addr: &str,
-    knowledge_db: PathBuf,
-    data_dir: PathBuf,
-    cors_origin: String,
+/// Returns when the knowledge DB cannot be opened.
+pub fn build_app(
+    knowledge_db: &std::path::Path,
+    data_dir: &std::path::Path,
+    cors_origin: &str,
     allowed_hosts: Vec<String>,
-) -> Result<()> {
-    let store = Arc::new(Store::open_readonly(&knowledge_db, &data_dir)?);
+) -> Result<Router> {
+    let store = Arc::new(Store::open_readonly(knowledge_db, data_dir)?);
     let n = store.doc_count()?;
     tracing::info!(documents = n, db = %knowledge_db.display(), "interchouette.db ready (read-only)");
     let _ = store.bot_schema_version()?;
 
-    let mcp = KnowledgeMcp {
-        store: Arc::clone(&store),
-    };
+    let mcp = KnowledgeMcp::new(Arc::clone(&store));
     let mut config =
         rmcp::transport::streamable_http_server::tower::StreamableHttpServerConfig::default();
     config = config.with_allowed_hosts(allowed_hosts);
     let mcp_service = rmcp::transport::streamable_http_server::tower::StreamableHttpService::new(
-        {
-            let mcp = mcp.clone();
-            move || Ok(mcp.clone())
-        },
+        move || Ok(mcp.clone()),
         Arc::new(
             rmcp::transport::streamable_http_server::session::local::LocalSessionManager::default(),
         ),
@@ -192,14 +203,158 @@ pub async fn run_http(
         .allow_methods(Any)
         .allow_headers(Any);
 
-    let app = Router::new()
+    Ok(Router::new()
         .route("/health", get(|| async { Json(json!({ "ok": true })) }))
         .route("/interchouette", mcp_router.clone())
         .route("/interchouette/", mcp_router)
-        .layer(cors);
+        .layer(cors))
+}
 
+/// Run Streamable HTTP MCP + health on `addr`.
+///
+/// # Errors
+/// Returns when bind or serve fails.
+pub async fn run_http(
+    addr: &str,
+    knowledge_db: PathBuf,
+    data_dir: PathBuf,
+    cors_origin: String,
+    allowed_hosts: Vec<String>,
+) -> Result<()> {
+    let app = build_app(&knowledge_db, &data_dir, &cors_origin, allowed_hosts)?;
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!(%addr, "interchouette-mcp listening");
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::{Request, StatusCode};
+    use http_body_util::BodyExt;
+    use tempfile::tempdir;
+    use tower::ServiceExt;
+
+    use crate::db::KnowledgeDoc;
+
+    fn seed_store(dir: &tempfile::TempDir) -> (PathBuf, PathBuf) {
+        let db = dir.path().join("interchouette.db");
+        let data = dir.path().join("data");
+        let store = Store::open_writable(&db, &data).unwrap();
+        store
+            .replace_all(&[
+                KnowledgeDoc {
+                    slug: "en/gregory-roussac".into(),
+                    lang: "en".into(),
+                    title: "Gregory Roussac".into(),
+                    body: "Gregory Roussac founded Interchouette ITC.".into(),
+                },
+                KnowledgeDoc {
+                    slug: "en/interchouette-overview".into(),
+                    lang: "en".into(),
+                    title: "Overview".into(),
+                    body: "Interchouette overview body.".into(),
+                },
+                KnowledgeDoc {
+                    slug: "en/cv-summary".into(),
+                    lang: "en".into(),
+                    title: "CV".into(),
+                    body: "CV summary body.".into(),
+                },
+                KnowledgeDoc {
+                    slug: "en/public-projects".into(),
+                    lang: "en".into(),
+                    title: "Projects".into(),
+                    body: "Public projects body.".into(),
+                },
+            ])
+            .unwrap();
+        drop(store);
+        (db, data)
+    }
+
+    #[test]
+    fn default_hosts_include_public_and_render() {
+        assert!(DEFAULT_ALLOWED_HOSTS.contains(&"mcp.interchouette.net"));
+        assert!(DEFAULT_ALLOWED_HOSTS.contains(&"interchouette-mcp-latest.onrender.com"));
+        assert!(DEFAULT_ALLOWED_HOSTS.contains(&"localhost"));
+    }
+
+    #[tokio::test]
+    async fn health_returns_ok_json() {
+        let dir = tempdir().unwrap();
+        let (db, data) = seed_store(&dir);
+        let app = build_app(
+            &db,
+            &data,
+            "https://interchouette.net",
+            DEFAULT_ALLOWED_HOSTS
+                .iter()
+                .map(|h| (*h).to_string())
+                .collect(),
+        )
+        .unwrap();
+
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/health")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(body["ok"], true);
+    }
+
+    #[tokio::test]
+    async fn tools_return_seeded_documents() {
+        let dir = tempdir().unwrap();
+        let (db, data) = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db, data).unwrap());
+        let mcp = KnowledgeMcp::new(store);
+
+        let profile = mcp.get_gregory_profile().await.unwrap();
+        assert!(!profile.is_error.unwrap_or(false));
+        let contact = mcp.get_contact().await.unwrap();
+        assert!(!contact.is_error.unwrap_or(false));
+        let overview = mcp
+            .get_interchouette_overview(Parameters(LangArgs {
+                lang: Some("en".into()),
+            }))
+            .await
+            .unwrap();
+        assert!(!overview.is_error.unwrap_or(false));
+        let cv = mcp.get_cv_summary().await.unwrap();
+        assert!(!cv.is_error.unwrap_or(false));
+        let projects = mcp.list_public_projects().await.unwrap();
+        assert!(!projects.is_error.unwrap_or(false));
+        let hits = mcp
+            .search_knowledge(Parameters(SearchArgs {
+                query: "Gregory Roussac".into(),
+                lang: Some("en".into()),
+            }))
+            .await
+            .unwrap();
+        assert!(!hits.is_error.unwrap_or(false));
+    }
+
+    #[tokio::test]
+    async fn missing_document_is_tool_error() {
+        let dir = tempdir().unwrap();
+        let (db, data) = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db, data).unwrap());
+        let mcp = KnowledgeMcp::new(store);
+        let err = mcp
+            .get_interchouette_overview(Parameters(LangArgs {
+                lang: Some("nl".into()),
+            }))
+            .await;
+        assert!(err.is_err());
+    }
 }
