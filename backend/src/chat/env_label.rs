@@ -8,7 +8,9 @@
 pub fn chat_env_label() -> String {
     resolve_chat_env_label(
         std::env::var("CHAT_ENV").ok().as_deref(),
-        std::env::var("PORT").map(|p| !p.is_empty()).unwrap_or(false),
+        std::env::var("PORT")
+            .map(|p| !p.is_empty())
+            .unwrap_or(false),
     )
 }
 
