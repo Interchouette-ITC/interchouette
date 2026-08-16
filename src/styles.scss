@@ -1,7 +1,13 @@
 /* Global layout + shared CSS. CV fonts load from the CV page styles only.
- * Font Awesome subset is listed separately in angular.json styles. */
-@import '@fontsource/montserrat/latin-400.css';
-@import '@fontsource/montserrat/latin-700.css';
+ * Font Awesome subset is listed separately in angular.json styles.
+ * Home critical text uses Montserrat 700 only (400 loads on legal pages). */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 700;
+  src: url('/fonts/montserrat-latin-700.woff2') format('woff2');
+}
 
 /* Minimal animate.css subset used by the home/footer (fadeIn, rollIn, pulse). */
 @keyframes fadeIn {
