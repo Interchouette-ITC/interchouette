@@ -1,5 +1,15 @@
 /* CV styles. Variables and page chrome live on :host (Angular encapsulation
  * ignores component :root / html / body against the document). */
+@import '@fontsource/playfair-display/latin-400.css';
+@import '@fontsource/playfair-display/latin-400-italic.css';
+@import '@fontsource/playfair-display/latin-600.css';
+@import '@fontsource/playfair-display/latin-700.css';
+@import '@fontsource/source-sans-3/latin-400.css';
+@import '@fontsource/source-sans-3/latin-400-italic.css';
+@import '@fontsource/source-sans-3/latin-500.css';
+@import '@fontsource/source-sans-3/latin-600.css';
+@import '@fontsource/source-sans-3/latin-700.css';
+
 :host {
   --color-top-bar: #1e3a5f;
   --color-marine: #1e3a5f;

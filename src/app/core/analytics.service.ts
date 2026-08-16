@@ -20,7 +20,7 @@ export class AnalyticsService {
 
   /**
    * Same GA4 tag as live interchouette.net (`G-TGZKWJK2D3`).
-   * Loads gtag in the browser only (skipped during prerender).
+   * Loads gtag in the browser only (skipped during prerender), after idle.
    */
   init(): void {
     if (this.booted || !isPlatformBrowser(this.platformId)) {
@@ -28,6 +28,16 @@ export class AnalyticsService {
     }
     this.booted = true;
 
+    const boot = () => this.bootGtag();
+    const ric = window.requestIdleCallback?.bind(window);
+    if (ric) {
+      ric(() => boot(), { timeout: 3000 });
+    } else {
+      setTimeout(boot, 1);
+    }
+  }
+
+  private bootGtag(): void {
     window.dataLayer = window.dataLayer ?? [];
     window.gtag = function gtag(...args: unknown[]) {
       window.dataLayer.push(args);
