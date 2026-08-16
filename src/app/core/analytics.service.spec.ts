@@ -8,7 +8,9 @@ import { AnalyticsService } from './analytics.service';
 
 describe('AnalyticsService', () => {
   afterEach(() => {
-    document.head.querySelectorAll('script[src*="googletagmanager.com"]').forEach((el) => el.remove());
+    document.head
+      .querySelectorAll('script[src*="googletagmanager.com"]')
+      .forEach((el) => el.remove());
     delete (window as { gtag?: unknown }).gtag;
     delete (window as { dataLayer?: unknown }).dataLayer;
   });
@@ -67,10 +69,6 @@ describe('AnalyticsService', () => {
 
     expect(window.dataLayer!.length).toBeGreaterThan(before);
     const last = window.dataLayer!.at(-1) as unknown[];
-    expect(last).toEqual([
-      'config',
-      GA_MEASUREMENT_ID,
-      { page_path: '/privacy' },
-    ]);
+    expect(last).toEqual(['config', GA_MEASUREMENT_ID, { page_path: '/privacy' }]);
   });
 });
