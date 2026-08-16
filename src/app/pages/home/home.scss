@@ -1,18 +1,15 @@
-body {
+:host {
+	display: block;
 	font-family: 'Montserrat', sans-serif;
 	width: 100%;
-	margin:0;
-	background-color: #FFFFFF;
-	background-image: url(img/bg.webp);
-	background-repeat: no-repeat;
-	background-size: cover;
-	background-position: center;
-	background-attachment: fixed;
+	margin: 0;
 }
 
 .icons > a {
 	text-decoration: none;
 	color: darkgray;
+	/* Live HTML keeps trailing whitespace inside each <a>; Angular strips it. */
+	margin-inline-end: 0.28em;
 }
 
 .location > a {
@@ -88,9 +85,9 @@ body {
 }
 
 @media (min-width: 100px) and (max-width: 728px) and (orientation:portrait) {
-	body {
+	:host {
 		width: 100%;
-		margin:0;
+		margin: 0;
 		overflow-x: hidden;
 	}
 	hr {
@@ -155,9 +152,9 @@ body {
 }
 
 @media (min-width: 100px) and (max-width: 728px) and (orientation:landscape) {
-	body {
+	:host {
 		width: 100%;
-		margin:0;
+		margin: 0;
 		overflow-x: hidden;
 	}
 	hr {
@@ -222,9 +219,9 @@ body {
 }
 
 @media only screen and (min-width: 728px) and (max-width: 1000px) {
-	body {
+	:host {
 		width: 100%;
-		margin:0;
+		margin: 0;
 		overflow-x: hidden;
 	}
 	hr {
@@ -343,10 +340,4 @@ body {
 
 .avatar {
 	text-align: center;
-}
-
-footer {
-	text-align: center;
-	color: white;
-	font-size: 1.2em;
 }

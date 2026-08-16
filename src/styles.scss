@@ -1,0 +1,39 @@
+/* Global layout + npm CSS libraries (built into the bundle).
+ * Home matches live: only Montserrat 700 (live Google Fonts link was weight 700).
+ * CV uses Playfair Display + Source Sans 3. */
+@import '@fontsource/montserrat/latin-400.css';
+@import '@fontsource/montserrat/latin-700.css';
+@import '@fontsource/playfair-display/latin-400.css';
+@import '@fontsource/playfair-display/latin-400-italic.css';
+@import '@fontsource/playfair-display/latin-600.css';
+@import '@fontsource/playfair-display/latin-700.css';
+@import '@fontsource/source-sans-3/latin-400.css';
+@import '@fontsource/source-sans-3/latin-400-italic.css';
+@import '@fontsource/source-sans-3/latin-500.css';
+@import '@fontsource/source-sans-3/latin-600.css';
+@import '@fontsource/source-sans-3/latin-700.css';
+@import 'font-awesome/css/font-awesome.css';
+@import 'animate.css/animate.css';
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  background-color: #ffffff;
+  background-image: url('/img/bg.webp');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+app-root {
+  display: block;
+}

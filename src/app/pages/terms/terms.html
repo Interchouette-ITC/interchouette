@@ -1,79 +1,5 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Terms of Service - Interchouette</title>
-    <link rel="stylesheet" type="text/css" href="../style.min.css" />
-    <link rel="shortcut icon" href="../favicon.ico" type="image/x-icon" />
-    <link
-      href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap"
-      rel="stylesheet"
-    />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="Terms of Service for Interchouette applications and services."
-    />
-    <meta name="robots" content="index, follow" />
-    <style>
-      .legal {
-        max-width: 720px;
-        margin: 4% auto 2%;
-        padding: 2rem 2.5rem;
-        background: #fff;
-        border-radius: 5px;
-        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
-        color: #444;
-        font-weight: 400;
-        line-height: 1.6;
-        font-size: 0.95rem;
-      }
-
-      .legal h1 {
-        font-size: 1.6rem;
-        color: #555;
-        margin-top: 0;
-      }
-
-      .legal h2 {
-        font-size: 1.15rem;
-        color: #555;
-        margin-top: 1.75rem;
-      }
-
-      .legal a {
-        color: #2a6ebb;
-      }
-
-      .legal .meta {
-        color: #888;
-        font-size: 0.85rem;
-        margin-bottom: 1.5rem;
-      }
-
-      .legal ul {
-        padding-left: 1.25rem;
-      }
-
-      .back {
-        display: inline-block;
-        margin-bottom: 1rem;
-        color: #2a6ebb;
-        text-decoration: none;
-      }
-
-      @media screen and (max-width: 768px) {
-        .legal {
-          margin: 2% 4%;
-          padding: 1.5rem;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <article class="legal">
-      <a class="back" href="/">&larr; Interchouette</a>
+<article class="legal">
+      <a class="back" routerLink="/">&larr; Interchouette</a>
       <h1>Terms of Service</h1>
       <p class="meta">Last updated: 22 July 2026</p>
 
@@ -152,7 +78,7 @@
       <h2>6. Privacy</h2>
       <p>
         Our collection and use of personal data is described in our
-        <a href="/privacy/">Privacy Policy</a>, which forms part of these Terms.
+        <a href="/privacy">Privacy Policy</a>, which forms part of these Terms.
       </p>
 
       <h2>7. Disclaimer</h2>
@@ -196,15 +122,4 @@
         <a href="https://interchouette.net">https://interchouette.net</a>
       </p>
     </article>
-
-    <footer>
-      Interchouette <span id="js-current-year">2026</span> - All Rights Reserved
-      · <a href="/privacy/" style="color: inherit">Privacy</a> ·
-      <a href="/terms/" style="color: inherit">Terms</a>
-    </footer>
-    <script>
-      document.getElementById("js-current-year").textContent =
-        new Date().getFullYear();
-    </script>
-  </body>
-</html>
+<app-site-footer [showLegalLinks]="true" />

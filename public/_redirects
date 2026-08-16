@@ -1,0 +1,3 @@
+# Static host URL rules (Render Static / similar).
+# CV lives as a directory (CV/index.html + PDF), so canonical URL has a trailing slash.
+/CV  /CV/  301
