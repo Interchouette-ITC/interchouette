@@ -28,6 +28,8 @@ No content inserts at runtime. No Postgres for knowledge or chat.
 | `OPENROUTER_API_KEY` | Away `ITCy` LLM (else FTS fallback)                                            |
 | `OPENROUTER_MODEL`   | Override free model                                                            |
 
+Bot OAuth scopes required for DM + presence: `im:write`, `chat:write`, `users:read`, plus `im:history` for Socket Mode inbound.
+
 Live replies: Greg answers in the bot DM with `[S-XXXX] message` (the visitor short code from the bot line).
 
 ## Images
