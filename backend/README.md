@@ -17,7 +17,8 @@ No content inserts at runtime. No Postgres.
 
 ## Images
 
-`interchouette/interchouette-mcp:latest` — port `8080`, path `/interchouette`.
+`interchouette/interchouette-mcp:latest` or `:dev` — port `8080`, path `/interchouette`.
+Tags: **`:dev`** and **`:latest` only** (no semver tags).
 
 ## Local
 

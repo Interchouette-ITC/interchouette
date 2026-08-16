@@ -6,4 +6,4 @@ Streamable HTTP MCP. Content is the committed SQLite file `db/interchouette.db` 
 - Port: 8080
 - Path: /interchouette
 
-Tags: `dev` (tip), version + `latest` (release).
+Tags: `dev` and `latest` only.
