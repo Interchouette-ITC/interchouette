@@ -9,7 +9,7 @@ use crate::db::{KnowledgeDoc, Store};
 
 /// Ingest all `*.md` under `knowledge_dir` (expects `en/` and `nl/` trees).
 ///
-/// The markdown tree is the source of truth (git). SQLite is rebuilt from it.
+/// The markdown tree is the source of truth (git). `SQLite` is rebuilt from it.
 ///
 /// # Errors
 /// Returns when the directory is missing or a file cannot be read.
