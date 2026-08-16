@@ -7,8 +7,9 @@ Public site for [interchouette.net](https://interchouette.net/): Gregory Roussac
 - Angular 22 (standalone, signals, zoneless, OnPush, SCSS)
 - Fonts / icons / motion via npm (`@fontsource/*`, `font-awesome`, `animate.css`) built into the CSS bundle (no CDN links in `index.html`)
 - Build-time prerender for `/`, `/CV`, `/privacy`, `/terms`
+- Per-route SEO: unique titles/descriptions, canonical, Open Graph / Twitter, JSON-LD
 - URLs: no trailing slash (`/CV/` → `/CV` on the static host)
-- Vitest (unit) · Playwright specs (MCP / host Chrome; no browser download)
+- Vitest (unit) · Playwright desktop / mobile / tablet (host Chrome; no browser download)
 - Render Static Site (CDN; build on deploy)
 
 ## Develop
@@ -42,4 +43,20 @@ npm run ci
 
 CI (GitHub Actions on `dev` / PRs into `dev`): Prettier, `npm audit --audit-level=high`, production build + prerender, unit tests, and a static publish layout check. Pin Node with `.nvmrc` (**24.19.0**). On push to `dev` after those steps succeed, CI calls the Render deploy hook (`RENDER_DEPLOY_HOOK_URL` org secret). Keep Render Auto-Deploy **Off** so only that hook triggers production.
 
-E2E: Playwright **specs** live in `e2e/`; config is `.cursor/scripts/playwright.config.ts` (`npm run e2e`). Use the shared Playwright MCP / host Chrome. **Do not** run `playwright install` or download browsers in this repo. If you install npm deps in an environment that would fetch browsers, set `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`.
+E2E: Playwright specs in `e2e/` (`npm run e2e`) with **desktop**, **mobile** (Pixel 7), and **tablet** (834×1194) projects via host Chrome. **Do not** run `playwright install` or download browsers in this repo. If you install npm deps in an environment that would fetch browsers, set `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`.
+
+## Render redirects (required)
+
+Dashboard → Redirects/Rewrites must **not** Redirect `/*` to `/index.html` (that 301s `/terms` → `/index.html` and breaks clean URLs). Use:
+
+| Source                       | Destination               | Action                       |
+| ---------------------------- | ------------------------- | ---------------------------- |
+| `/CV/CV_Gregory_Roussac.pdf` | `/CV/Gregory_Roussac.pdf` | Redirect                     |
+| `/CV/CV_Roussac.pdf`         | `/CV/Gregory_Roussac.pdf` | Redirect                     |
+| `/CV/`                       | `/CV`                     | Redirect                     |
+| `/terms`                     | `/terms/index.html`       | **Rewrite**                  |
+| `/privacy`                   | `/privacy/index.html`     | **Rewrite**                  |
+| `/CV`                        | `/CV/index.html`          | **Rewrite**                  |
+| `/*`                         | `/index.html`             | **Rewrite** (never Redirect) |
+
+Same rules live in `public/_redirects` for hosts that honor it.
