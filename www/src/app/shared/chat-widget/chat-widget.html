@@ -253,15 +253,16 @@
         @if (showEmail) {
           <form class="chat-panel__email" (submit)="onEmailSubmit($event)">
             <input
+              #emailField
               type="email"
               name="email"
-              [value]="emailDraft"
-              (input)="onEmailInput($event)"
+              value=""
+              required
               placeholder="you@company.com"
               autocomplete="email"
               aria-label="Email for Greg to follow up"
             />
-            <button type="submit">Save</button>
+            <button type="submit" class="chat-panel__email-save">Save</button>
           </form>
         }
         <form class="chat-panel__compose" (submit)="onSubmit($event)">
@@ -278,26 +279,27 @@
           <label class="chat-panel__field">
             <span class="visually-hidden">Message</span>
             <input
+              #messageField
               type="text"
               name="message"
-              [value]="draft"
-              (input)="onDraftInput($event)"
+              value=""
               placeholder="Ask anything…"
               autocomplete="off"
               maxlength="2000"
               aria-label="Message"
               [disabled]="!chat.wsReady() || !!chat.error()"
+              (input)="onDraftInput($event)"
             />
           </label>
           <button
             type="submit"
             class="chat-panel__send"
-            [disabled]="!draft.trim() || !chat.wsReady() || !!chat.error()"
+            [disabled]="!canSend() || !chat.wsReady() || !!chat.error()"
             aria-label="Send"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path
-                d="M4.5 12h12M13 6.5 19.5 12 13 17.5"
+                d="M12 19.5V7.5M6.5 13 12 6.5 17.5 13"
                 fill="none"
                 stroke="currentColor"
                 stroke-width="2.35"

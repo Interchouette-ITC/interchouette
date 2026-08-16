@@ -89,6 +89,23 @@
   font-size: 0.95rem;
 }
 
+.about-ferris {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: text-bottom;
+  margin: 0 0 0 -0.15em;
+  line-height: 1;
+  position: relative;
+  top: calc(0.12em + 1px);
+}
+
+.about-ferris img {
+  width: 1.45em;
+  height: 1.45em;
+  object-fit: contain;
+  display: block;
+}
+
 .back {
   display: inline-block;
   margin-bottom: 1rem;

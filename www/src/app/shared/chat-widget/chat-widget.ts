@@ -5,6 +5,7 @@ import {
   effect,
   ElementRef,
   inject,
+  Injector,
   OnDestroy,
   signal,
   viewChild,
@@ -36,6 +37,13 @@ const NUDGE_HOOKS = [
   'Permission to be curious granted',
   'Even Wasm needs a hello',
   'Come say boop',
+  'Got cookies? We only nibble the optional ones',
+  'This chat is gluten-free. The cookie banner is not.',
+  'Accept cookies elsewhere; accept jokes here',
+  '404: cookie crumb not found (send a hello instead)',
+  'Our cookies are non-essential. Our humour is mandatory',
+  'Chef’s special: consent with a side of puns',
+  'Milk and cookies at night? Chat first, crumbs later',
 ] as const;
 
 @Component({
@@ -49,6 +57,7 @@ const NUDGE_HOOKS = [
 })
 export class ChatWidget implements OnDestroy {
   protected readonly chat = inject(ChatService);
+  private readonly injector = inject(Injector);
   protected readonly mounted = signal(false);
   /** Soft invite bubble next to the chat button. */
   protected readonly nudgeHint = signal(false);
@@ -59,9 +68,12 @@ export class ChatWidget implements OnDestroy {
   /** Near-fullscreen chat panel. */
   protected readonly expanded = signal(false);
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
+  private readonly emailField = viewChild<ElementRef<HTMLInputElement>>('emailField');
+  private readonly messageField = viewChild<ElementRef<HTMLInputElement>>('messageField');
 
+  protected readonly canSend = signal(false);
+  /** Always a string — never leave compose bindings as undefined. */
   protected draft = '';
-  protected emailDraft = '';
   protected showEmail = false;
 
   private nudgeTimer: ReturnType<typeof setInterval> | null = null;
@@ -123,24 +135,54 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected onDraftInput(event: Event): void {
-    this.draft = (event.target as HTMLInputElement).value;
-  }
-
-  protected onEmailInput(event: Event): void {
-    this.emailDraft = (event.target as HTMLInputElement).value;
+    const value = (event.target as HTMLInputElement).value;
+    this.canSend.set(value.trim().length > 0);
   }
 
   protected onSubmit(event: Event): void {
     event.preventDefault();
-    const text = this.draft;
+    const input = this.messageField()?.nativeElement;
+    if (!input) {
+      return;
+    }
+    const text = String(input.value ?? '').trim();
+    input.value = '';
     this.draft = '';
+    this.canSend.set(false);
+    if (!text) {
+      return;
+    }
     this.chat.send(text);
     queueMicrotask(() => this.scrollToBottom());
+  }
+
+  protected onEmailSubmit(event: Event): void {
+    event.preventDefault();
+    const input = this.emailField()?.nativeElement;
+    if (!input) {
+      return;
+    }
+    if (!input.reportValidity()) {
+      return;
+    }
+    const email = String(input.value ?? '').trim();
+    if (!email) {
+      return;
+    }
+    this.chat.sendEmail(email);
+  }
+
+  protected toggleEmail(): void {
+    this.showEmail = !this.showEmail;
+    if (this.showEmail) {
+      this.scheduleEmailSeed();
+    }
   }
 
   protected onChip(text: string): void {
     if (text === 'Leave my email') {
       this.showEmail = true;
+      this.scheduleEmailSeed();
       return;
     }
     if (!this.chat.wsReady()) {
@@ -150,15 +192,19 @@ export class ChatWidget implements OnDestroy {
     queueMicrotask(() => this.scrollToBottom());
   }
 
-  protected onEmailSubmit(event: Event): void {
-    event.preventDefault();
-    this.chat.sendEmail(this.emailDraft);
-    this.emailDraft = '';
-    this.showEmail = false;
+  private scheduleEmailSeed(): void {
+    afterNextRender(() => this.seedEmailField(), { injector: this.injector });
   }
 
-  protected toggleEmail(): void {
-    this.showEmail = !this.showEmail;
+  private seedEmailField(): void {
+    const input = this.emailField()?.nativeElement;
+    if (!input) {
+      return;
+    }
+    const saved = this.chat.readSavedEmail();
+    if (saved) {
+      input.value = saved;
+    }
   }
 
   protected quickChips(): string[] {

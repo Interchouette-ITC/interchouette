@@ -26,4 +26,13 @@ export const CHAT_WIDGET_ENABLED = CHAT_WIDGET_ENABLED_ENV;
 
 export const CHAT_STORAGE_KEY = 'ic.chat.v1';
 
+/** Visitor email left in chat for follow-up (local only). */
+export const CHAT_EMAIL_KEY = 'ic.chat.email';
+
+/** Last email that was announced to Slack (dedupe across reloads). */
+export const CHAT_EMAIL_ANNOUNCED_KEY = 'ic.chat.email.announced';
+
 export const CONTACT_EMAIL = 'contact@interchouette.net';
+
+/** Non-essential cookie / analytics consent choice. */
+export const CONSENT_STORAGE_KEY = 'ic.consent.v1';

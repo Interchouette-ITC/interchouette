@@ -4,6 +4,7 @@ import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
 import { GA_MEASUREMENT_ID } from './analytics.constants';
+import { ConsentService } from './consent.service';
 
 declare global {
   interface Window {
@@ -20,15 +21,30 @@ const NO_INTERACTION_FALLBACK_MS = 12_000;
 export class AnalyticsService {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router);
+  private readonly consent = inject(ConsentService);
   private booted = false;
   private arming = false;
 
   /**
-   * Same GA4 tag as live interchouette.net (`G-TGZKWJK2D3`).
-   * Browser only: first interaction, or a late fallback if nobody interacts.
+   * Browser only. Boots GA after non-essential cookie consent (Accept).
+   * If consent was already stored as accepted, arms the deferred loader.
    */
   init(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    this.consent.hydrate();
+    if (this.consent.acceptsNonEssential()) {
+      this.initAfterConsent();
+    }
+  }
+
+  /** Call after the visitor accepts non-essential cookies. */
+  initAfterConsent(): void {
     if (this.booted || this.arming || !isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    if (!this.consent.acceptsNonEssential()) {
       return;
     }
     this.arming = true;
@@ -53,8 +69,6 @@ export class AnalyticsService {
       window.addEventListener(type, bootOnce, { capture: true, passive: true, once: true });
     }
 
-    // Do not use requestIdleCallback here: it fires as soon as the main thread
-    // is quiet and pulls gtag into the Lighthouse "unused JS" window.
     fallbackId = window.setTimeout(bootOnce, NO_INTERACTION_FALLBACK_MS);
   }
 

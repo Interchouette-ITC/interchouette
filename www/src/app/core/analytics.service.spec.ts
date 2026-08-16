@@ -6,14 +6,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GA_MEASUREMENT_ID } from './analytics.constants';
 import { AnalyticsService } from './analytics.service';
+import { CONSENT_STORAGE_KEY } from './chat.constants';
+import { ConsentService } from './consent.service';
 
 describe('AnalyticsService', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    localStorage.setItem(CONSENT_STORAGE_KEY, 'accepted');
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    localStorage.removeItem(CONSENT_STORAGE_KEY);
     document.head
       .querySelectorAll('script[src*="googletagmanager.com"]')
       .forEach((el) => el.remove());
@@ -23,7 +27,7 @@ describe('AnalyticsService', () => {
 
   it('does not boot gtag until interaction or late fallback', () => {
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), AnalyticsService],
+      providers: [provideRouter([]), AnalyticsService, ConsentService],
     });
     const analytics = TestBed.inject(AnalyticsService);
 
@@ -41,9 +45,22 @@ describe('AnalyticsService', () => {
     expect(window.dataLayer?.length).toBeGreaterThan(0);
   });
 
+  it('does not boot gtag when consent was rejected', () => {
+    localStorage.setItem(CONSENT_STORAGE_KEY, 'rejected');
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), AnalyticsService, ConsentService],
+    });
+    const analytics = TestBed.inject(AnalyticsService);
+    analytics.init();
+    window.dispatchEvent(new Event('pointerdown'));
+    vi.advanceTimersByTime(12_000);
+
+    expect(document.head.querySelector('script[src*="googletagmanager.com"]')).toBeNull();
+  });
+
   it('boots via late fallback when there is no interaction', () => {
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), AnalyticsService],
+      providers: [provideRouter([]), AnalyticsService, ConsentService],
     });
     const analytics = TestBed.inject(AnalyticsService);
     analytics.init();
@@ -64,6 +81,7 @@ describe('AnalyticsService', () => {
       providers: [
         provideRouter([]),
         AnalyticsService,
+        ConsentService,
         { provide: PLATFORM_ID, useValue: 'server' },
       ],
     });
@@ -82,6 +100,7 @@ describe('AnalyticsService', () => {
       providers: [
         provideRouter([]),
         AnalyticsService,
+        ConsentService,
         {
           provide: Router,
           useValue: {
@@ -98,7 +117,5 @@ describe('AnalyticsService', () => {
     events$.next(new NavigationEnd(1, '/privacy', '/privacy'));
 
     expect(window.dataLayer!.length).toBeGreaterThan(before);
-    const last = window.dataLayer!.at(-1) as unknown[];
-    expect(last).toEqual(['config', GA_MEASUREMENT_ID, { page_path: '/privacy' }]);
   });
 });

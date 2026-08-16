@@ -60,6 +60,13 @@ struct ClientWsMessage {
     kind: String,
     text: Option<String>,
     email: Option<String>,
+    /// When `false`, bind email on the session but do not post to Slack.
+    #[serde(default = "default_announce")]
+    announce: bool,
+}
+
+fn default_announce() -> bool {
+    true
 }
 
 /// Mount chat routes under `/v1`.
@@ -189,9 +196,20 @@ async fn handle_client_msg(state: &ChatState, session_id: &str, msg: ClientWsMes
     };
     match msg.kind.as_str() {
         "email" => {
-            if let Some(email) = msg.email.filter(|e| !e.trim().is_empty()) {
+            if let Some(email) = msg
+                .email
+                .map(|e| e.trim().to_string())
+                .filter(|e| !e.is_empty())
+            {
+                let unchanged = session
+                    .visitor_email
+                    .as_ref()
+                    .is_some_and(|prev| prev.eq_ignore_ascii_case(&email));
                 state.sessions.set_email(session_id, email.clone()).await;
-                let _ = post_to_session_thread(state, &session, &format!("EMAIL: {email}")).await;
+                if msg.announce && !unchanged {
+                    let _ =
+                        post_to_session_thread(state, &session, &format!("EMAIL: {email}")).await;
+                }
             }
         }
         "message" => {

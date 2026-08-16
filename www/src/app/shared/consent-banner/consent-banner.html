@@ -1,0 +1,29 @@
+@if (visible()) {
+  <aside class="consent" role="dialog" aria-label="Cookie consent">
+    <p class="consent__joke">{{ joke() }}</p>
+    <p class="consent__body">
+      We use
+      <strong>non-essential cookies</strong>
+      (analytics) only if you accept. Essential site bits and optional chat stay under
+      <a routerLink="/privacy">Privacy</a>
+      .
+    </p>
+    <div class="consent__actions">
+      <button type="button" class="consent__btn consent__btn--ghost" (click)="reject()">
+        Decline
+      </button>
+      <button type="button" class="consent__btn consent__btn--primary" (click)="accept()">
+        Accept
+        <img
+          class="consent__cookie"
+          src="/img/cookie.png"
+          width="28"
+          height="28"
+          alt=""
+          decoding="async"
+          aria-hidden="true"
+        />
+      </button>
+    </div>
+  </aside>
+}

@@ -1,6 +1,13 @@
 import { Injectable, computed, effect, signal } from '@angular/core';
 
-import { CHAT_STORAGE_KEY, CHAT_WIDGET_ENABLED, chatApiBase, chatWsUrl } from './chat.constants';
+import {
+  CHAT_EMAIL_ANNOUNCED_KEY,
+  CHAT_EMAIL_KEY,
+  CHAT_STORAGE_KEY,
+  CHAT_WIDGET_ENABLED,
+  chatApiBase,
+  chatWsUrl,
+} from './chat.constants';
 
 const CHAT_OPENED_KEY = 'ic.chat.opened';
 
@@ -53,6 +60,8 @@ export class ChatService {
   private socket: WebSocket | null = null;
   private sessionId: string | null = null;
   private warming = false;
+  /** Last email posted on this socket session (dedupe Save spam). */
+  private lastPostedEmail = '';
 
   constructor() {
     effect(() => {
@@ -195,10 +204,70 @@ export class ChatService {
 
   sendEmail(email: string): void {
     const trimmed = email.trim();
-    if (!trimmed || !this.socket || this.socket.readyState !== WebSocket.OPEN) {
+    if (!trimmed) {
       return;
     }
-    this.socket.send(JSON.stringify({ type: 'email', email: trimmed }));
+    // Always keep a local copy (localStorage, not cookies). Notify only when the socket is up.
+    this.persistEmail(trimmed);
+    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+    if (this.lastPostedEmail.toLowerCase() === trimmed.toLowerCase()) {
+      return;
+    }
+    this.lastPostedEmail = trimmed;
+    const announced = this.readAnnouncedEmail();
+    const shouldAnnounce = announced.toLowerCase() !== trimmed.toLowerCase();
+    if (shouldAnnounce) {
+      this.persistAnnouncedEmail(trimmed);
+    }
+    this.socket.send(JSON.stringify({ type: 'email', email: trimmed, announce: shouldAnnounce }));
+  }
+
+  /** Last email the visitor saved in chat (browser localStorage). */
+  readSavedEmail(): string {
+    return this.readStorageKey(CHAT_EMAIL_KEY);
+  }
+
+  private readAnnouncedEmail(): string {
+    return this.readStorageKey(CHAT_EMAIL_ANNOUNCED_KEY);
+  }
+
+  private readStorageKey(key: string): string {
+    if (typeof localStorage === 'undefined') {
+      return '';
+    }
+    try {
+      const raw = localStorage.getItem(key)?.trim() ?? '';
+      if (!raw || raw === 'undefined' || raw === 'null') {
+        if (raw === 'undefined' || raw === 'null') {
+          localStorage.removeItem(key);
+        }
+        return '';
+      }
+      return raw;
+    } catch {
+      return '';
+    }
+  }
+
+  private persistEmail(email: string): void {
+    this.writeStorageKey(CHAT_EMAIL_KEY, email);
+  }
+
+  private persistAnnouncedEmail(email: string): void {
+    this.writeStorageKey(CHAT_EMAIL_ANNOUNCED_KEY, email);
+  }
+
+  private writeStorageKey(key: string, value: string): void {
+    if (typeof localStorage === 'undefined') {
+      return;
+    }
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      /* quota / private mode */
+    }
   }
 
   private async tryResumeSocket(sessionId: string): Promise<boolean> {
@@ -228,6 +297,7 @@ export class ChatService {
   ): void {
     this.socket?.close();
     this.wsReady.set(false);
+    this.lastPostedEmail = '';
     const ws = new WebSocket(chatWsUrl(sessionId));
     this.socket = ws;
     let settled = false;
