@@ -48,6 +48,18 @@ const NUDGE_HOOKS = [
   'Chef’s special: consent with a side of puns',
   'Milk and cookies at night? Chat first, crumbs later',
 ] as const;
+const RESUME_NUDGE_HOOKS = [
+  'Your previous chat is still warm',
+  'Welcome back, thread unfinished',
+  'We saved your last conversation',
+  'Plot twist: the chat remembers you',
+  'Pick up where you left off',
+  'Same owl, same ticket, new hello',
+  'That chat from earlier? Still here',
+  'No amnesia in this widget',
+  'Your transcript survived the reload',
+  'Continue the saga in one click',
+] as const;
 
 @Component({
   selector: 'app-chat-widget',
@@ -109,7 +121,7 @@ export class ChatWidget implements OnDestroy {
       queueMicrotask(() => this.scrollToBottom());
     });
     effect(() => {
-      if (this.chat.open() || this.chat.hasOpenedThisSession()) {
+      if (this.chat.open()) {
         this.dismissBubbleAndBounce();
         return;
       }
@@ -265,6 +277,12 @@ export class ChatWidget implements OnDestroy {
   }
 
   private buildNudgeCopy(): string {
+    if (this.chat.priorConversation()) {
+      const hook =
+        RESUME_NUDGE_HOOKS[Math.floor(Math.random() * RESUME_NUDGE_HOOKS.length)] ??
+        RESUME_NUDGE_HOOKS[0];
+      return `${hook}. Open chat to continue.`;
+    }
     const hook = NUDGE_HOOKS[Math.floor(Math.random() * NUDGE_HOOKS.length)] ?? NUDGE_HOOKS[0];
     const who =
       this.chat.hero() === 'greg'
@@ -396,10 +414,19 @@ export class ChatWidget implements OnDestroy {
   }
 
   private tryStartNudge(): void {
-    if (this.bubbleDismissed || this.chat.hasOpenedThisSession() || this.chat.open()) {
+    if (this.bubbleDismissed || this.chat.open()) {
       return;
     }
     if (!this.chat.ready()) {
+      return;
+    }
+    // Prior transcript: invite back even after reload (sessionStorage open flag).
+    if (this.chat.priorConversation()) {
+      this.revealBubble();
+      this.startBounceLoop();
+      return;
+    }
+    if (this.chat.hasOpenedThisSession()) {
       return;
     }
     this.revealBubble();
@@ -415,14 +442,20 @@ export class ChatWidget implements OnDestroy {
   }
 
   private startBounceLoop(): void {
-    if (this.nudgeTimer || this.bubbleDismissed || this.chat.hasOpenedThisSession()) {
+    if (this.nudgeTimer || this.bubbleDismissed) {
+      return;
+    }
+    if (!this.chat.priorConversation() && this.chat.hasOpenedThisSession()) {
       return;
     }
     this.nudgeTimer = setInterval(() => this.pulseBounce(), NUDGE_EVERY_MS);
   }
 
   private pulseBounce(): void {
-    if (this.chat.open() || this.chat.hasOpenedThisSession() || !this.chat.ready()) {
+    if (this.chat.open() || !this.chat.ready()) {
+      return;
+    }
+    if (!this.chat.priorConversation() && this.chat.hasOpenedThisSession()) {
       return;
     }
     if (this.nudgeHint()) {

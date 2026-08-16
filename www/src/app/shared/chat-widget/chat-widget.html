@@ -52,6 +52,9 @@
             decoding="async"
           />
         </span>
+        @if (!chat.open() && (chat.mode() === 'live' || chat.mode() === 'away')) {
+          <span class="chat-fab__badge" [attr.data-mode]="chat.mode()" aria-hidden="true"></span>
+        }
       </button>
     </div>
 

@@ -229,10 +229,19 @@
   width: 0.72rem;
   height: 0.72rem;
   border-radius: 999px;
-  background: var(--chat-ok);
   border: 2px solid #27084e;
+  background: #cfcfcf;
+  pointer-events: none;
+}
+
+.chat-fab__badge[data-mode='live'] {
+  background: var(--chat-ok);
   box-shadow: 0 0 0 0 rgba(47, 211, 154, 0.55);
   animation: chatStatusPulse 2s ease-out infinite;
+}
+
+.chat-fab__badge[data-mode='away'] {
+  background: var(--chat-warn);
 }
 
 .chat-panel {

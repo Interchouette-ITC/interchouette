@@ -87,6 +87,34 @@ impl SessionRegistry {
             s.visitor_email = Some(email);
         }
     }
+
+    /// Update presence mode for one session. Returns `true` when it changed.
+    pub async fn set_mode(&self, id: &str, mode: PresenceMode) -> bool {
+        let mut map = self.sessions.write().await;
+        let Some(s) = map.get_mut(id) else {
+            return false;
+        };
+        if s.mode == mode {
+            return false;
+        }
+        s.mode = mode;
+        drop(map);
+        true
+    }
+
+    /// Apply presence to every live session. Returns ids whose mode changed.
+    pub async fn set_all_modes(&self, mode: PresenceMode) -> Vec<String> {
+        let mut map = self.sessions.write().await;
+        let mut changed = Vec::new();
+        for (id, s) in map.iter_mut() {
+            if s.mode != mode {
+                s.mode = mode;
+                changed.push(id.clone());
+            }
+        }
+        drop(map);
+        changed
+    }
 }
 
 /// `IC-` + 8 unambiguous alphanumerics (no 0/O/1/I).

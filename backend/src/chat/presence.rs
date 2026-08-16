@@ -1,8 +1,10 @@
 //! Greg Slack presence (live vs away).
 
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use serde::Serialize;
+use tokio::sync::RwLock;
 
 /// Chat handoff mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -57,8 +59,23 @@ impl PresenceSnapshot {
 pub enum PresenceSource {
     /// Fixed mode (local / tests / missing Slack token).
     Fixed(PresenceMode),
-    /// Slack `users.getPresence` + status text (Z / away / DND / meeting => away).
+    /// Slack presence + paused notifications (DND) + custom status markers => away.
     Slack(Arc<SlackPresence>),
+}
+
+/// True when Slack `dnd.info` says notifications are paused / DND is on.
+#[must_use]
+pub fn dnd_info_means_away(body: &serde_json::Value) -> bool {
+    if body["ok"] != true {
+        return false;
+    }
+    if body["dnd_enabled"] == true {
+        return true;
+    }
+    if body["snooze_enabled"] == true {
+        return true;
+    }
+    false
 }
 
 /// True when Slack custom status should treat Greg as away despite `presence=active`.
@@ -70,7 +87,15 @@ pub fn status_text_means_away(status_text: &str, status_emoji: &str) -> bool {
         return false;
     }
     // Standalone Z / sleep markers (not every status that merely contains the letter "z").
-    if status == "z" || status == "zzz" || emoji == ":z:" || emoji.contains("zzz") {
+    if is_z_sleep_marker(&status) {
+        return true;
+    }
+    if emoji == ":z:"
+        || emoji.contains("zzz")
+        || emoji.contains("sleeping")
+        || status_text.contains('\u{1F4A4}') // 💤
+        || status_emoji.contains('\u{1F4A4}')
+    {
         return true;
     }
     let blob = format!("{status} {emoji}");
@@ -79,6 +104,11 @@ pub fn status_text_means_away(status_text: &str, status_emoji: &str) -> bool {
         || blob.contains("do not disturb")
         || blob.contains("meeting")
         || blob.contains("in a call")
+}
+
+/// `Z`, `Zz`, `zzz`, … only (not "organizing").
+fn is_z_sleep_marker(status: &str) -> bool {
+    !status.is_empty() && status.bytes().all(|b| b == b'z')
 }
 
 impl PresenceSource {
@@ -103,6 +133,7 @@ impl PresenceSource {
         Self::Slack(Arc::new(SlackPresence {
             token,
             user_id: user,
+            cache: RwLock::new(None),
         }))
     }
 
@@ -120,12 +151,33 @@ impl PresenceSource {
 pub struct SlackPresence {
     token: String,
     user_id: String,
+    /// Short TTL so WS connect + message + poller do not stampede Slack.
+    cache: RwLock<Option<(Instant, PresenceMode)>>,
 }
 
 impl SlackPresence {
+    const CACHE_TTL: Duration = Duration::from_secs(10);
+
     async fn resolve(&self) -> PresenceMode {
+        if let Some(mode) = self.cached_mode().await {
+            return mode;
+        }
+        let mode = self.resolve_fresh().await;
+        *self.cache.write().await = Some((Instant::now(), mode));
+        mode
+    }
+
+    async fn cached_mode(&self) -> Option<PresenceMode> {
+        let guard = self.cache.read().await;
+        let (at, mode) = (*guard)?;
+        let hit = at.elapsed() < Self::CACHE_TTL;
+        drop(guard);
+        hit.then_some(mode)
+    }
+
+    async fn resolve_fresh(&self) -> PresenceMode {
         let client = match reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(8))
+            .timeout(Duration::from_secs(8))
             .build()
         {
             Ok(c) => c,
@@ -158,10 +210,33 @@ impl SlackPresence {
         if !presence_online {
             return PresenceMode::Away;
         }
+        if self.dnd_means_away(&client).await {
+            return PresenceMode::Away;
+        }
         if self.status_means_away(&client).await {
             return PresenceMode::Away;
         }
         PresenceMode::Live
+    }
+
+    /// Slack "Pause notifications" / DND (`dnd:read` required on the bot).
+    async fn dnd_means_away(&self, client: &reqwest::Client) -> bool {
+        let url = format!("https://slack.com/api/dnd.info?user={}", self.user_id);
+        let Ok(resp) = client.get(url).bearer_auth(&self.token).send().await else {
+            return false;
+        };
+        let Ok(body) = resp.json::<serde_json::Value>().await else {
+            return false;
+        };
+        if body["ok"] != true {
+            if body["error"].as_str() == Some("missing_scope") {
+                tracing::warn!(
+                    "dnd.info missing_scope (need dnd:read); paused notifications ignored"
+                );
+            }
+            return false;
+        }
+        dnd_info_means_away(&body)
     }
 
     async fn status_means_away(&self, client: &reqwest::Client) -> bool {
@@ -187,7 +262,31 @@ impl SlackPresence {
 
 #[cfg(test)]
 mod tests {
-    use super::status_text_means_away;
+    use super::{dnd_info_means_away, status_text_means_away};
+    use serde_json::json;
+
+    #[test]
+    fn dnd_or_snooze_is_away() {
+        assert!(dnd_info_means_away(&json!({
+            "ok": true,
+            "dnd_enabled": true,
+            "snooze_enabled": false
+        })));
+        assert!(dnd_info_means_away(&json!({
+            "ok": true,
+            "dnd_enabled": false,
+            "snooze_enabled": true
+        })));
+        assert!(!dnd_info_means_away(&json!({
+            "ok": true,
+            "dnd_enabled": false,
+            "snooze_enabled": false
+        })));
+        assert!(!dnd_info_means_away(&json!({
+            "ok": false,
+            "error": "missing_scope"
+        })));
+    }
 
     #[test]
     fn empty_status_is_live() {
@@ -205,9 +304,12 @@ mod tests {
     #[test]
     fn z_and_zzz_are_away() {
         assert!(status_text_means_away("Z", ""));
+        assert!(status_text_means_away("Zz", ""));
         assert!(status_text_means_away("zzz", ""));
         assert!(status_text_means_away("", ":zzz:"));
         assert!(status_text_means_away("", ":Zzz:"));
+        assert!(status_text_means_away("", ":sleeping:"));
+        assert!(status_text_means_away("napping \u{1F4A4}", ""));
     }
 
     #[test]

@@ -39,9 +39,11 @@ impl ChatState {
         }
     }
 
-    /// Start Slack Socket Mode so Greg DM replies reach live browsers.
+    /// Start Slack Socket Mode so Greg DM replies reach live browsers,
+    /// plus a presence poller so open chats flip live/away with Slack.
     pub fn spawn_background_tasks(&self) {
         crate::chat::socket::spawn_inbound(self.clone());
+        spawn_presence_watcher(self.clone());
     }
 }
 
@@ -133,6 +135,10 @@ async fn handle_socket(socket: WebSocket, session_id: String, state: ChatState) 
         return;
     };
 
+    let session = sync_session_presence(&state, &session.id)
+        .await
+        .unwrap_or(session);
+
     let mut rx = state.hub.subscribe(&session_id).await;
     let (mut sender, mut receiver) = socket.split();
 
@@ -148,12 +154,9 @@ async fn handle_socket(socket: WebSocket, session_id: String, state: ChatState) 
         .await;
     let _ = sender
         .send(Message::Text(
-            serde_json::to_string(&ChatEvent::Presence {
-                mode: session.mode.as_str().into(),
-                label: session.mode.label().into(),
-            })
-            .unwrap_or_default()
-            .into(),
+            serde_json::to_string(&presence_event(session.mode))
+                .unwrap_or_default()
+                .into(),
         ))
         .await;
 
@@ -190,8 +193,60 @@ async fn handle_socket(socket: WebSocket, session_id: String, state: ChatState) 
     }
 }
 
+fn presence_event(mode: PresenceMode) -> ChatEvent {
+    ChatEvent::Presence {
+        mode: mode.as_str().into(),
+        label: mode.label().into(),
+    }
+}
+
+/// Re-read Slack presence, update the session when it flipped, push WS when asked.
+async fn sync_session_presence(state: &ChatState, session_id: &str) -> Option<Session> {
+    let snap = state.presence.snapshot().await;
+    let changed = state.sessions.set_mode(session_id, snap.mode).await;
+    if changed {
+        state
+            .hub
+            .publish(session_id, presence_event(snap.mode))
+            .await;
+        tracing::info!(
+            session = %session_id,
+            mode = snap.mode.as_str(),
+            "chat presence updated for session"
+        );
+    }
+    state.sessions.get(session_id).await
+}
+
+/// Poll Slack presence and fan out flips to every open session.
+fn spawn_presence_watcher(state: ChatState) {
+    tokio::spawn(async move {
+        let mut ticker = tokio::time::interval(std::time::Duration::from_secs(15));
+        ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+        // First tick completes immediately; skip so we do not double-hit Slack on boot.
+        ticker.tick().await;
+        loop {
+            ticker.tick().await;
+            let snap = state.presence.snapshot().await;
+            let changed = state.sessions.set_all_modes(snap.mode).await;
+            if changed.is_empty() {
+                continue;
+            }
+            tracing::info!(
+                mode = snap.mode.as_str(),
+                sessions = changed.len(),
+                "chat presence flipped; notifying open sessions"
+            );
+            state
+                .hub
+                .publish_many(&changed, presence_event(snap.mode))
+                .await;
+        }
+    });
+}
+
 async fn handle_client_msg(state: &ChatState, session_id: &str, msg: ClientWsMessage) {
-    let Some(session) = state.sessions.get(session_id).await else {
+    let Some(session) = sync_session_presence(state, session_id).await else {
         return;
     };
     match msg.kind.as_str() {

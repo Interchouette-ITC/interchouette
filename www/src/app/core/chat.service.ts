@@ -53,6 +53,12 @@ export class ChatService {
   readonly typing = signal(false);
   /** Opaque resume / ticket code for the visitor (and Slack). */
   readonly shortCode = signal('');
+  /** True when localStorage already has a prior chat transcript. */
+  readonly priorConversation = computed(() =>
+    this.messages().some(
+      (m) => m.role === 'visitor' || m.role === 'greg' || m.role === 'itcy' || m.role === 'system',
+    ),
+  );
   readonly error = signal<string | null>(null);
   readonly connecting = signal(false);
   readonly wsReady = signal(false);

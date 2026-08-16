@@ -64,4 +64,16 @@ impl Hub {
             }
         }
     }
+
+    /// Publish the same event to every session bus that still has receivers.
+    pub async fn publish_many(&self, session_ids: &[String], event: ChatEvent) {
+        let map = self.inner.read().await;
+        for id in session_ids {
+            if let Some(bus) = map.get(id) {
+                if bus.tx.receiver_count() > 0 {
+                    let _ = bus.tx.send(event.clone());
+                }
+            }
+        }
+    }
 }
