@@ -3,8 +3,8 @@
 #   /* → /index.html (Rewrite) so Angular ** handles unknown paths.
 # Real files (CV/*.pdf, img/*, etc.) are served as-is; rewrites skip existing assets.
 
-# CV directory canonical with trailing slash
-/CV  /CV/  301
+# CV canonical without trailing slash
+/CV/  /CV  301
 
 # SPA fallback: unknown paths → Angular shell (client ** → home)
 /*  /index.html  200

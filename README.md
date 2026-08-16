@@ -6,8 +6,8 @@ Public site for [interchouette.net](https://interchouette.net/): Gregory Roussac
 
 - Angular 22 (standalone, signals, zoneless, OnPush, SCSS)
 - Fonts / icons / motion via npm (`@fontsource/*`, `font-awesome`, `animate.css`) built into the CSS bundle (no CDN links in `index.html`)
-- Build-time prerender for `/`, `/CV/`, `/privacy`, `/terms`
-- URLs: no trailing slash except `/CV/` (`/CV` → `/CV/` on the static host)
+- Build-time prerender for `/`, `/CV`, `/privacy`, `/terms`
+- URLs: no trailing slash (`/CV/` → `/CV` on the static host)
 - Vitest (unit) · Playwright specs (MCP / host Chrome; no browser download)
 - Render Static Site (CDN; build on deploy)
 
