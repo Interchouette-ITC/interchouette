@@ -1,3 +1,5 @@
+import { environment } from '../../environments/environment';
+
 /** Chat API base URL. Today co-located with knowledge MCP; will move to chat host. */
 export function chatApiBase(): string {
   if (typeof window === 'undefined') {
@@ -16,14 +18,9 @@ export function chatWsUrl(sessionId: string): string {
 }
 
 /**
- * Feature gate for the embeddable chat widget. Default: enabled.
- *
- * Reliable switches (browser):
- * - `<meta name="ic-chat-widget" content="off">` in `index.html` (preferred deploy toggle)
- * - `window.__IC_CHAT_ENABLED__ = false` before app bootstrap (tests / emergency)
- *
- * Shell `CHAT_WIDGET_ENABLED` is only honored if the build injects it into the bundle
- * (`import.meta.env` / define). A bare export in `.env` does not reach the Angular client.
+ * Feature gate for the embeddable chat widget.
+ * Source: `src/environments/environment*.ts` (dev vs production file replacement).
+ * Optional test override: `window.__IC_CHAT_ENABLED__ = false` before bootstrap.
  */
 export const CHAT_WIDGET_ENABLED = resolveChatWidgetEnabled();
 
@@ -34,62 +31,18 @@ export const CONTACT_EMAIL = 'contact@interchouette.net';
 function resolveChatWidgetEnabled(): boolean {
   if (typeof window !== 'undefined') {
     const runtime = (window as Window & { __IC_CHAT_ENABLED__?: unknown }).__IC_CHAT_ENABLED__;
-    const fromRuntime = parseEnabledFlag(runtime);
-    if (fromRuntime !== null) {
-      return fromRuntime;
+    if (typeof runtime === 'boolean') {
+      return runtime;
     }
-
-    const meta = document.querySelector('meta[name="ic-chat-widget"]');
-    const fromMeta = parseEnabledFlag(meta?.getAttribute('content'));
-    if (fromMeta !== null) {
-      return fromMeta;
+    if (typeof runtime === 'string') {
+      const v = runtime.trim().toLowerCase();
+      if (['0', 'false', 'off', 'no'].includes(v)) {
+        return false;
+      }
+      if (['1', 'true', 'on', 'yes'].includes(v)) {
+        return true;
+      }
     }
   }
-
-  const fromEnv = parseEnabledFlag(readEnvChatFlag());
-  if (fromEnv !== null) {
-    return fromEnv;
-  }
-
-  return true;
-}
-
-function readEnvChatFlag(): unknown {
-  try {
-    const metaEnv = (import.meta as ImportMeta & { env?: Record<string, string> }).env;
-    if (metaEnv && 'CHAT_WIDGET_ENABLED' in metaEnv) {
-      return metaEnv['CHAT_WIDGET_ENABLED'];
-    }
-  } catch {
-    /* no import.meta.env */
-  }
-
-  try {
-    const proc = (globalThis as { process?: { env?: Record<string, string> } }).process;
-    if (proc?.env && 'CHAT_WIDGET_ENABLED' in proc.env) {
-      return proc.env['CHAT_WIDGET_ENABLED'];
-    }
-  } catch {
-    /* no process */
-  }
-
-  return undefined;
-}
-
-/** `null` = flag absent (use default). */
-function parseEnabledFlag(raw: unknown): boolean | null {
-  if (raw === undefined || raw === null || raw === '') {
-    return null;
-  }
-  if (typeof raw === 'boolean') {
-    return raw;
-  }
-  const v = String(raw).trim().toLowerCase();
-  if (['0', 'false', 'off', 'no'].includes(v)) {
-    return false;
-  }
-  if (['1', 'true', 'on', 'yes'].includes(v)) {
-    return true;
-  }
-  return null;
+  return environment.chatWidgetEnabled;
 }
