@@ -9,7 +9,7 @@ use interchouette_mcp::server::{run_http, DEFAULT_HTTP_LISTEN};
 #[derive(Debug, Parser)]
 #[command(
     name = "interchouette-mcp",
-    about = "Interchouette knowledge MCP (Streamable HTTP + SQLite FTS5)",
+    about = "Interchouette knowledge MCP (Streamable HTTP + committed SQLite .db)",
     version
 )]
 struct Cli {
@@ -17,17 +17,17 @@ struct Cli {
     #[arg(long, env = "MCP_LISTEN", default_value = DEFAULT_HTTP_LISTEN)]
     listen: String,
 
-    /// Directory for knowledge.sqlite and bot.sqlite.
+    /// Committed read-only knowledge database.
+    #[arg(
+        long,
+        env = "KNOWLEDGE_DB",
+        default_value = "../knowledge/knowledge.db"
+    )]
+    knowledge_db: PathBuf,
+
+    /// Directory for writable `bot.sqlite` only.
     #[arg(long, env = "DATA_DIR", default_value = "./data")]
     data_dir: PathBuf,
-
-    /// Committed markdown corpus (`en/`, `nl/`) baked into the image.
-    #[arg(long, env = "KNOWLEDGE_DIR", default_value = "../knowledge")]
-    knowledge_dir: PathBuf,
-
-    /// Bearer token for `/v1/admin/knowledge*`.
-    #[arg(long, env = "ADMIN_TOKEN")]
-    admin_token: Option<String>,
 
     /// CORS allow origin for browser callers.
     #[arg(long, env = "CORS_ORIGIN", default_value = "https://interchouette.net")]
@@ -48,14 +48,7 @@ fn init_logging() {
 async fn main() -> Result<()> {
     init_logging();
     let cli = Cli::parse();
-    tracing::info!(addr = %cli.listen, "interchouette-mcp starting");
-    run_http(
-        &cli.listen,
-        cli.data_dir,
-        cli.knowledge_dir,
-        cli.admin_token,
-        cli.cors_origin,
-    )
-    .await?;
+    tracing::info!(addr = %cli.listen, db = %cli.knowledge_db.display(), "interchouette-mcp starting");
+    run_http(&cli.listen, cli.knowledge_db, cli.data_dir, cli.cors_origin).await?;
     Ok(())
 }

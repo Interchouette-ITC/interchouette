@@ -1,4 +1,4 @@
-//! MCP tools + HTTP listener (`/interchouette`, `/health`, admin).
+//! MCP tools + HTTP listener (`/interchouette`, `/health`).
 
 #![allow(unknown_lints)]
 #![allow(clippy::unused_async)]
@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use anyhow::Result;
-use axum::routing::{get, post};
+use axum::routing::get;
 use axum::{Json, Router};
 use rmcp::{
     handler::server::wrapper::Parameters,
@@ -21,9 +21,7 @@ use serde::Deserialize;
 use serde_json::json;
 use tower_http::cors::{Any, CorsLayer};
 
-use crate::admin::{self, AppState};
 use crate::db::Store;
-use crate::ingest;
 
 /// Default bind address (Render sets `PORT`).
 pub const DEFAULT_HTTP_LISTEN: &str = "0.0.0.0:8080";
@@ -149,20 +147,19 @@ impl ServerHandler for KnowledgeMcp {
     }
 }
 
-/// Run Streamable HTTP MCP + health + admin on `addr`.
+/// Run Streamable HTTP MCP + health on `addr`.
 ///
 /// # Errors
-/// Returns when bind, ingest, or serve fails.
+/// Returns when bind or serve fails.
 pub async fn run_http(
     addr: &str,
+    knowledge_db: PathBuf,
     data_dir: PathBuf,
-    knowledge_dir: PathBuf,
-    admin_token: Option<String>,
     cors_origin: String,
 ) -> Result<()> {
-    let store = Arc::new(Store::open(&data_dir)?);
-    let n = ingest::ingest_dir(&store, &knowledge_dir)?;
-    tracing::info!(documents = n, from = %knowledge_dir.display(), "knowledge index ready");
+    let store = Arc::new(Store::open_readonly(&knowledge_db, &data_dir)?);
+    let n = store.doc_count()?;
+    tracing::info!(documents = n, db = %knowledge_db.display(), "knowledge.db ready (read-only)");
     let _ = store.bot_schema_version()?;
 
     let mcp = KnowledgeMcp {
@@ -182,12 +179,6 @@ pub async fn run_http(
     );
     let mcp_router = axum::routing::any_service(mcp_service);
 
-    let state = AppState {
-        store,
-        admin_token,
-        knowledge_dir,
-    };
-
     let cors = CorsLayer::new()
         .allow_origin(
             cors_origin
@@ -199,18 +190,10 @@ pub async fn run_http(
         .allow_methods(Any)
         .allow_headers(Any);
 
-    let admin = Router::new()
-        .route(
-            "/v1/admin/knowledge/reingest",
-            post(admin::reingest_handler),
-        )
-        .with_state(state);
-
     let app = Router::new()
         .route("/health", get(|| async { Json(json!({ "ok": true })) }))
         .route("/interchouette", mcp_router.clone())
         .route("/interchouette/", mcp_router)
-        .merge(admin)
         .layer(cors);
 
     let listener = tokio::net::TcpListener::bind(addr).await?;

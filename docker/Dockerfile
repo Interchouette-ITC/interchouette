@@ -1,5 +1,5 @@
 # interchouette-mcp — Streamable HTTP on :8080 at /interchouette
-# Build context: repo root (needs knowledge/ + backend/)
+# Build context: repo root (needs knowledge/knowledge.db + backend/)
 
 ARG RUST_IMAGE=rust:1.97-bookworm
 ARG RUNTIME_IMAGE=debian:bookworm-slim
@@ -26,13 +26,13 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY --from=builder /interchouette-mcp /usr/local/bin/interchouette-mcp
-COPY knowledge /app/knowledge
+COPY knowledge/knowledge.db /app/knowledge/knowledge.db
 
 RUN mkdir -p /app/data && chown -R mcp:mcp /app
 
 USER mcp
 ENV DATA_DIR=/app/data \
-    KNOWLEDGE_DIR=/app/knowledge \
+    KNOWLEDGE_DB=/app/knowledge/knowledge.db \
     MCP_LISTEN=0.0.0.0:8080 \
     CORS_ORIGIN=https://interchouette.net \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
