@@ -1,4 +1,4 @@
-import { environment } from '../../environments/environment';
+import { CHAT_WIDGET_ENABLED as CHAT_WIDGET_ENABLED_ENV } from './chat-widget.enabled';
 
 /** Chat API base URL. Today co-located with knowledge MCP; will move to chat host. */
 export function chatApiBase(): string {
@@ -19,30 +19,11 @@ export function chatWsUrl(sessionId: string): string {
 
 /**
  * Feature gate for the embeddable chat widget.
- * Source: `src/environments/environment*.ts` (dev vs production file replacement).
- * Optional test override: `window.__IC_CHAT_ENABLED__ = false` before bootstrap.
+ * Set `CHAT_WIDGET_ENABLED=false` in `.env` (or the shell), then restart `npm start` /
+ * re-run `npm run build`. Synced by `scripts/sync-chat-env.mjs`.
  */
-export const CHAT_WIDGET_ENABLED = resolveChatWidgetEnabled();
+export const CHAT_WIDGET_ENABLED = CHAT_WIDGET_ENABLED_ENV;
 
 export const CHAT_STORAGE_KEY = 'ic.chat.v1';
 
 export const CONTACT_EMAIL = 'contact@interchouette.net';
-
-function resolveChatWidgetEnabled(): boolean {
-  if (typeof window !== 'undefined') {
-    const runtime = (window as Window & { __IC_CHAT_ENABLED__?: unknown }).__IC_CHAT_ENABLED__;
-    if (typeof runtime === 'boolean') {
-      return runtime;
-    }
-    if (typeof runtime === 'string') {
-      const v = runtime.trim().toLowerCase();
-      if (['0', 'false', 'off', 'no'].includes(v)) {
-        return false;
-      }
-      if (['1', 'true', 'on', 'yes'].includes(v)) {
-        return true;
-      }
-    }
-  }
-  return environment.chatWidgetEnabled;
-}
