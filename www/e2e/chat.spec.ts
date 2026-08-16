@@ -11,13 +11,16 @@ test.describe('chat widget', () => {
     const away = presenceBody.mode === 'away';
 
     await page.goto('/');
+    const consent = page.getByRole('dialog', { name: 'Cookie consent' });
+    if (await consent.isVisible().catch(() => false)) {
+      await page.getByRole('button', { name: 'Decline' }).click();
+    }
     const fab = page.getByRole('button', { name: /Open chat/i });
     await expect(fab).toBeVisible({ timeout: 15_000 });
     await fab.click();
     const panel = page.locator('#interchouette-chat-panel');
     await expect(panel).toHaveClass(/chat-panel--open/);
-    await expect(page.getByRole('dialog')).toBeVisible();
-    await expect(page.getByText(/Chat with (Greg|ITCy)|Connecting/)).toBeVisible();
+    await expect(page.getByRole('dialog', { name: /Chat with/i })).toBeVisible();
 
     const input = page.getByRole('textbox', { name: 'Message' });
     await expect(input).toBeEnabled({ timeout: 15_000 });
