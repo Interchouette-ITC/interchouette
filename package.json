@@ -9,10 +9,11 @@
     "test": "ng test",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "ci": "npm run format:check && npm run build && npm test && node scripts/verify-static-dist.mjs",
+    "ci": "npm run format:check && npm run build && npm test && node scripts/verify-static-dist.mjs && node scripts/check-static-console.mjs",
     "minify:html": "node scripts/minify-static-html.mjs",
     "e2e": "playwright test --config e2e/playwright.config.ts",
     "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
+    "console:static": "node scripts/check-static-console.mjs",
     "preflight": "bash .cursor/scripts/preflight-before-merge.sh"
   },
   "private": true,
