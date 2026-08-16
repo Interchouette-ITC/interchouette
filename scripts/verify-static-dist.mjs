@@ -2,7 +2,7 @@
 /**
  * Assert production static publish layout after `npm run build`.
  * Fail CI if prerender / public assets expected by the host are missing,
- * or if HTML was left pretty-printed (minify-static-html must have run).
+ * or if HTML packing / hydration markers are wrong.
  */
 import { access, constants, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -39,10 +39,15 @@ async function mustExist(rel) {
   }
 }
 
-async function mustBeMinified(rel) {
+async function mustBePacked(rel) {
   const html = await readFile(join(root, rel), 'utf8');
-  if (/\n\s{2,}</.test(html)) {
-    console.error(`HTML still pretty-printed (run minify after build): ${rel}`);
+  if (!html.includes('<!--nghm-->')) {
+    console.error(`missing Angular hydration marker <!--nghm-->: ${rel}`);
+    process.exitCode = 1;
+  }
+  const head = html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i);
+  if (head && /\n\s{2,}</.test(head[1])) {
+    console.error(`<head> still pretty-printed (run pack after build): ${rel}`);
     process.exitCode = 1;
   }
   const ld = html.match(
@@ -55,7 +60,7 @@ async function mustBeMinified(rel) {
 }
 
 await Promise.all(required.map(mustExist));
-await Promise.all(htmlPages.map(mustBeMinified));
+await Promise.all(htmlPages.map(mustBePacked));
 if (process.exitCode) {
   console.error(`static publish check failed under ${root}`);
   process.exit(process.exitCode);

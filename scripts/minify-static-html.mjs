@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Minify prerendered HTML after `ng build` (Angular leaves pretty-printed markup).
- * Compacts application/ld+json and collapses HTML/CSS whitespace in publish HTML.
+ * Pack prerendered HTML after `ng build` without breaking Angular hydration.
+ * Compacts JSON-LD and minifies `<head>` only. Leaves `<body>` untouched
+ * (hydration comment nodes and whitespace must stay intact — see NG0507).
  */
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -33,14 +34,13 @@ function compactJsonLd(html) {
   );
 }
 
-let count = 0;
-let before = 0;
-let after = 0;
-
-for await (const file of walkHtml(root)) {
-  const raw = await readFile(file, 'utf8');
-  before += Buffer.byteLength(raw);
-  const minified = await minify(compactJsonLd(raw), {
+async function packHeadOnly(html) {
+  const match = html.match(/<head\b[^>]*>([\s\S]*?)<\/head>/i);
+  if (!match) {
+    return html;
+  }
+  const [full, inner] = match;
+  const packedInner = await minify(inner, {
     collapseBooleanAttributes: true,
     collapseWhitespace: true,
     decodeEntities: true,
@@ -53,9 +53,30 @@ for await (const file of walkHtml(root)) {
     sortAttributes: false,
     sortClassName: false,
   });
-  after += Buffer.byteLength(minified);
-  await writeFile(file, minified);
+  return html.replace(full, full.replace(inner, packedInner));
+}
+
+let count = 0;
+let before = 0;
+let after = 0;
+
+for await (const file of walkHtml(root)) {
+  const raw = await readFile(file, 'utf8');
+  before += Buffer.byteLength(raw);
+  const hadHydration = raw.includes('<!--nghm-->');
+  const packed = await packHeadOnly(compactJsonLd(raw));
+  if (hadHydration && !packed.includes('<!--nghm-->')) {
+    console.error(`hydration marker stripped by pack: ${file}`);
+    process.exitCode = 1;
+    continue;
+  }
+  after += Buffer.byteLength(packed);
+  await writeFile(file, packed);
   count += 1;
+}
+
+if (process.exitCode) {
+  process.exit(process.exitCode);
 }
 
 if (!count) {
@@ -64,4 +85,4 @@ if (!count) {
 }
 
 const saved = before - after;
-console.log(`minified ${count} HTML file(s): ${before} -> ${after} bytes (−${saved})`);
+console.log(`packed ${count} HTML file(s): ${before} -> ${after} bytes (−${saved})`);
