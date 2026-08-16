@@ -1,3 +1,13 @@
-# Static host URL rules (Render Static / similar).
-# CV lives as a directory (CV/index.html + PDF), so canonical URL has a trailing slash.
+# Static host URL rules (Render Static / Netlify-style).
+# Specific rules first. Render also: Dashboard → Redirects/Rewrites
+#   /* → /index.html (Rewrite) so Angular ** handles unknown paths.
+# Real files (CV/*.pdf, img/*, etc.) are served as-is; rewrites skip existing assets.
+
+# CV directory canonical with trailing slash
 /CV  /CV/  301
+
+# Common typo
+/pirvacy  /privacy  301
+
+# SPA fallback: unknown paths → Angular shell (client ** → home)
+/*  /index.html  200
