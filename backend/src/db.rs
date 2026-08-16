@@ -338,7 +338,7 @@ mod tests {
 
     #[test]
     fn committed_repo_db_searches() {
-        let db = Path::new(env!("CARGO_MANIFEST_DIR")).join("../knowledge/knowledge.db");
+        let db = Path::new(env!("CARGO_MANIFEST_DIR")).join("../db/knowledge.db");
         let dir = tempdir().unwrap();
         let store = Store::open_readonly(&db, dir.path()).unwrap();
         assert!(store.doc_count().unwrap() >= 6);

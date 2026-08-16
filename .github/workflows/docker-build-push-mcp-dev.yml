@@ -6,7 +6,7 @@ on:
     branches: [dev]
     paths:
       - 'backend/**'
-      - 'knowledge/**'
+      - 'db/**'
       - 'docker/Dockerfile'
       - 'Makefile'
       - '.github/workflows/docker-build-push-mcp-dev.yml'
