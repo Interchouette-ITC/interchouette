@@ -14,15 +14,9 @@ describe('humanizeChatError', () => {
     expect(humanizeChatError('undefined')).toBe(
       'Chat is temporarily unavailable. Please try again.',
     );
-    expect(humanizeChatError(undefined)).toBe(
-      'Chat is temporarily unavailable. Please try again.',
-    );
-    expect(humanizeChatError(null)).toBe(
-      'Chat is temporarily unavailable. Please try again.',
-    );
-    expect(humanizeChatError('')).toBe(
-      'Chat is temporarily unavailable. Please try again.',
-    );
+    expect(humanizeChatError(undefined)).toBe('Chat is temporarily unavailable. Please try again.');
+    expect(humanizeChatError(null)).toBe('Chat is temporarily unavailable. Please try again.');
+    expect(humanizeChatError('')).toBe('Chat is temporarily unavailable. Please try again.');
   });
 
   it('keeps clear product messages', () => {
