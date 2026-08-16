@@ -2,21 +2,18 @@ import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NavigationEnd, provideRouter, Router } from '@angular/router';
 import { Subject } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GA_MEASUREMENT_ID } from './analytics.constants';
 import { AnalyticsService } from './analytics.service';
 
 describe('AnalyticsService', () => {
   beforeEach(() => {
-    (window as Window & { requestIdleCallback?: unknown }).requestIdleCallback = (
-      cb: IdleRequestCallback,
-    ) => {
-      cb({ didTimeout: false, timeRemaining: () => 50 } as IdleDeadline);
-      return 0;
-    };
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     document.head
       .querySelectorAll('script[src*="googletagmanager.com"]')
       .forEach((el) => el.remove());
@@ -24,7 +21,7 @@ describe('AnalyticsService', () => {
     delete (window as { dataLayer?: unknown }).dataLayer;
   });
 
-  it('boots gtag once in the browser and ignores a second init', () => {
+  it('does not boot gtag until interaction or late fallback', () => {
     TestBed.configureTestingModule({
       providers: [provideRouter([]), AnalyticsService],
     });
@@ -33,11 +30,33 @@ describe('AnalyticsService', () => {
     analytics.init();
     analytics.init();
 
+    expect(document.head.querySelector('script[src*="googletagmanager.com"]')).toBeNull();
+
+    window.dispatchEvent(new Event('pointerdown'));
+
     const scripts = document.head.querySelectorAll(
       `script[src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"]`,
     );
     expect(scripts.length).toBe(1);
     expect(window.dataLayer?.length).toBeGreaterThan(0);
+  });
+
+  it('boots via late fallback when there is no interaction', () => {
+    TestBed.configureTestingModule({
+      providers: [provideRouter([]), AnalyticsService],
+    });
+    const analytics = TestBed.inject(AnalyticsService);
+    analytics.init();
+
+    expect(document.head.querySelector('script[src*="googletagmanager.com"]')).toBeNull();
+
+    vi.advanceTimersByTime(12_000);
+
+    expect(
+      document.head.querySelector(
+        `script[src="https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}"]`,
+      ),
+    ).not.toBeNull();
   });
 
   it('skips boot on the server platform', () => {
@@ -51,12 +70,13 @@ describe('AnalyticsService', () => {
     const analytics = TestBed.inject(AnalyticsService);
 
     analytics.init();
+    vi.advanceTimersByTime(12_000);
 
     expect(document.head.querySelector('script[src*="googletagmanager.com"]')).toBeNull();
     expect(window.gtag).toBeUndefined();
   });
 
-  it('sends page_path on NavigationEnd', () => {
+  it('sends page_path on NavigationEnd after boot', () => {
     const events$ = new Subject<NavigationEnd>();
     TestBed.configureTestingModule({
       providers: [
@@ -72,6 +92,7 @@ describe('AnalyticsService', () => {
     });
     const analytics = TestBed.inject(AnalyticsService);
     analytics.init();
+    window.dispatchEvent(new Event('pointerdown'));
 
     const before = window.dataLayer!.length;
     events$.next(new NavigationEnd(1, '/privacy', '/privacy'));
