@@ -65,7 +65,7 @@ struct ClientWsMessage {
     announce: bool,
 }
 
-fn default_announce() -> bool {
+const fn default_announce() -> bool {
     true
 }
 
@@ -294,18 +294,18 @@ async fn post_to_session_thread(
 }
 
 async fn handle_live(state: &ChatState, session: &Session, session_id: &str, text: &str) {
-    let _ = post_to_session_thread(state, session, &format!("VISITOR: {text}")).await;
+    let _ = post_to_session_thread(state, session, &format!("Prospect: {text}")).await;
     publish_role(
         state,
         session_id,
         "system",
-        "Message delivered to Greg. Reply in this chat when he answers in the Slack thread.",
+        "Message sent. Greg will reply here, usually within minutes.",
     )
     .await;
 }
 
 async fn handle_away(state: &ChatState, session: &Session, session_id: &str, text: &str) {
-    let _ = post_to_session_thread(state, session, &format!("VISITOR: {text}")).await;
+    let _ = post_to_session_thread(state, session, &format!("Prospect: {text}")).await;
     state
         .hub
         .publish(

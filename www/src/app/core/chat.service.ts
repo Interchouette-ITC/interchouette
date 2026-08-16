@@ -11,6 +11,11 @@ import {
 
 const CHAT_OPENED_KEY = 'ic.chat.opened';
 
+/** Old live ack that leaked Slack routing; rewrite if still in localStorage. */
+const LEGACY_SLACK_ACK =
+  'Message delivered to Greg. Reply in this chat when he answers in the Slack thread.';
+const LIVE_DELIVERY_ACK = 'Message sent. Greg will reply here, usually within minutes.';
+
 export type ChatMode = 'live' | 'away' | 'connecting';
 export type ChatRole = 'visitor' | 'greg' | 'itcy' | 'system';
 
@@ -46,7 +51,7 @@ export class ChatService {
   readonly statusLabel = signal('Connecting…');
   readonly messages = signal<ChatMessage[]>([]);
   readonly typing = signal(false);
-  /** Opaque resume code for Slack/support only; not shown in the visitor UI. */
+  /** Opaque resume / ticket code for the visitor (and Slack). */
   readonly shortCode = signal('');
   readonly error = signal<string | null>(null);
   readonly connecting = signal(false);
@@ -450,9 +455,24 @@ export class ChatService {
         localStorage.removeItem(CHAT_STORAGE_KEY);
         return null;
       }
+      parsed.messages = sanitizeStoredMessages(parsed.messages);
       return parsed;
     } catch {
       return null;
     }
   }
+}
+
+function sanitizeStoredMessages(messages: ChatMessage[]): ChatMessage[] {
+  return messages.map((msg) => {
+    if (
+      msg.text === LEGACY_SLACK_ACK ||
+      /slack thread/i.test(msg.text) ||
+      /will reply in this chat when he can/i.test(msg.text) ||
+      /usually within a few minutes/i.test(msg.text)
+    ) {
+      return { ...msg, text: LIVE_DELIVERY_ACK };
+    }
+    return msg;
+  });
 }

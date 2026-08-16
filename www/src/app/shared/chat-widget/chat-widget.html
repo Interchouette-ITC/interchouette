@@ -11,6 +11,7 @@
   @if (chat.ready() || chat.open() || chat.connecting() || chat.error()) {
     <div
       class="chat-fab-dock"
+      [class.chat-fab-dock--enter]="fabEnter()"
       [class.chat-fab-dock--nudge]="nudgeBounce()"
       [class.chat-fab-dock--hidden]="chat.open()"
       [attr.aria-hidden]="chat.open() ? 'true' : null"
@@ -51,9 +52,6 @@
             decoding="async"
           />
         </span>
-        @if (!chat.open() && chat.hero() === 'greg') {
-          <span class="chat-fab__badge" aria-hidden="true"></span>
-        }
       </button>
     </div>
 
@@ -74,75 +72,107 @@
       <div class="chat-panel__grain" aria-hidden="true"></div>
 
       <header class="chat-panel__hero">
-        <div class="chat-panel__identity">
-          <div class="chat-panel__avatar-wrap" aria-hidden="true">
-            <div class="chat-panel__avatar">
-              @if (chat.hero() === 'neutral') {
-                <span class="chat-panel__orbit"><i></i></span>
-              } @else {
-                <img
-                  [src]="panelFaceSrc()"
-                  [class.chat-panel__avatar-img--itcy]="chat.hero() === 'itcy'"
-                  width="72"
-                  height="72"
-                  alt=""
-                  decoding="async"
-                />
-              }
-            </div>
-            <span class="chat-panel__presence" [attr.data-mode]="chat.mode()"></span>
-          </div>
-          <div class="chat-panel__titles">
-            <p class="chat-panel__eyebrow">Interchouette Concierge</p>
-            <h2>{{ title() }}</h2>
-            <p class="chat-panel__status">
-              <span class="chat-panel__live-dot" [attr.data-mode]="chat.mode()"></span>
-              {{ subtitle() }}
-            </p>
+        <div class="chat-panel__avatar-wrap" aria-hidden="true">
+          <div class="chat-panel__avatar">
+            @if (chat.hero() === 'neutral') {
+              <span class="chat-panel__orbit"><i></i></span>
+            } @else {
+              <img
+                [src]="panelFaceSrc()"
+                [class.chat-panel__avatar-img--itcy]="chat.hero() === 'itcy'"
+                width="72"
+                height="72"
+                alt=""
+                decoding="async"
+              />
+            }
           </div>
         </div>
-        <div class="chat-panel__actions">
-          <button
-            type="button"
-            class="chat-panel__icon-btn"
-            (click)="onToggleExpand()"
-            [attr.aria-label]="expanded() ? 'Exit full screen chat' : 'Expand chat'"
-            [attr.title]="expanded() ? 'Exit full screen' : 'Expand chat'"
-            [attr.aria-pressed]="expanded()"
-          >
-            @if (expanded()) {
+
+        <div class="chat-panel__main">
+          <p class="chat-panel__eyebrow">Interchouette Concierge</p>
+          <div class="chat-panel__actions">
+            <button
+              type="button"
+              class="chat-panel__icon-btn"
+              (click)="onToggleExpand()"
+              [attr.aria-label]="expanded() ? 'Exit full screen chat' : 'Expand chat'"
+              [attr.title]="expanded() ? 'Exit full screen' : 'Expand chat'"
+              [attr.aria-pressed]="expanded()"
+            >
+              @if (expanded()) {
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M9 9H4v2h3v3h2V9zm6 0v5h2v-3h3V9h-5zM9 15H7v3H4v2h5v-5zm11 3h-3v-3h-2v5h5v-2z"
+                    fill="currentColor"
+                  />
+                </svg>
+              } @else {
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M4 4h5v2H6v3H4V4zm11 0h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm16 0v5h-5v-2h3v-3h2z"
+                    fill="currentColor"
+                  />
+                </svg>
+              }
+            </button>
+            <button
+              type="button"
+              class="chat-panel__icon-btn chat-panel__close"
+              (click)="onClose()"
+              aria-label="Close chat"
+              title="Close chat"
+            >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path
-                  d="M9 9H4v2h3v3h2V9zm6 0v5h2v-3h3V9h-5zM9 15H7v3H4v2h5v-5zm11 3h-3v-3h-2v5h5v-2z"
-                  fill="currentColor"
+                  d="M7 7l10 10M17 7 7 17"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
                 />
               </svg>
-            } @else {
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M4 4h5v2H6v3H4V4zm11 0h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm16 0v5h-5v-2h3v-3h2z"
-                  fill="currentColor"
-                />
-              </svg>
+            </button>
+          </div>
+
+          <h2 class="chat-panel__title">{{ title() }}</h2>
+
+          <div class="chat-panel__meta">
+            <p class="chat-panel__status">
+              <span class="chat-panel__live-dot" [attr.data-mode]="chat.mode()"></span>
+              <span class="chat-panel__status-text">{{ subtitle() }}</span>
+            </p>
+            @if (chat.shortCode()) {
+              <div class="chat-panel__ticket">
+                <code class="chat-panel__ticket-code">{{ ticketDisplay() }}</code>
+                <button
+                  type="button"
+                  class="chat-panel__ticket-copy"
+                  (click)="onCopyTicket($event)"
+                  [attr.aria-label]="
+                    ticketCopied() ? 'Ticket copied' : 'Copy ticket ' + ticketDisplay()
+                  "
+                  [attr.title]="ticketCopied() ? 'Copied' : 'Copy ticket'"
+                >
+                  @if (ticketCopied()) {
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M9.5 16.2 5.8 12.5l1.4-1.4 2.3 2.3 7.3-7.3 1.4 1.4-8.7 8.7z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  } @else {
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M9 3h9a2 2 0 0 1 2 2v11h-2V5H9V3zm-4 4h9a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2zm0 2v11h9V9H5z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  }
+                </button>
+              </div>
             }
-          </button>
-          <button
-            type="button"
-            class="chat-panel__icon-btn chat-panel__close"
-            (click)="onClose()"
-            aria-label="Close chat"
-            title="Close chat"
-          >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M7 7l10 10M17 7 7 17"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
-            </svg>
-          </button>
+          </div>
         </div>
       </header>
 

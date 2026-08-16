@@ -86,9 +86,7 @@ impl SlackRelay {
         mode: &str,
     ) -> anyhow::Result<ThreadRef> {
         let channel = self.open_dm().await?;
-        let text = format!(
-            "[{short_code}] New website chat · mode={mode}\nReply in this thread - no tag needed."
-        );
+        let text = format!("[{short_code}] mode={mode}");
         let ts = self.post_raw(&channel, None, &text).await?;
         Ok(ThreadRef {
             channel,

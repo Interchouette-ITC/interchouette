@@ -13,7 +13,7 @@ use crate::chat::presence::PresenceMode;
 #[derive(Debug, Clone)]
 pub struct Session {
     pub id: String,
-    /// Opaque resume code for Slack / support (`IC-A3F9K2M7`). Not shown in the visitor UI.
+    /// Opaque resume / ticket code (`IC-A3F9K2M7`). Shown in the visitor header.
     pub short_code: String,
     pub mode: PresenceMode,
     pub visitor_email: Option<String>,

@@ -15,8 +15,9 @@ import { ChatRole, ChatService } from '../../core/chat.service';
 import { SLACK_JOIN_URL } from '../../core/chat.constants';
 import { RouterLink } from '@angular/router';
 
-const NUDGE_EVERY_MS = 2 * 60 * 1000;
+const NUDGE_EVERY_MS = 60 * 1000;
 const NUDGE_BOUNCE_MS = 1100;
+const FAB_ENTER_MS = 1100;
 
 const NUDGE_HOOKS = [
   "Don't be a stranger",
@@ -66,6 +67,8 @@ export class ChatWidget implements OnDestroy {
   protected readonly nudgeHint = signal(false);
   /** One-shot bounce on the chat button. */
   protected readonly nudgeBounce = signal(false);
+  /** Entrance animation only; cleared so later nudges do not re-trigger it. */
+  protected readonly fabEnter = signal(true);
   /** Stable copy for the current nudge pulse. */
   protected readonly nudgeCopy = signal('');
   /** Near-fullscreen chat panel. */
@@ -75,6 +78,8 @@ export class ChatWidget implements OnDestroy {
   private readonly messageField = viewChild<ElementRef<HTMLInputElement>>('messageField');
 
   protected readonly canSend = signal(false);
+  /** Brief “Copied” state for the ticket button. */
+  protected readonly ticketCopied = signal(false);
   /** Always a string — never leave compose bindings as undefined. */
   protected draft = '';
   protected showEmail = false;
@@ -82,11 +87,14 @@ export class ChatWidget implements OnDestroy {
 
   private nudgeTimer: ReturnType<typeof setInterval> | null = null;
   private bounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private enterTimer: ReturnType<typeof setTimeout> | null = null;
+  private ticketCopyTimer: ReturnType<typeof setTimeout> | null = null;
   private bubbleDismissed = false;
 
   constructor() {
     afterNextRender(() => {
       this.mounted.set(true);
+      this.enterTimer = setTimeout(() => this.fabEnter.set(false), FAB_ENTER_MS);
       void this.chat.warm().then(() => this.tryStartNudge());
     });
     effect(() => {
@@ -132,6 +140,33 @@ export class ChatWidget implements OnDestroy {
 
   protected onToggleExpand(): void {
     this.expanded.update((v) => !v);
+  }
+
+  protected async onCopyTicket(event: Event): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+    const code = this.ticketDisplay();
+    if (!code) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+    this.ticketCopied.set(true);
+    if (this.ticketCopyTimer) {
+      clearTimeout(this.ticketCopyTimer);
+    }
+    this.ticketCopyTimer = setTimeout(() => this.ticketCopied.set(false), 1600);
   }
 
   protected onRetry(): void {
@@ -251,10 +286,14 @@ export class ChatWidget implements OnDestroy {
     }
   }
 
+  protected ticketDisplay(): string {
+    return this.chat.shortCode().trim().replace(/^IC-/i, '');
+  }
+
   protected subtitle(): string {
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Usually replies in a few minutes';
+        return 'Usually replies within minutes';
       case 'itcy':
         return 'Greg is away · ITCy can help now';
       default:
@@ -416,6 +455,14 @@ export class ChatWidget implements OnDestroy {
     if (this.bounceTimer) {
       clearTimeout(this.bounceTimer);
       this.bounceTimer = null;
+    }
+    if (this.enterTimer) {
+      clearTimeout(this.enterTimer);
+      this.enterTimer = null;
+    }
+    if (this.ticketCopyTimer) {
+      clearTimeout(this.ticketCopyTimer);
+      this.ticketCopyTimer = null;
     }
   }
 
