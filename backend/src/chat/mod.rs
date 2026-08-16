@@ -1,7 +1,7 @@
 //! Website visitor chat: WebSocket + Slack DM (no chat database).
 //!
 //! Active sessions live in memory. Durable retrieval is Slack threads only.
-//! Away `ITCy` should query knowledge via the remote MCP HTTP API (not `SQLite`).
+//! Away mode queries knowledge via the remote MCP HTTP API (not local SQLite).
 
 mod api;
 mod hub;

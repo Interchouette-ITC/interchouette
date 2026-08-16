@@ -1,45 +1,28 @@
-# Interchouette knowledge MCP + chat
+# Interchouette chat
 
-Streamable HTTP MCP. **Read-only** committed SQLite file:
+Website visitor chat: WebSocket sessions, Slack DM for live replies, remote knowledge MCP for away mode.
 
-**`db/interchouette.db`**
+**No chat database.** Durable retrieval is the bot↔Greg Slack DM. Away mode must call the remote MCP HTTP API; it does not open `interchouette.db`.
 
-Official MCP URL: `https://mcp.interchouette.net/interchouette`
-
-Website chat (`/v1/sessions`, WebSocket) lives on the same process. **No chat database.** Durable retrieval is the bot↔Greg Slack DM. Knowledge DB is read-only for away-mode RAG only.
-
-## How to update knowledge content
-
-1. Edit `db/interchouette.db` (DB Browser for SQLite, `sqlite3`, etc.)
-2. Commit + merge to `dev`
-3. CI publishes `interchouette/interchouette-mcp:latest`
-4. CI calls the Render deploy hook for the MCP service
-
-No content inserts at runtime. No Postgres for knowledge or chat.
-
-## Chat env
+## Env
 
 | Variable             | Role                                                                           |
 | -------------------- | ------------------------------------------------------------------------------ |
+| `CHAT_LISTEN`        | Bind address (default `0.0.0.0:8080`)                                           |
 | `CHAT_FORCE_MODE`    | `live` or `away` (local/tests)                                                 |
 | `SLACK_BOT_TOKEN`    | Bot token for presence + DM                                                    |
 | `SLACK_APP_TOKEN`    | App-level token for Socket Mode (`xapp-…`) so Greg DM replies reach the widget |
 | `GREG_SLACK_USER_ID` | Greg's Slack user id                                                           |
-| `OPENROUTER_API_KEY` | Away `ITCy` LLM (else FTS fallback)                                            |
+| `OPENROUTER_API_KEY` | Away LLM (else MCP tool fallback)                                              |
 | `OPENROUTER_MODEL`   | Override free model                                                            |
+| `KNOWLEDGE_MCP_URL`  | Knowledge MCP Streamable HTTP URL (away mode)                                  |
 
-Bot OAuth scopes required for DM + presence: `im:write`, `chat:write`, `users:read`, plus `im:history` for Socket Mode inbound.
+Bot OAuth scopes for DM + presence: `im:write`, `chat:write`, `users:read`, plus `im:history` for Socket Mode inbound.
 
-Live replies: Greg answers in the bot DM with `[S-XXXX] message` (the visitor short code from the bot line).
-
-## Images
-
-`interchouette/interchouette-mcp:latest` or `:dev` — port `8080`, path `/interchouette`.
-Tags: **`:dev`** and **`:latest` only** (no semver tags).
+Live replies: Greg answers in the bot DM with the session short code from the bot line.
 
 ## Local
 
 ```bash
-make mcp-lint mcp-test
-CHAT_FORCE_MODE=away cargo run --manifest-path backend/Cargo.toml -- --knowledge-db db/interchouette.db
+cargo run --manifest-path backend/Cargo.toml
 ```

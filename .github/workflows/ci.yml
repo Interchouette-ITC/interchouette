@@ -23,6 +23,9 @@ jobs:
   ci:
     name: format · audit · build · test · publish · console
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: www
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -31,8 +34,9 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
-          node-version-file: .nvmrc
+          node-version-file: www/.nvmrc
           cache: npm
+          cache-dependency-path: www/package-lock.json
 
       - name: Assert Node major matches pin
         run: |
@@ -72,6 +76,7 @@ jobs:
 
       - name: Deploy to Render
         if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        working-directory: .
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
@@ -83,6 +88,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: browser-dist-on-failure
-          path: dist/interchouette/browser
+          path: www/dist/interchouette/browser
           if-no-files-found: ignore
           retention-days: 7

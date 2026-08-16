@@ -21,3 +21,4 @@ public/cover
 public/**/*.min.css
 public/sitemap.xml
 public/robots.txt
+test-results

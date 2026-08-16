@@ -1,5 +1,5 @@
-# interchouette-mcp — Streamable HTTP on :8080 at /interchouette
-# Build context: repo root (needs db/interchouette.db + backend/)
+# interchouette-mcp - Streamable HTTP on :8080 at /interchouette
+# Build context: repo root (needs db/interchouette.db + mcp/)
 
 ARG RUST_IMAGE=rust:1.97-bookworm
 ARG RUNTIME_IMAGE=debian:bookworm-slim
@@ -11,8 +11,8 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY backend/Cargo.toml backend/Cargo.lock ./
-COPY backend/src ./src
+COPY mcp/Cargo.toml mcp/Cargo.lock ./
+COPY mcp/src ./src
 RUN cargo build --release \
   && strip -s target/release/interchouette-mcp \
   && cp target/release/interchouette-mcp /interchouette-mcp
@@ -28,11 +28,10 @@ WORKDIR /app
 COPY --from=builder /interchouette-mcp /usr/local/bin/interchouette-mcp
 COPY db/interchouette.db /app/db/interchouette.db
 
-RUN mkdir -p /app/data && chown -R mcp:mcp /app
+RUN chown -R mcp:mcp /app
 
 USER mcp
-ENV DATA_DIR=/app/data \
-    KNOWLEDGE_DB=/app/db/interchouette.db \
+ENV KNOWLEDGE_DB=/app/db/interchouette.db \
     MCP_LISTEN=0.0.0.0:8080 \
     CORS_ORIGIN=https://interchouette.net \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt

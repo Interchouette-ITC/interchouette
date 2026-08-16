@@ -1,42 +1,23 @@
-//! `interchouette-mcp` - Streamable HTTP knowledge MCP for Gregory Roussac / Interchouette.
-
-use std::path::PathBuf;
+//! `interchouette-chat` - website visitor chat.
 
 use anyhow::Result;
 use clap::Parser;
-use interchouette_mcp::server::{run_http, DEFAULT_ALLOWED_HOSTS, DEFAULT_HTTP_LISTEN};
+use interchouette_chat::server::{run_http, DEFAULT_HTTP_LISTEN};
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "interchouette-mcp",
-    about = "Interchouette knowledge MCP (Streamable HTTP + committed SQLite .db)",
+    name = "interchouette-chat",
+    about = "Interchouette website chat",
     version
 )]
 struct Cli {
-    /// HTTP bind address (`PORT` on Render is mapped by the start command).
-    #[arg(long, env = "MCP_LISTEN", default_value = DEFAULT_HTTP_LISTEN)]
+    /// HTTP bind address.
+    #[arg(long, env = "CHAT_LISTEN", default_value = DEFAULT_HTTP_LISTEN)]
     listen: String,
-
-    /// Committed read-only knowledge database.
-    #[arg(long, env = "KNOWLEDGE_DB", default_value = "../db/interchouette.db")]
-    knowledge_db: PathBuf,
-
-    /// Directory for writable `bot.sqlite` only.
-    #[arg(long, env = "DATA_DIR", default_value = "./data")]
-    data_dir: PathBuf,
 
     /// CORS allow origin for browser callers.
     #[arg(long, env = "CORS_ORIGIN", default_value = "https://interchouette.net")]
     cors_origin: String,
-
-    /// Comma-separated Host values allowed by the Streamable HTTP transport.
-    #[arg(
-        long,
-        env = "MCP_ALLOWED_HOSTS",
-        value_delimiter = ',',
-        default_values = DEFAULT_ALLOWED_HOSTS
-    )]
-    allowed_hosts: Vec<String>,
 }
 
 fn init_logging() {
@@ -53,19 +34,7 @@ fn init_logging() {
 async fn main() -> Result<()> {
     init_logging();
     let cli = Cli::parse();
-    tracing::info!(
-        addr = %cli.listen,
-        db = %cli.knowledge_db.display(),
-        hosts = ?cli.allowed_hosts,
-        "interchouette-mcp starting"
-    );
-    run_http(
-        &cli.listen,
-        cli.knowledge_db,
-        cli.data_dir,
-        cli.cors_origin,
-        cli.allowed_hosts,
-    )
-    .await?;
+    tracing::info!(addr = %cli.listen, "interchouette-chat starting");
+    run_http(&cli.listen, cli.cors_origin).await?;
     Ok(())
 }

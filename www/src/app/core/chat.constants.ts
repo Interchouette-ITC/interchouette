@@ -1,6 +1,6 @@
 import { CHAT_WIDGET_ENABLED as CHAT_WIDGET_ENABLED_ENV } from './chat-widget.enabled';
 
-/** Chat API base URL. Today co-located with knowledge MCP; will move to chat host. */
+/** Chat API base URL (chat backend; not the knowledge MCP). */
 export function chatApiBase(): string {
   if (typeof window === 'undefined') {
     return 'http://127.0.0.1:8080';
@@ -19,8 +19,8 @@ export function chatWsUrl(sessionId: string): string {
 
 /**
  * Feature gate for the embeddable chat widget.
- * Set `CHAT_WIDGET_ENABLED=false` in `.env` (or the shell), then restart `npm start` /
- * re-run `npm run build`. Synced by `scripts/sync-chat-env.mjs`.
+ * Set `CHAT_WIDGET_ENABLED=false` in the repo `.env` (or the shell), then restart
+ * `npm start` / re-run `npm run build` from `www/`. Synced by `scripts/sync-chat-env.mjs`.
  */
 export const CHAT_WIDGET_ENABLED = CHAT_WIDGET_ENABLED_ENV;
 

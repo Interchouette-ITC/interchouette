@@ -1,6 +1,6 @@
-//! Away-mode `ITCy`: `OpenRouter` + remote Interchouette knowledge MCP (HTTP).
+//! Away mode: `OpenRouter` plus remote knowledge MCP over HTTP.
 //!
-//! Chat never opens `interchouette.db`. Knowledge comes from the live MCP only.
+//! Chat does not open `interchouette.db`. Knowledge comes from the MCP HTTP API.
 
 use serde_json::{json, Value};
 

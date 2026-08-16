@@ -12,6 +12,7 @@ DOCKER_BUILDKIT ?= 1
 CLIPPY_FLAGS := -D warnings -D clippy::all -D clippy::pedantic -D clippy::nursery
 
 .PHONY: help mcp-lint mcp-test mcp-build \
+	chat-lint chat-test chat-build \
 	mcp-docker-build mcp-docker-push-hub \
 	mcp-docker-push-ghcr-personal mcp-docker-push-ghcr-itc \
 	mcp-docker-push
@@ -20,16 +21,27 @@ help:
 	@echo "Knowledge MCP"
 	@echo "  make mcp-lint / mcp-test / mcp-build"
 	@echo "  make mcp-docker-build / mcp-docker-push"
+	@echo "Chat"
+	@echo "  make chat-lint / chat-test / chat-build"
 	@echo "Tags: :dev :latest only"
 	@echo "Images: $(MCP_HUB_IMAGE) | $(MCP_GHCR_ORG_IMAGE)"
 
 mcp-lint:
-	cd backend && cargo fmt --check && cargo clippy --all-targets -- $(CLIPPY_FLAGS)
+	cd mcp && cargo fmt --check && cargo clippy --all-targets -- $(CLIPPY_FLAGS)
 
 mcp-test:
-	cd backend && cargo test
+	cd mcp && cargo test
 
 mcp-build:
+	cd mcp && cargo build --release
+
+chat-lint:
+	cd backend && cargo fmt --check && cargo clippy --all-targets -- $(CLIPPY_FLAGS)
+
+chat-test:
+	cd backend && cargo test
+
+chat-build:
 	cd backend && cargo build --release
 
 mcp-docker-build:

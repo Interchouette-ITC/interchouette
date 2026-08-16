@@ -1,25 +1,21 @@
-name: MCP Rust CI
+name: Chat Rust CI
 
 on:
   pull_request:
     branches: [dev]
     paths:
-      - 'mcp/**'
-      - 'db/**'
-      - 'docker/Dockerfile'
+      - 'backend/**'
       - 'Makefile'
-      - '.github/workflows/mcp-ci.yml'
+      - '.github/workflows/chat-ci.yml'
   push:
     branches: [dev]
     paths:
-      - 'mcp/**'
-      - 'db/**'
-      - 'docker/Dockerfile'
+      - 'backend/**'
       - 'Makefile'
-      - '.github/workflows/mcp-ci.yml'
+      - '.github/workflows/chat-ci.yml'
 
 concurrency:
-  group: mcp-ci-${{ github.workflow }}-${{ github.ref }}
+  group: chat-ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -30,7 +26,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  mcp:
+  chat:
     name: fmt · clippy · test
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -45,7 +41,7 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: mcp
+          workspaces: backend
 
       - name: Lint + test
-        run: make mcp-lint mcp-test
+        run: make chat-lint chat-test

@@ -1,47 +1,31 @@
-//! `SQLite` knowledge store (FTS5) and bot stub DB.
+//! Read-only knowledge store over committed `interchouette.db` (FTS5).
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::{Mutex, MutexGuard};
 
 use anyhow::{bail, Context, Result};
 use rusqlite::{params, Connection, OpenFlags};
 
-/// Opened knowledge (read-only product DB) + bot stub.
+/// Opened knowledge database.
 pub struct Store {
     knowledge: Mutex<Connection>,
-    bot: Mutex<Connection>,
-    data_dir: PathBuf,
 }
 
 impl Store {
-    /// Open the committed knowledge `.db` read-only, plus a writable bot stub under `data_dir`.
+    /// Open the committed knowledge `.db` read-only.
     ///
     /// # Errors
     /// Returns when the knowledge file is missing or `SQLite` open fails.
-    pub fn open_readonly(
-        knowledge_db: impl AsRef<Path>,
-        data_dir: impl Into<PathBuf>,
-    ) -> Result<Self> {
+    pub fn open_readonly(knowledge_db: impl AsRef<Path>) -> Result<Self> {
         let knowledge_db = knowledge_db.as_ref();
-        let data_dir = data_dir.into();
-        std::fs::create_dir_all(&data_dir)
-            .with_context(|| format!("create data dir {}", data_dir.display()))?;
-
         let knowledge = Connection::open_with_flags(
             knowledge_db,
             OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
         )
         .with_context(|| format!("open read-only {}", knowledge_db.display()))?;
 
-        let bot_path = data_dir.join("bot.sqlite");
-        let bot =
-            Connection::open(&bot_path).with_context(|| format!("open {}", bot_path.display()))?;
-        migrate_bot(&bot)?;
-
         Ok(Self {
             knowledge: Mutex::new(knowledge),
-            bot: Mutex::new(bot),
-            data_dir,
         })
     }
 
@@ -49,51 +33,19 @@ impl Store {
     ///
     /// # Errors
     /// Returns when directories or `SQLite` open/migrate fail.
-    pub fn open_writable(
-        knowledge_db: impl AsRef<Path>,
-        data_dir: impl Into<PathBuf>,
-    ) -> Result<Self> {
+    pub fn open_writable(knowledge_db: impl AsRef<Path>) -> Result<Self> {
         let knowledge_db = knowledge_db.as_ref();
-        let data_dir = data_dir.into();
         if let Some(parent) = knowledge_db.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        std::fs::create_dir_all(&data_dir)?;
 
         let knowledge = Connection::open(knowledge_db)
             .with_context(|| format!("open writable {}", knowledge_db.display()))?;
         migrate_knowledge(&knowledge)?;
 
-        let bot_path = data_dir.join("bot.sqlite");
-        let bot = Connection::open(&bot_path)?;
-        migrate_bot(&bot)?;
-
         Ok(Self {
             knowledge: Mutex::new(knowledge),
-            bot: Mutex::new(bot),
-            data_dir,
         })
-    }
-
-    /// Data directory path.
-    #[must_use]
-    pub fn data_dir(&self) -> &Path {
-        &self.data_dir
-    }
-
-    /// Bot schema version (keeps `bot.sqlite` live).
-    ///
-    /// # Errors
-    /// Returns when the bot DB lock or query fails.
-    pub fn bot_schema_version(&self) -> Result<i64> {
-        let bot = lock(&self.bot, "bot")?;
-        let v: i64 = bot.query_row(
-            "SELECT version FROM schema_version WHERE id = 1",
-            [],
-            |row| row.get(0),
-        )?;
-        drop(bot);
-        Ok(v)
     }
 
     /// Replace all knowledge rows from prepared docs (writable DB only).
@@ -264,19 +216,6 @@ fn migrate_knowledge(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
-fn migrate_bot(conn: &Connection) -> Result<()> {
-    conn.execute_batch(
-        "
-        CREATE TABLE IF NOT EXISTS schema_version (
-            id INTEGER PRIMARY KEY CHECK (id = 1),
-            version INTEGER NOT NULL
-        );
-        INSERT OR IGNORE INTO schema_version (id, version) VALUES (1, 1);
-        ",
-    )?;
-    Ok(())
-}
-
 fn map_hit(row: &rusqlite::Row<'_>) -> rusqlite::Result<SearchHit> {
     Ok(SearchHit {
         slug: row.get(0)?,
@@ -317,7 +256,7 @@ mod tests {
     fn writable_then_readonly_search() {
         let dir = tempdir().unwrap();
         let db = dir.path().join("interchouette.db");
-        let store = Store::open_writable(&db, dir.path()).unwrap();
+        let store = Store::open_writable(&db).unwrap();
         store
             .replace_all(&[KnowledgeDoc {
                 slug: "en/gregory-roussac".into(),
@@ -328,19 +267,17 @@ mod tests {
             .unwrap();
         drop(store);
 
-        let ro = Store::open_readonly(&db, dir.path()).unwrap();
+        let ro = Store::open_readonly(&db).unwrap();
         let hits = ro.search("Gregory Roussac", Some("en"), 5).unwrap();
         assert!(!hits.is_empty());
         assert_eq!(hits[0].slug, "en/gregory-roussac");
         assert_eq!(ro.doc_count().unwrap(), 1);
-        assert_eq!(ro.bot_schema_version().unwrap(), 1);
     }
 
     #[test]
     fn committed_repo_db_searches() {
         let db = Path::new(env!("CARGO_MANIFEST_DIR")).join("../db/interchouette.db");
-        let dir = tempdir().unwrap();
-        let store = Store::open_readonly(&db, dir.path()).unwrap();
+        let store = Store::open_readonly(&db).unwrap();
         assert!(store.doc_count().unwrap() >= 6);
         let hits = store.search("Gregory Roussac", None, 5).unwrap();
         assert!(!hits.is_empty());

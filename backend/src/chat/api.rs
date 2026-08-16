@@ -27,7 +27,7 @@ pub struct ChatState {
 }
 
 impl ChatState {
-    /// Build chat state from knowledge store + env.
+    /// Build chat state from env.
     #[must_use]
     pub fn new(away: AwayBrain) -> Self {
         Self {

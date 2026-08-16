@@ -14,7 +14,7 @@
     "e2e": "playwright test --config e2e/playwright.config.ts",
     "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
     "console:static": "node scripts/check-static-console.mjs",
-    "preflight": "bash .cursor/scripts/preflight-before-merge.sh"
+    "preflight": "bash ../.cursor/scripts/preflight-before-merge.sh"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
