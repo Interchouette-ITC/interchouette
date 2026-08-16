@@ -156,14 +156,13 @@ impl ServerHandler for KnowledgeMcp {
 pub async fn run_http(
     addr: &str,
     data_dir: PathBuf,
-    seed_knowledge_dir: PathBuf,
+    knowledge_dir: PathBuf,
     admin_token: Option<String>,
     cors_origin: String,
 ) -> Result<()> {
     let store = Arc::new(Store::open(&data_dir)?);
-    let knowledge_dir = ingest::ensure_live_knowledge(&data_dir, &seed_knowledge_dir)?;
     let n = ingest::ingest_dir(&store, &knowledge_dir)?;
-    tracing::info!(documents = n, live = %knowledge_dir.display(), "knowledge ready");
+    tracing::info!(documents = n, from = %knowledge_dir.display(), "knowledge index ready");
     let _ = store.bot_schema_version()?;
 
     let mcp = KnowledgeMcp {
@@ -205,7 +204,6 @@ pub async fn run_http(
             "/v1/admin/knowledge/reingest",
             post(admin::reingest_handler),
         )
-        .route("/v1/admin/knowledge", post(admin::upsert_handler))
         .with_state(state);
 
     let app = Router::new()

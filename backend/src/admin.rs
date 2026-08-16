@@ -1,36 +1,29 @@
-//! Admin HTTP handlers for knowledge upload.
+//! Admin HTTP: rebuild FTS from the committed markdown tree shipped in the image.
 
 use std::sync::Arc;
 
-use axum::body::Bytes;
-use axum::extract::{Query, State};
+use axum::extract::State;
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::IntoResponse;
 use axum::Json;
-use serde::Deserialize;
 use serde_json::{json, Value};
 
-use crate::db::{KnowledgeDoc, Store};
+use crate::db::Store;
 use crate::ingest;
 
 #[derive(Clone)]
 pub struct AppState {
     pub store: Arc<Store>,
     pub admin_token: Option<String>,
-    /// Live markdown tree on disk (`$DATA_DIR/knowledge`).
     pub knowledge_dir: std::path::PathBuf,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UpsertQuery {
-    pub slug: String,
-    pub lang: Option<String>,
-    pub title: Option<String>,
 }
 
 type AuthError = (StatusCode, Json<Value>);
 
-/// Rebuild FTS from the live disk markdown tree (not the image bundle).
+/// Rebuild the derived FTS index from `KNOWLEDGE_DIR` (image / git corpus).
+///
+/// Content updates are done by editing `knowledge/**/*.md` in git and shipping
+/// a new image. This endpoint only re-reads that tree (ops / without restart).
 pub async fn reingest_handler(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -40,62 +33,6 @@ pub async fn reingest_handler(
     }
     match ingest::ingest_dir(&state.store, &state.knowledge_dir) {
         Ok(n) => (StatusCode::OK, Json(json!({ "ingested": n }))).into_response(),
-        Err(err) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "error": err.to_string() })),
-        )
-            .into_response(),
-    }
-}
-
-/// Upsert one markdown document: write live disk file + SQLite/FTS.
-pub async fn upsert_handler(
-    State(state): State<AppState>,
-    headers: HeaderMap,
-    Query(q): Query<UpsertQuery>,
-    body: Bytes,
-) -> impl IntoResponse {
-    if let Err(resp) = authorize(&state, &headers) {
-        return resp.into_response();
-    }
-    let text = String::from_utf8_lossy(&body).into_owned();
-    if text.trim().is_empty() {
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(json!({ "error": "empty body" })),
-        )
-            .into_response();
-    }
-    let lang = q.lang.unwrap_or_else(|| "en".into());
-    let title = q.title.clone().unwrap_or_else(|| q.slug.clone());
-    let slug = if q.slug.contains('/') {
-        q.slug
-    } else {
-        format!("{lang}/{}", q.slug)
-    };
-    let doc = KnowledgeDoc {
-        slug,
-        lang,
-        title,
-        body: text,
-    };
-    if let Err(err) = ingest::write_markdown_doc(&state.knowledge_dir, &doc) {
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "error": err.to_string() })),
-        )
-            .into_response();
-    }
-    match state.store.upsert_doc(&doc) {
-        Ok(()) => (
-            StatusCode::OK,
-            Json(json!({
-                "ok": true,
-                "slug": doc.slug,
-                "path": format!("{}.md", doc.slug),
-            })),
-        )
-            .into_response(),
         Err(err) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(json!({ "error": err.to_string() })),

@@ -88,30 +88,6 @@ impl Store {
         Ok(())
     }
 
-    /// Upsert one document by slug.
-    ///
-    /// # Errors
-    /// Returns when `SQLite` write fails.
-    pub fn upsert_doc(&self, doc: &KnowledgeDoc) -> Result<()> {
-        let conn = lock(&self.knowledge, "knowledge")?;
-        conn.execute(
-            "DELETE FROM documents_fts WHERE rowid IN (SELECT id FROM documents WHERE slug = ?1)",
-            params![doc.slug],
-        )?;
-        conn.execute("DELETE FROM documents WHERE slug = ?1", params![doc.slug])?;
-        conn.execute(
-            "INSERT INTO documents (slug, lang, title, body) VALUES (?1, ?2, ?3, ?4)",
-            params![doc.slug, doc.lang, doc.title, doc.body],
-        )?;
-        let rowid = conn.last_insert_rowid();
-        conn.execute(
-            "INSERT INTO documents_fts (rowid, slug, lang, title, body) VALUES (?1, ?2, ?3, ?4, ?5)",
-            params![rowid, doc.slug, doc.lang, doc.title, doc.body],
-        )?;
-        drop(conn);
-        Ok(())
-    }
-
     /// Full-text search.
     ///
     /// # Errors
