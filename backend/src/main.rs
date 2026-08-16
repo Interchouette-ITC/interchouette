@@ -28,6 +28,15 @@ struct Cli {
     /// CORS allow origin for browser callers.
     #[arg(long, env = "CORS_ORIGIN", default_value = "https://interchouette.net")]
     cors_origin: String,
+
+    /// Comma-separated Host values allowed by the Streamable HTTP transport.
+    #[arg(
+        long,
+        env = "MCP_ALLOWED_HOSTS",
+        value_delimiter = ',',
+        default_value = "localhost,127.0.0.1,::1,mcp.interchouette.net,interchouette-mcp-latest.onrender.com"
+    )]
+    allowed_hosts: Vec<String>,
 }
 
 fn init_logging() {
@@ -44,7 +53,19 @@ fn init_logging() {
 async fn main() -> Result<()> {
     init_logging();
     let cli = Cli::parse();
-    tracing::info!(addr = %cli.listen, db = %cli.knowledge_db.display(), "interchouette-mcp starting");
-    run_http(&cli.listen, cli.knowledge_db, cli.data_dir, cli.cors_origin).await?;
+    tracing::info!(
+        addr = %cli.listen,
+        db = %cli.knowledge_db.display(),
+        hosts = ?cli.allowed_hosts,
+        "interchouette-mcp starting"
+    );
+    run_http(
+        &cli.listen,
+        cli.knowledge_db,
+        cli.data_dir,
+        cli.cors_origin,
+        cli.allowed_hosts,
+    )
+    .await?;
     Ok(())
 }
