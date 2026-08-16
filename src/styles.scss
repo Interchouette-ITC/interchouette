@@ -1,7 +1,7 @@
-/* Global layout + shared CSS. CV fonts load from the CV page styles only. */
+/* Global layout + shared CSS. CV fonts load from the CV page styles only.
+ * Font Awesome subset is listed separately in angular.json styles. */
 @import '@fontsource/montserrat/latin-400.css';
 @import '@fontsource/montserrat/latin-700.css';
-@import './styles/font-awesome-subset.scss';
 
 /* Minimal animate.css subset used by the home/footer (fadeIn, rollIn, pulse). */
 @keyframes fadeIn {
