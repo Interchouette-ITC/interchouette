@@ -26,6 +26,8 @@ npm run build
 
 Publish directory for Render: `dist/interchouette/browser`
 
+Node: **22.22.3+** (see `.node-version` / `package.json` `engines`). On Render, clear build cache after the first Node upgrade.
+
 ## Test
 
 ```bash
