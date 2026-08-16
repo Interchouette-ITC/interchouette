@@ -11,7 +11,7 @@ import {
 
 const CHAT_OPENED_KEY = 'ic.chat.opened';
 
-/** Old live ack that leaked Slack routing; rewrite if still in localStorage. */
+/** Drop legacy live-delivery system lines from persisted transcripts. */
 const LEGACY_SLACK_ACK =
   'Message delivered to Greg. Reply in this chat when he answers in the Slack thread.';
 const LIVE_DELIVERY_ACK = 'Message sent. Greg will reply here, usually within minutes.';
@@ -487,16 +487,17 @@ export class ChatService {
 }
 
 function sanitizeStoredMessages(messages: ChatMessage[]): ChatMessage[] {
-  return messages.map((msg) => {
-    if (
+  return messages.filter((msg) => {
+    if (msg.role !== 'system') {
+      return true;
+    }
+    return !(
       msg.text === LEGACY_SLACK_ACK ||
+      msg.text === LIVE_DELIVERY_ACK ||
       /slack thread/i.test(msg.text) ||
       /will reply in this chat when he can/i.test(msg.text) ||
-      /usually within a few minutes/i.test(msg.text)
-    ) {
-      return { ...msg, text: LIVE_DELIVERY_ACK };
-    }
-    return msg;
+      /usually within (a few )?minutes/i.test(msg.text)
+    );
   });
 }
 

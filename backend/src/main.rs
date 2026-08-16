@@ -33,7 +33,14 @@ fn init_logging() {
 #[tokio::main]
 async fn main() -> Result<()> {
     init_logging();
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
+    if std::env::var("CHAT_LISTEN").is_err() {
+        if let Ok(port) = std::env::var("PORT") {
+            if !port.is_empty() {
+                cli.listen = format!("0.0.0.0:{port}");
+            }
+        }
+    }
     tracing::info!(addr = %cli.listen, "interchouette-chat starting");
     run_http(&cli.listen, cli.cors_origin).await?;
     Ok(())

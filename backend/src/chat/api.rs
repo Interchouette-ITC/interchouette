@@ -279,7 +279,7 @@ async fn handle_client_msg(state: &ChatState, session_id: &str, msg: ClientWsMes
             publish_role(state, session_id, "visitor", &text).await;
             match session.mode {
                 PresenceMode::Live => {
-                    handle_live(state, &session, session_id, &text).await;
+                    handle_live(state, &session, &text).await;
                 }
                 PresenceMode::Away => {
                     handle_away(state, &session, session_id, &text).await;
@@ -349,15 +349,8 @@ async fn post_to_session_thread(
     Ok(())
 }
 
-async fn handle_live(state: &ChatState, session: &Session, session_id: &str, text: &str) {
+async fn handle_live(state: &ChatState, session: &Session, text: &str) {
     let _ = post_to_session_thread(state, session, &format!("Prospect: {text}")).await;
-    publish_role(
-        state,
-        session_id,
-        "system",
-        "Message sent. Greg will reply here, usually within minutes.",
-    )
-    .await;
 }
 
 async fn handle_away(state: &ChatState, session: &Session, session_id: &str, text: &str) {

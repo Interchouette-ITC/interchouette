@@ -10,7 +10,7 @@ export function chatApiBase(): string {
   if (host === 'localhost' || host === '127.0.0.1') {
     return `http://${host}:8080`;
   }
-  return 'https://mcp.interchouette.net';
+  return 'https://chat.interchouette.net';
 }
 
 export function chatWsUrl(sessionId: string): string {
