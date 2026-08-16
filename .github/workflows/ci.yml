@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Action runtimes: Node 24+ (checkout / setup-node v7).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+  NPM_CONFIG_FUND: 'false'
+
+jobs:
+  ci:
+    name: format · audit · build · test · publish layout
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Assert Node major matches pin
+        run: |
+          expected="$(tr -d '[:space:]' < .nvmrc)"
+          actual="$(node -v | sed 's/^v//')"
+          echo "expected=${expected} actual=${actual}"
+          test "${actual}" = "${expected}"
+
+      - name: Install
+        run: npm ci
+
+      - name: Prettier
+        run: npm run format:check
+
+      - name: npm audit (high+)
+        run: npm audit --audit-level=high
+
+      - name: Production build (static + prerender)
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Verify static publish layout
+        run: node scripts/verify-static-dist.mjs
+
+      - name: Upload browser publish dir
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-dist-on-failure
+          path: dist/interchouette/browser
+          if-no-files-found: ignore
+          retention-days: 7

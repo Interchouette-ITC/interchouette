@@ -11,9 +11,6 @@
 npm-debug.log
 yarn-error.log
 
-# Local auth (never commit)
-.github_credentials
-
 # IDEs and editors
 .idea/
 .project
