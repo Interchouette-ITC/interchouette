@@ -33,6 +33,8 @@ fn build_cors(cors_origin: &str) -> CorsLayer {
         HeaderValue::from_static("https://interchouette.net"),
         HeaderValue::from_static("http://127.0.0.1:4200"),
         HeaderValue::from_static("http://localhost:4200"),
+        HeaderValue::from_static("http://127.0.0.1:4201"),
+        HeaderValue::from_static("http://localhost:4201"),
     ];
     if let Ok(extra) = cors_origin.parse::<HeaderValue>() {
         if !origins.contains(&extra) {
