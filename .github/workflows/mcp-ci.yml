@@ -4,19 +4,19 @@ on:
   pull_request:
     branches: [dev]
     paths:
-      - "backend/**"
-      - "knowledge/**"
-      - "docker/Dockerfile"
-      - "Makefile"
-      - ".github/workflows/mcp-ci.yml"
+      - 'backend/**'
+      - 'knowledge/**'
+      - 'docker/Dockerfile'
+      - 'Makefile'
+      - '.github/workflows/mcp-ci.yml'
   push:
     branches: [dev]
     paths:
-      - "backend/**"
-      - "knowledge/**"
-      - "docker/Dockerfile"
-      - "Makefile"
-      - ".github/workflows/mcp-ci.yml"
+      - 'backend/**'
+      - 'knowledge/**'
+      - 'docker/Dockerfile'
+      - 'Makefile'
+      - '.github/workflows/mcp-ci.yml'
 
 concurrency:
   group: mcp-ci-${{ github.workflow }}-${{ github.ref }}

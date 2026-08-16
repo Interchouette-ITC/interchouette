@@ -5,11 +5,11 @@ on:
   push:
     branches: [dev]
     paths:
-      - "backend/**"
-      - "knowledge/**"
-      - "docker/Dockerfile"
-      - "Makefile"
-      - ".github/workflows/docker-build-push-mcp-dev.yml"
+      - 'backend/**'
+      - 'knowledge/**'
+      - 'docker/Dockerfile'
+      - 'Makefile'
+      - '.github/workflows/docker-build-push-mcp-dev.yml'
 
 permissions:
   contents: read

@@ -1,6 +1,6 @@
 //! MCP tools + HTTP listener (`/interchouette`, `/health`, admin).
 
-#![allow(clippy::unused_async_trait_impl)]
+#![allow(clippy::unused_async)]
 
 use std::fmt::Write as _;
 use std::path::PathBuf;

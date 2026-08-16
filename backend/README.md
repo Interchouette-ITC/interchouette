@@ -6,12 +6,12 @@ Official URL: `https://mcp.interchouette.net/interchouette`
 
 ## Images
 
-| Registry | Image |
-| --- | --- |
-| Docker Hub (primary) | `interchouette/interchouette-mcp` |
-| Org GHCR | `ghcr.io/interchouette-itc/interchouette-mcp` |
-| Worker GHCR | `ghcr.io/interchouette/interchouette-mcp` |
-| Personal GHCR | `ghcr.io/groussac/interchouette-mcp` |
+| Registry             | Image                                         |
+| -------------------- | --------------------------------------------- |
+| Docker Hub (primary) | `interchouette/interchouette-mcp`             |
+| Org GHCR             | `ghcr.io/interchouette-itc/interchouette-mcp` |
+| Worker GHCR          | `ghcr.io/interchouette/interchouette-mcp`     |
+| Personal GHCR        | `ghcr.io/groussac/interchouette-mcp`          |
 
 Tags: `:dev` (tip from CI), `:0.1.0` + `:latest` (release CI).
 

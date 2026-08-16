@@ -1,4 +1,4 @@
-//! Load markdown knowledge files into SQLite.
+//! Load markdown knowledge files into `SQLite`.
 
 use std::path::Path;
 

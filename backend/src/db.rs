@@ -1,4 +1,4 @@
-//! SQLite knowledge store (FTS5) and bot stub DB.
+//! `SQLite` knowledge store (FTS5) and bot stub DB.
 
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard};
@@ -17,7 +17,7 @@ impl Store {
     /// Open or create DBs under `data_dir` and ensure schema.
     ///
     /// # Errors
-    /// Returns when directories or SQLite open/migrate fail.
+    /// Returns when directories or `SQLite` open/migrate fail.
     pub fn open(data_dir: impl Into<PathBuf>) -> Result<Self> {
         let data_dir = data_dir.into();
         std::fs::create_dir_all(&data_dir)
@@ -65,7 +65,7 @@ impl Store {
     /// Replace all knowledge rows from prepared docs.
     ///
     /// # Errors
-    /// Returns when SQLite write fails.
+    /// Returns when `SQLite` write fails.
     pub fn replace_all(&self, docs: &[KnowledgeDoc]) -> Result<()> {
         let mut conn = lock(&self.knowledge, "knowledge")?;
         {
@@ -91,7 +91,7 @@ impl Store {
     /// Upsert one document by slug.
     ///
     /// # Errors
-    /// Returns when SQLite write fails.
+    /// Returns when `SQLite` write fails.
     pub fn upsert_doc(&self, doc: &KnowledgeDoc) -> Result<()> {
         let conn = lock(&self.knowledge, "knowledge")?;
         conn.execute(
