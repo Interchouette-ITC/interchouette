@@ -1,13 +1,9 @@
-body {
+:host {
+	display: block;
+	min-height: 100vh;
 	font-family: 'Montserrat', sans-serif;
 	width: 100%;
-	margin:0;
-	background-color: #FFFFFF;
-	background-image: url(img/bg.webp);
-	background-repeat: no-repeat;
-	background-size: cover;
-	background-position: center;
-	background-attachment: fixed;
+	margin: 0;
 }
 
 .icons > a {

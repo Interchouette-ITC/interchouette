@@ -1,0 +1,16 @@
+/* Global site chrome (prerendered pages). */
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background-color: #ffffff;
+  background-image: url('/img/bg.webp');
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
