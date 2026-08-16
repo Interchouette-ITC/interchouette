@@ -20,6 +20,7 @@ const required = [
   'fonts/montserrat-latin-700.woff2',
   'fonts/montserrat-latin-400.woff2',
   'img/avatar-1x.webp',
+  'img/avatar-360.webp',
   'img/avatar-2x.webp',
   'CV/Gregory_Roussac.pdf',
 ];
