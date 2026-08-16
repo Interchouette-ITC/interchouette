@@ -42,12 +42,12 @@ export class HomePage {
   protected contactAriaLabel(): string {
     if (this.chat.ready()) {
       const who = this.chat.hero() === 'greg' ? 'Greg' : 'ITCy';
-      return `Open chat with ${who}. Also copies ${this.email} to the clipboard.`;
+      return `Open chat with ${who} or contact us at ${this.email}`;
     }
     if (this.chatEnabled) {
-      return `Email ${this.email}. Chat is connecting.`;
+      return `Contact us at ${this.email}. Chat is connecting.`;
     }
-    return `Email Interchouette - ITC at ${this.email}`;
+    return `Contact us at ${this.email}`;
   }
 
   protected contactTitle(): string {

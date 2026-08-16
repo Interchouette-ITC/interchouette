@@ -48,14 +48,14 @@
             decoding="async"
             aria-hidden="true"
           />
-          <i class="fa fa-comments" aria-hidden="true" data-chat title="Chat"></i>
+          <i class="fa fa-comments" aria-hidden="true" data-chat title="Chat with the team"></i>
         }
         @if (!chatEnabled) {
-          <i class="fa fa-envelope-o" aria-hidden="true" data-mail title="Email"></i>
+          <i class="fa fa-envelope-o" aria-hidden="true" data-mail [attr.title]="email"></i>
         }
         <span class="location__label">Interchouette - ITC</span>
         @if (chatEnabled) {
-          <i class="fa fa-envelope-o" aria-hidden="true" data-mail title="Email"></i>
+          <i class="fa fa-envelope-o" aria-hidden="true" data-mail [attr.title]="email"></i>
         }
       </span>
     </a>
