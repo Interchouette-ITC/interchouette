@@ -13,6 +13,28 @@ test.describe('responsive rendering', () => {
     expect(overflowX, `horizontal overflow on ${testInfo.project.name}`).toBe(false);
   });
 
+  test('home icons pulse once and avatar keeps aspect ratio', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(1200);
+
+    const icons = page.locator('p.icons.animated.pulse');
+    await expect(icons).toBeVisible();
+    const iteration = await icons.evaluate((el) => getComputedStyle(el).animationIterationCount);
+    expect(iteration, 'pulse must not loop forever (animate.css needs .infinite for that)').toBe(
+      '1',
+    );
+
+    const transform = await icons.evaluate((el) => getComputedStyle(el).transform);
+    expect(['none', 'matrix(1, 0, 0, 1, 0, 0)']).toContain(transform);
+
+    const avatar = page.getByRole('img', { name: 'ITC' });
+    const box = await avatar.boundingBox();
+    expect(box).not.toBeNull();
+    const ratio = box!.width / box!.height;
+    expect(ratio).toBeGreaterThan(1.0);
+    expect(ratio).toBeLessThan(1.2);
+  });
+
   test('terms and privacy stay readable', async ({ page }, testInfo) => {
     await page.goto('/terms');
     await expect(page.getByRole('heading', { name: 'Terms of Service' })).toBeVisible();
