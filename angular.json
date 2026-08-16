@@ -23,16 +23,11 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "styles": ["src/styles.scss"],
+            "styles": ["src/styles/font-awesome-subset.css", "src/styles.scss"],
             "assets": [
               {
                 "glob": "**/*",
                 "input": "public"
-              },
-              {
-                "glob": "**/*",
-                "input": "node_modules/font-awesome/fonts",
-                "output": "/fonts"
               }
             ],
             "server": "src/main.server.ts",
