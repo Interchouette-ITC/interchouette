@@ -1,4 +1,4 @@
-# interchouette-mcp - Streamable HTTP on :8080 at /interchouette
+# interchouette-mcp - Streamable HTTP on :8080 at /
 # Build context: repo root (needs db/interchouette.db + mcp/)
 
 ARG RUST_IMAGE=rust:1.97-bookworm
@@ -31,7 +31,7 @@ COPY db/interchouette.db /app/db/interchouette.db
 RUN chown -R mcp:mcp /app
 
 USER mcp
-ENV KNOWLEDGE_DB=/app/db/interchouette.db \
+ENV MCP_DB=/app/db/interchouette.db \
     MCP_LISTEN=0.0.0.0:8080 \
     CORS_ORIGIN=https://interchouette.net \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt

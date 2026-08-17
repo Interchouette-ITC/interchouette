@@ -2,16 +2,16 @@
   "version": "1.0",
   "protocolVersion": "2025-06-18",
   "serverInfo": {
-    "name": "interchouette-knowledge",
-    "title": "Interchouette knowledge",
+    "name": "interchouette-mcp",
+    "title": "Interchouette MCP",
     "version": "0.2.0"
   },
-  "description": "Read-only MCP for Gregory Roussac, Interchouette ITC, CV summary, Rust/Wasm/MCP/API public knowledge, and project blurbs.",
+  "description": "Read-only MCP for Gregory Roussac, Interchouette ITC, CV summary, Rust/Wasm/MCP/API public content, and project blurbs.",
   "documentationUrl": "https://interchouette.net/llms.txt",
   "websiteUrl": "https://interchouette.net/",
   "transport": {
     "type": "streamable-http",
-    "endpoint": "https://mcp.interchouette.net/interchouette"
+    "endpoint": "https://mcp.interchouette.net/"
   },
   "capabilities": {
     "tools": {}

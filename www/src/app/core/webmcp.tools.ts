@@ -65,7 +65,7 @@ export function listPagesText(): string {
 
 export function remoteMcpText(): string {
   return [
-    'Official remote MCP (Streamable HTTP): https://mcp.interchouette.net/interchouette',
+    'Official remote MCP (Streamable HTTP): https://mcp.interchouette.net/',
     'Transport: streamable-http',
     'Server card: https://interchouette.net/.well-known/mcp.json',
     'Site map: https://interchouette.net/llms.txt',

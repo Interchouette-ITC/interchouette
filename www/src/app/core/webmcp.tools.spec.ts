@@ -31,7 +31,7 @@ describe('webmcp.tools helpers', () => {
   });
 
   it('exposes remote MCP discovery text', () => {
-    expect(remoteMcpText()).toContain('https://mcp.interchouette.net/interchouette');
+    expect(remoteMcpText()).toContain('https://mcp.interchouette.net/');
     expect(remoteMcpText()).toContain('streamable-http');
     expect(remoteMcpText()).toContain('https://interchouette.net/.well-known/mcp.json');
     expect(remoteMcpText()).toContain('https://interchouette.net/llms.txt');

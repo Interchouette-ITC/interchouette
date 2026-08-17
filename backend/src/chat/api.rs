@@ -406,7 +406,7 @@ mod tests {
             presence: PresenceSource::Fixed(PresenceMode::Away),
             slack: SlackRelay::from_env(),
             away: AwayBrain::with_static_context(
-                "### Test\nInterchouette Rust chat test knowledge.",
+                "### Test\nInterchouette Rust chat test MCP context.",
             ),
         }
     }

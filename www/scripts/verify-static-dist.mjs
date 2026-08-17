@@ -60,7 +60,7 @@ async function mustBePacked(rel) {
   }
 }
 
-const MCP_ENDPOINT = 'https://mcp.interchouette.net/interchouette';
+const MCP_ENDPOINT = 'https://mcp.interchouette.net/';
 
 async function mustDiscoverMcp() {
   const card = JSON.parse(await readFile(join(root, '.well-known/mcp.json'), 'utf8'));

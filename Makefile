@@ -1,4 +1,4 @@
-# Interchouette knowledge MCP image targets (Hub + GHCR).
+# Interchouette MCP image targets (Hub + GHCR).
 # Tags: :dev and :latest only (no semver tags).
 
 MCP_NAME ?= interchouette-mcp
@@ -18,7 +18,7 @@ CLIPPY_FLAGS := -D warnings -D clippy::all -D clippy::pedantic -D clippy::nurser
 	mcp-docker-push
 
 help:
-	@echo "Knowledge MCP"
+	@echo "Interchouette MCP"
 	@echo "  make mcp-lint / mcp-test / mcp-build"
 	@echo "  make mcp-docker-build / mcp-docker-push"
 	@echo "Chat"
