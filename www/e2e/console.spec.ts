@@ -1,6 +1,17 @@
 import { expect, test, type ConsoleMessage, type Page } from '@playwright/test';
 
-const routes = ['/', '/CV', '/about', '/privacy', '/terms'] as const;
+const routes = [
+  '/',
+  '/CV',
+  '/about',
+  '/privacy',
+  '/terms',
+  '/news',
+  '/login',
+  '/account',
+  '/?lang=nl',
+  '/?lang=fr',
+] as const;
 
 test.describe('browser console', () => {
   for (const path of routes) {

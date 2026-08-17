@@ -1,0 +1,27 @@
+<header class="site-header">
+  <a
+    class="site-header__brand"
+    routerLink="/"
+    routerLinkActive="is-current"
+    [routerLinkActiveOptions]="{ exact: true }"
+    >{{ copy.headerBrand }}</a
+  >
+  <nav class="site-header__nav" [attr.aria-label]="copy.headerBrand">
+    <a routerLink="/news" routerLinkActive="is-current">{{ copy.headerNews }}</a>
+    @if (session.profile(); as profile) {
+      <a class="site-header__account" routerLink="/account" routerLinkActive="is-current">
+        <img
+          class="site-header__avatar"
+          [src]="profile.picture"
+          width="28"
+          height="28"
+          alt=""
+          decoding="async"
+        />
+        <span>{{ session.firstName() }}</span>
+      </a>
+    } @else {
+      <a routerLink="/login" routerLinkActive="is-current">{{ copy.headerLogin }}</a>
+    }
+  </nav>
+</header>

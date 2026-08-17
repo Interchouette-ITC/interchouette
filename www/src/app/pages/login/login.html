@@ -1,0 +1,10 @@
+<article class="inner-page">
+  <h1>{{ copy.loginTitle }}</h1>
+  <button type="button" class="google-btn" [disabled]="!gisConfigured">
+    {{ copy.loginGoogle }}
+  </button>
+  @if (!gisConfigured) {
+    <p>{{ copy.loginNotConfigured }}</p>
+  }
+</article>
+<app-site-footer />

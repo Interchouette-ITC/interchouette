@@ -2,10 +2,10 @@
   &#169; Interchouette {{ currentYear
   }}<span class="site-footer__home-wrap"
     ><span aria-hidden="true"> · </span
-    ><a routerLink="/" routerLinkActive="is-current" [routerLinkActiveOptions]="{ exact: true }"
-      >Home</a
-    ></span
-  ><span aria-hidden="true"> · </span><a routerLink="/about">About</a
-  ><span aria-hidden="true"> · </span><a routerLink="/privacy">Privacy</a
-  ><span aria-hidden="true"> · </span><a routerLink="/terms">Terms</a>
+    ><a routerLink="/" routerLinkActive="is-current" [routerLinkActiveOptions]="{ exact: true }">{{
+      copy.footerHome
+    }}</a></span
+  ><span aria-hidden="true"> · </span><a routerLink="/about">{{ copy.footerAbout }}</a
+  ><span aria-hidden="true"> · </span><a routerLink="/privacy">{{ copy.footerPrivacy }}</a
+  ><span aria-hidden="true"> · </span><a routerLink="/terms">{{ copy.footerTerms }}</a>
 </footer>

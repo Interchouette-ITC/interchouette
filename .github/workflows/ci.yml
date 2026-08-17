@@ -16,8 +16,8 @@ permissions:
 # Action runtimes: Node 24+ (checkout / setup-node v7).
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
-  NPM_CONFIG_FUND: 'false'
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+  NPM_CONFIG_FUND: "false"
 
 jobs:
   ci:
@@ -65,13 +65,13 @@ jobs:
 
       - name: Install Chromium for static console gate
         env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '0'
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "0"
         run: npx playwright install --with-deps chromium
 
       - name: Console errors on packed dist
         env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '0'
-          CI: 'true'
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "0"
+          CI: "true"
         run: node scripts/check-static-console.mjs
 
       - name: Deploy to Render
@@ -81,7 +81,16 @@ jobs:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
           test -n "$RENDER_DEPLOY_HOOK_URL"
-          curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK_URL"
+          hook="$(printf '%s' "$RENDER_DEPLOY_HOOK_URL" | tr -d '\r\n')"
+          # GET, no body. Do not print the URL (it is the secret).
+          http_code="$(curl -sS -o /tmp/render-hook.json -w '%{http_code}' --get "$hook")"
+          echo "render_hook_http=${http_code}"
+          cat /tmp/render-hook.json
+          echo
+          case "$http_code" in
+            200|202) ;;
+            *) exit 1 ;;
+          esac
 
       - name: Upload browser publish dir
         if: failure()

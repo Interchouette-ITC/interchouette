@@ -1,0 +1,30 @@
+export const EN = {
+  headerBrand: 'Interchouette',
+  headerNews: 'News',
+  headerLogin: 'Customer login',
+  footerHome: 'Home',
+  footerAbout: 'About',
+  footerPrivacy: 'Privacy',
+  footerTerms: 'Terms',
+  homePromise: 'Rust and Wasm freelance development for product teams.',
+  homeSubtitle: 'Rust - Wasm Freelance Developer',
+  newsTitle: 'News',
+  newsEmpty: 'No posts yet.',
+  loginTitle: 'Customer login',
+  loginGoogle: 'Sign in with Google',
+  loginNotConfigured: 'Customer login is not configured yet.',
+  accountTitle: 'Account',
+  accountStub: 'Customer space being prepared.',
+  accountSignIn: 'Customer login',
+  titleHome: 'Gregory Roussac - Rust / Wasm Freelance Developer - Interchouette - ITC',
+  descHome:
+    'Gregory Roussac, Rust and Wasm freelance developer (Interchouette ITC). Contact, CV, and links.',
+  titleNews: 'News - Interchouette',
+  descNews: 'News from Interchouette ITC.',
+  titleLogin: 'Customer login - Interchouette',
+  descLogin: 'Sign in to Interchouette with Google. The session stays in this browser.',
+  titleAccount: 'Account - Interchouette',
+  descAccount: 'Customer space for Interchouette.',
+} as const;
+
+export type SiteCopy = { [K in keyof typeof EN]: string };

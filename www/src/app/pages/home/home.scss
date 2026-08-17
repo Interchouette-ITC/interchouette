@@ -8,13 +8,13 @@
   --home-muted: #a9a9a9;
 }
 
-/* Desktop: room for fixed footer + vertical center of the card. */
+/* Desktop: room for sticky header, fixed footer, and vertical center of the card. */
 @media screen and (min-width: 1280px) {
   :host {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: calc(100vh - var(--site-header-height, 2.85rem));
+    min-height: calc(100dvh - var(--site-header-height, 2.85rem));
     padding-bottom: 2.75rem;
     box-sizing: border-box;
   }
@@ -130,7 +130,7 @@
 
 /*---------- Responsive Grid ---------------*/
 
-/* Mobile portrait — keep close to the known-good mobile look */
+/* Mobile portrait: keep close to the known-good mobile look */
 @media (min-width: 100px) and (max-width: 727px) and (orientation: portrait) {
   :host {
     width: 100%;
@@ -177,8 +177,18 @@
     line-height: 1.15;
     color: var(--home-title);
     margin-top: 16%;
-    margin-bottom: 0.45em;
+    margin-bottom: 0.35em;
     text-transform: capitalize;
+  }
+
+  .promise {
+    text-align: center;
+    font-size: clamp(0.88rem, 3.4vw, 1rem);
+    line-height: 1.4;
+    font-weight: 700;
+    color: var(--home-muted);
+    margin: 0 0 0.65em;
+    padding-inline: 0.35rem;
   }
 
   .subtitle {
@@ -207,7 +217,7 @@
   }
 }
 
-/* Mobile landscape — keep close to existing */
+/* Mobile landscape: keep close to existing */
 @media (min-width: 100px) and (max-width: 727px) and (orientation: landscape) {
   :host {
     width: 100%;
@@ -254,8 +264,18 @@
     line-height: 1.15;
     color: var(--home-title);
     margin-top: 16%;
-    margin-bottom: 0.35em;
+    margin-bottom: 0.3em;
     text-transform: capitalize;
+  }
+
+  .promise {
+    text-align: center;
+    font-size: clamp(1rem, 2.8vw, 1.2em);
+    line-height: 1.35;
+    font-weight: 700;
+    color: var(--home-muted);
+    margin: 0 0 0.55em;
+    padding-inline: 0.35rem;
   }
 
   .subtitle {
@@ -285,7 +305,7 @@
 
 /*
  * Tablet → small laptop (728–1499).
- * Do not use the desktop 35% card here — that reads as a tiny mobile strip.
+ * Do not use the desktop 35% card here: that reads as a tiny mobile strip.
  */
 @media screen and (min-width: 728px) and (max-width: 1499px) {
   :host {
@@ -329,8 +349,17 @@
     font-size: clamp(2rem, 3.2vw, 2.55em);
     color: var(--home-title);
     margin-top: 14%;
-    margin-bottom: 0.35em;
+    margin-bottom: 0.3em;
     text-transform: capitalize;
+  }
+
+  .promise {
+    text-align: center;
+    font-size: clamp(1rem, 1.6vw, 1.15em);
+    font-weight: 700;
+    color: var(--home-muted);
+    margin: 0 0 0.55em;
+    padding-inline: 0.75rem;
   }
 
   .subtitle {
@@ -394,8 +423,16 @@
     font-size: 2.8em;
     color: var(--home-title);
     margin-top: 15%;
-    margin-bottom: auto;
+    margin-bottom: 0.2em;
     text-transform: capitalize;
+  }
+
+  .promise {
+    text-align: center;
+    font-size: 1.15em;
+    font-weight: 700;
+    color: var(--home-muted);
+    margin: 0 8% 0.55em;
   }
 
   hr {
@@ -492,6 +529,10 @@
 
 .avatar {
   text-align: center;
+}
+
+h1.name {
+  font-weight: 700;
 }
 
 .avatar--chat {

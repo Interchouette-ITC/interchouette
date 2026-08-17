@@ -45,7 +45,7 @@ test.describe('responsive rendering', () => {
       })
       .toBeCloseTo(1, 2);
 
-    const avatar = page.getByRole('img', { name: 'ITC' });
+    const avatar = page.locator('.avatar img');
     const box = await avatar.boundingBox();
     expect(box).not.toBeNull();
     const ratio = box!.width / box!.height;

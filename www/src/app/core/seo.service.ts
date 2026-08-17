@@ -4,7 +4,8 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
-import { DEFAULT_OG_IMAGE, SITE_ORIGIN, type SeoRouteData } from './seo.constants';
+import { LocaleService } from './locale.service';
+import { DEFAULT_OG_IMAGE, LOCALE_ORIGINS, SITE_ORIGIN, type SeoRouteData } from './seo.constants';
 
 @Injectable({ providedIn: 'root' })
 export class SeoService {
@@ -13,6 +14,7 @@ export class SeoService {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly doc = inject(DOCUMENT);
+  private readonly locale = inject(LocaleService);
   private booted = false;
 
   /** Apply SEO tags on every navigation (browser + prerender). */
@@ -25,18 +27,27 @@ export class SeoService {
     this.router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe(() => this.apply());
+    this.apply();
   }
 
   apply(): void {
     const leaf = this.leafRoute();
     const path = this.router.url.split('?')[0] || '/';
-    const pageTitle = this.title.getTitle();
     const seo = (leaf.snapshot.data ?? {}) as SeoRouteData;
+    const copy = this.locale.copy;
+    const pageTitle = seo.titleKey ? copy[seo.titleKey] : this.title.getTitle();
     const description =
-      seo.description ?? 'Gregory Roussac - Rust / Wasm Freelance Developer - Interchouette - ITC';
-    const canonical = `${SITE_ORIGIN}${path === '/' ? '/' : path.replace(/\/$/, '')}`;
+      (seo.descriptionKey ? copy[seo.descriptionKey] : seo.description) ?? copy.descHome;
+    const origin = LOCALE_ORIGINS[this.locale.locale];
+    const canonical = `${origin}${path === '/' ? '/' : path.replace(/\/$/, '')}`;
     const ogType = seo.ogType ?? 'website';
     const robots = seo.robots ?? 'index, follow';
+
+    if (seo.titleKey) {
+      this.title.setTitle(pageTitle);
+    }
+
+    this.doc.documentElement.lang = this.locale.locale;
 
     this.meta.updateTag({ name: 'description', content: description });
     this.meta.updateTag({ name: 'robots', content: robots });
@@ -52,6 +63,7 @@ export class SeoService {
     this.meta.updateTag({ name: 'twitter:image', content: DEFAULT_OG_IMAGE });
 
     this.setCanonical(canonical);
+    this.setHreflang(path);
   }
 
   private leafRoute(): ActivatedRoute {
@@ -71,5 +83,26 @@ export class SeoService {
       head.appendChild(link);
     }
     link.setAttribute('href', href);
+  }
+
+  private setHreflang(path: string): void {
+    const head = this.doc.head;
+    const normalized = path === '/' ? '/' : path.replace(/\/$/, '');
+    const suffix = normalized === '/' ? '/' : normalized;
+    head.querySelectorAll('link[rel="alternate"][hreflang]').forEach((el) => el.remove());
+
+    const alts: [string, string][] = [
+      ['en', `${LOCALE_ORIGINS.en}${suffix}`],
+      ['nl', `${LOCALE_ORIGINS.nl}${suffix}`],
+      ['fr', `${LOCALE_ORIGINS.fr}${suffix}`],
+      ['x-default', `${SITE_ORIGIN}${suffix}`],
+    ];
+    for (const [hreflang, href] of alts) {
+      const link = this.doc.createElement('link');
+      link.setAttribute('rel', 'alternate');
+      link.setAttribute('hreflang', hreflang);
+      link.setAttribute('href', href);
+      head.appendChild(link);
+    }
   }
 }

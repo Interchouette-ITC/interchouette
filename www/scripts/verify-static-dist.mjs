@@ -14,6 +14,9 @@ const required = [
   'CV/index.html',
   'privacy/index.html',
   'terms/index.html',
+  'news/index.html',
+  'login/index.html',
+  'account/index.html',
   '_redirects',
   'sitemap.xml',
   'llms.txt',
@@ -29,7 +32,15 @@ const required = [
   'CV/Gregory_Roussac.pdf',
 ];
 
-const htmlPages = ['index.html', 'CV/index.html', 'privacy/index.html', 'terms/index.html'];
+const htmlPages = [
+  'index.html',
+  'CV/index.html',
+  'privacy/index.html',
+  'terms/index.html',
+  'news/index.html',
+  'login/index.html',
+  'account/index.html',
+];
 
 async function mustExist(rel) {
   const full = join(root, rel);

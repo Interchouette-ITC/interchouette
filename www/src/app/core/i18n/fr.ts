@@ -1,0 +1,30 @@
+import type { SiteCopy } from './en';
+
+export const FR: SiteCopy = {
+  headerBrand: 'Interchouette',
+  headerNews: 'Actualités',
+  headerLogin: 'Connexion client',
+  footerHome: 'Accueil',
+  footerAbout: 'À propos',
+  footerPrivacy: 'Confidentialité',
+  footerTerms: 'Conditions',
+  homePromise: 'Développement freelance Rust et Wasm pour les équipes produit.',
+  homeSubtitle: 'Développeur freelance Rust - Wasm',
+  newsTitle: 'Actualités',
+  newsEmpty: "Pas encore d'articles.",
+  loginTitle: 'Connexion client',
+  loginGoogle: 'Se connecter avec Google',
+  loginNotConfigured: "La connexion client n'est pas encore configurée.",
+  accountTitle: 'Compte',
+  accountStub: "L'espace client est en préparation.",
+  accountSignIn: 'Connexion client',
+  titleHome: 'Gregory Roussac - Développeur freelance Rust / Wasm - Interchouette - ITC',
+  descHome:
+    'Gregory Roussac, développeur freelance Rust et Wasm (Interchouette ITC). Contact, CV et liens.',
+  titleNews: 'Actualités - Interchouette',
+  descNews: 'Actualités Interchouette ITC.',
+  titleLogin: 'Connexion client - Interchouette',
+  descLogin: 'Connectez-vous à Interchouette avec Google. La session reste dans ce navigateur.',
+  titleAccount: 'Compte - Interchouette',
+  descAccount: 'Espace client Interchouette.',
+};

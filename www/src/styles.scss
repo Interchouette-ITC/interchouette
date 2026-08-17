@@ -67,6 +67,14 @@ body {
   overflow-x: hidden;
 }
 
+html {
+  --site-header-height: 2.85rem;
+}
+
+html[data-locale]:not([data-locale='en']):not(.app-ready) body {
+  visibility: hidden;
+}
+
 body {
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;

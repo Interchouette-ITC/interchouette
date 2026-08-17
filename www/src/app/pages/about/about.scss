@@ -106,18 +106,6 @@
   display: block;
 }
 
-.back {
-  display: inline-block;
-  margin-bottom: 1rem;
-  color: #27084e;
-  text-decoration: none;
-}
-
-.back:hover {
-  color: #3a1868;
-  text-decoration: underline;
-}
-
 @media screen and (max-width: 768px) {
   .card.about {
     width: auto;

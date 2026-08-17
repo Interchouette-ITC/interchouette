@@ -1,6 +1,6 @@
 export type SiteLocale = 'en' | 'nl' | 'fr';
 
-/** Hostname TLD (and localhost `?lang=`) for chat + later site copy. */
+/** Hostname TLD (and localhost `?lang=`). Keep the blocking script in index.html in sync. */
 export function siteLocale(hostname?: string, search?: string): SiteLocale {
   const query = search ?? (typeof location === 'undefined' ? '' : location.search);
   const params = new URLSearchParams(query.startsWith('?') ? query.slice(1) : query);

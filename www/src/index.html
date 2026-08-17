@@ -2,6 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <script>
+      (() => {
+        const params = new URLSearchParams(location.search);
+        const q = params.get('lang');
+        let locale = 'en';
+        if (q === 'nl' || q === 'fr' || q === 'en') {
+          locale = q;
+        } else if (/\.nl$/i.test(location.hostname)) {
+          locale = 'nl';
+        } else if (/\.fr$/i.test(location.hostname)) {
+          locale = 'fr';
+        }
+        const html = document.documentElement;
+        html.lang = locale;
+        html.setAttribute('data-locale', locale);
+        if (locale !== 'en') {
+          window.setTimeout(() => html.classList.add('app-ready'), 4000);
+        }
+      })();
+    </script>
     <title>Gregory Roussac - Rust / Wasm Freelance Developer - Interchouette - ITC</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -119,5 +139,13 @@
   </head>
   <body>
     <app-root></app-root>
+    <script>
+      (() => {
+        if (document.documentElement.getAttribute('data-locale') === 'en') {
+          return;
+        }
+        document.querySelector('app-root')?.replaceChildren();
+      })();
+    </script>
   </body>
 </html>

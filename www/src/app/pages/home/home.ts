@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 
 import { CONTACT_EMAIL, CHAT_WIDGET_ENABLED } from '../../core/chat.constants';
 import { ChatService } from '../../core/chat.service';
+import { LocaleService } from '../../core/locale.service';
 import { SiteFooter } from '../../shared/site-footer/site-footer';
 
 @Component({
@@ -14,6 +15,7 @@ import { SiteFooter } from '../../shared/site-footer/site-footer';
 })
 export class HomePage {
   protected readonly chat = inject(ChatService);
+  protected readonly copy = inject(LocaleService).copy;
 
   /** Feature gate only (may still be warming). */
   protected readonly chatEnabled = CHAT_WIDGET_ENABLED;

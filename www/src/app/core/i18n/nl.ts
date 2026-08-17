@@ -1,0 +1,30 @@
+import type { SiteCopy } from './en';
+
+export const NL: SiteCopy = {
+  headerBrand: 'Interchouette',
+  headerNews: 'Nieuws',
+  headerLogin: 'Klantlogin',
+  footerHome: 'Home',
+  footerAbout: 'Over',
+  footerPrivacy: 'Privacy',
+  footerTerms: 'Voorwaarden',
+  homePromise: 'Freelance Rust- en Wasm-ontwikkeling voor productteams.',
+  homeSubtitle: 'Rust - Wasm freelance-ontwikkelaar',
+  newsTitle: 'Nieuws',
+  newsEmpty: 'Nog geen berichten.',
+  loginTitle: 'Klantlogin',
+  loginGoogle: 'Inloggen met Google',
+  loginNotConfigured: 'Klantlogin is nog niet ingesteld.',
+  accountTitle: 'Account',
+  accountStub: 'De klantruimte wordt voorbereid.',
+  accountSignIn: 'Klantlogin',
+  titleHome: 'Gregory Roussac - Rust / Wasm freelance-ontwikkelaar - Interchouette - ITC',
+  descHome:
+    'Gregory Roussac, freelance-ontwikkelaar in Rust en Wasm (Interchouette ITC). Contact, CV en links.',
+  titleNews: 'Nieuws - Interchouette',
+  descNews: 'Nieuws van Interchouette ITC.',
+  titleLogin: 'Klantlogin - Interchouette',
+  descLogin: 'Log in bij Interchouette met Google. De sessie blijft in deze browser.',
+  titleAccount: 'Account - Interchouette',
+  descAccount: 'Klantruimte van Interchouette.',
+};

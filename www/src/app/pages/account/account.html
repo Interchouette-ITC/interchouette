@@ -1,0 +1,13 @@
+<article class="inner-page">
+  <h1>{{ copy.accountTitle }}</h1>
+  @if (session.profile(); as profile) {
+    <p>{{ profile.name }}</p>
+    <p>{{ copy.accountStub }}</p>
+  } @else {
+    <p>{{ copy.accountStub }}</p>
+    <p>
+      <a routerLink="/login">{{ copy.accountSignIn }}</a>
+    </p>
+  }
+</article>
+<app-site-footer />

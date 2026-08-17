@@ -16,6 +16,40 @@ export const routes: Routes = [
       description:
         'Gregory Roussac, Rust and Wasm freelance developer (Interchouette ITC). Contact, CV, and links.',
       ogType: 'profile',
+      titleKey: 'titleHome',
+      descriptionKey: 'descHome',
+    },
+  },
+  {
+    path: 'news',
+    loadComponent: () => import('./pages/news/news').then((m) => m.NewsPage),
+    title: 'News - Interchouette',
+    data: {
+      description: 'News from Interchouette ITC.',
+      titleKey: 'titleNews',
+      descriptionKey: 'descNews',
+    },
+  },
+  {
+    path: 'login',
+    loadComponent: () => import('./pages/login/login').then((m) => m.LoginPage),
+    title: 'Customer login - Interchouette',
+    data: {
+      description: 'Sign in to Interchouette with Google. The session stays in this browser.',
+      titleKey: 'titleLogin',
+      descriptionKey: 'descLogin',
+      robots: 'noindex, follow',
+    },
+  },
+  {
+    path: 'account',
+    loadComponent: () => import('./pages/account/account').then((m) => m.AccountPage),
+    title: 'Account - Interchouette',
+    data: {
+      description: 'Customer space for Interchouette.',
+      titleKey: 'titleAccount',
+      descriptionKey: 'descAccount',
+      robots: 'noindex, follow',
     },
   },
   {

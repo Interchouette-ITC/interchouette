@@ -9,7 +9,18 @@ import { join, extname } from 'node:path';
 import { chromium } from '@playwright/test';
 
 const root = join(process.cwd(), 'dist', 'interchouette', 'browser');
-const routes = ['/', '/CV', '/about', '/privacy', '/terms'];
+const routes = [
+  '/',
+  '/CV',
+  '/about',
+  '/privacy',
+  '/terms',
+  '/news',
+  '/login',
+  '/account',
+  '/?lang=nl',
+  '/?lang=fr',
+];
 const port = Number(process.env.STATIC_CONSOLE_PORT ?? 4201);
 const host = '127.0.0.1';
 
@@ -115,7 +126,7 @@ async function collectErrors(page, base, path) {
 }
 
 if (!(await fileExists(join(root, 'index.html')))) {
-  console.error(`missing ${join(root, 'index.html')} — run npm run build first`);
+  console.error(`missing ${join(root, 'index.html')} - run npm run build first`);
   process.exit(1);
 }
 
