@@ -7,7 +7,6 @@
 }
 
 :host {
-  display: block;
   font-family: 'Montserrat', sans-serif;
   font-weight: 400;
   padding-top: 2.15rem;
@@ -24,16 +23,18 @@
 }
 
 .legal {
-  max-width: 720px;
-  margin: 4% auto 2%;
-  padding: 2rem 2.5rem;
+  width: min(72rem, 94vw);
+  max-width: none;
+  margin: 3% auto 2%;
+  padding: 2.35rem 3rem;
   background: #fff;
   border-radius: 5px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
   color: #444;
   font-weight: 400;
-  line-height: 1.6;
-  font-size: 0.95rem;
+  line-height: 1.65;
+  font-size: 1rem;
+  box-sizing: border-box;
 }
 
 .legal h1 {
@@ -92,7 +93,8 @@
 
 @media screen and (max-width: 768px) {
   .legal {
-    margin: 2% 4%;
-    padding: 1.5rem;
+    width: auto;
+    margin: 2% 3%;
+    padding: 1.5rem 1.35rem;
   }
 }

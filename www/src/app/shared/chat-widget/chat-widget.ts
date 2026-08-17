@@ -485,5 +485,3 @@ export class ChatWidget implements OnDestroy {
     }
   }
 }
-
-

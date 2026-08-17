@@ -3,12 +3,18 @@
 }
 
 .site-footer {
-  text-align: left;
   color: white;
-  font-size: 0.78em;
+  font-size: clamp(0.62rem, 2.45vw, 0.78em);
   font-weight: 700;
   font-family: 'Montserrat', sans-serif;
-  padding: 0.4rem 1.1rem 0.85rem;
+  padding: 0.4rem 0.75rem 0.85rem;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.site-footer::-webkit-scrollbar {
+  display: none;
 }
 
 .site-footer a {
@@ -19,6 +25,51 @@
 /* Hide Home (+ its leading separator) when already on `/`. */
 .site-footer__home-wrap:has(a.is-current) {
   display: none;
+}
+
+/* Mobile + tablet: footer at page bottom, centered. Home pins to the viewport (like desktop). */
+@media screen and (max-width: 1279px) {
+  :host {
+    display: block;
+    width: 100%;
+  }
+
+  :host-context(app-home-page) {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+  }
+
+  :host-context(app-home-page) .site-footer {
+    pointer-events: auto;
+    background: #ffffff;
+    color: #160430;
+  }
+
+  :host-context(app-about-page),
+  :host-context(app-privacy-page),
+  :host-context(app-terms-page),
+  :host-context(app-login-page),
+  :host-context(app-news-page),
+  :host-context(app-account-page) {
+    margin-top: auto;
+  }
+
+  .site-footer {
+    text-align: center;
+    padding-inline: 0.75rem;
+    padding-bottom: max(0.85rem, calc(env(safe-area-inset-bottom) + 0.35rem));
+    background: #ffffff;
+    color: #160430;
+    border-top: 1px solid rgba(22, 4, 32, 0.12);
+    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.1);
+  }
 }
 
 /* Desktop / large laptop: pin footer to the viewport bottom. */
@@ -33,6 +84,7 @@
   }
 
   .site-footer {
+    text-align: left;
     pointer-events: auto;
   }
 }

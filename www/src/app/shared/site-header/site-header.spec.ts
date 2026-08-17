@@ -20,8 +20,18 @@ describe('SiteHeader', () => {
     expect(el.querySelector('.site-header__brand')?.getAttribute('aria-label')).toBe(
       'interchouette.net',
     );
+    expect(el.querySelector('.site-header__brand')?.getAttribute('title')).toBe(
+      COPY.en.headerHomeTitle,
+    );
     expect(el.querySelector('.site-header__dot')).toBeTruthy();
+    expect(el.querySelector('.site-header__marquee')?.textContent).toContain("Internet, c'est chouette");
+    expect(el.querySelector('a[routerlink="/news"]')?.getAttribute('title')).toBe(
+      COPY.en.titleNews,
+    );
     expect(el.querySelector('a[routerlink="/news"]')?.textContent?.trim()).toBe(COPY.en.headerNews);
+    expect(el.querySelector('a[routerlink="/login"]')?.getAttribute('title')).toBe(
+      COPY.en.titleLogin,
+    );
     expect(el.querySelector('a[routerlink="/login"]')?.textContent?.trim()).toBe(
       COPY.en.headerLogin,
     );

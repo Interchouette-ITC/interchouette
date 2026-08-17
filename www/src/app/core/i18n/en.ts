@@ -8,8 +8,11 @@ import type { DeepLoose, SiteCopyLeafKey } from './copy-types';
 
 export const EN = {
   headerBrand: 'Interchouette',
+  headerHomeTitle: 'Home - interchouette.net',
   headerNews: 'News',
   headerLogin: 'Client login',
+  headerMarquee:
+    "★ Internet, c'est chouette ★ Rust · Wasm · Freelance ★ Interchouette - ITC ★ Gregory Roussac ★",
   footerHome: 'Home',
   footerAbout: 'About',
   footerPrivacy: 'Privacy',

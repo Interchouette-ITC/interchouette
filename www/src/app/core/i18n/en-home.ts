@@ -15,4 +15,11 @@ export const EN_HOME = {
   slack: 'Slack workspace Interchouette (opens in a new tab)',
   twitter: 'X (Twitter) Interchouette (opens in a new tab)',
   amazon: 'Amazon wishlist of Gregory Roussac (opens in a new tab)',
+  cardLogoLabel: 'Interchouette logo',
+  cardLogoHints: [
+    'Why click here? That is our mark — tap again for About.',
+    'This owl brands the card — curious? Tap again.',
+    'Not just decoration — About Interchouette is one more tap.',
+    'The hanging logo? About page, second tap.',
+  ],
 } as const;

@@ -15,4 +15,11 @@ export const FR_HOME = {
   slack: "Espace Slack Interchouette (s'ouvre dans un nouvel onglet)",
   twitter: "X (Twitter) Interchouette (s'ouvre dans un nouvel onglet)",
   amazon: "Liste d'envies Amazon de Gregory Roussac (s'ouvre dans un nouvel onglet)",
+  cardLogoLabel: 'Logo Interchouette',
+  cardLogoHints: [
+    'Pourquoi cliquer ici ? Notre marque — retapez pour About.',
+    'Cette chouette signe la carte — curieux ? Retapez.',
+    'Pas que de la déco — About Interchouette en un second tap.',
+    'Le logo suspendu ? Page About au second clic.',
+  ],
 } as const;

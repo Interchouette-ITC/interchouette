@@ -60,7 +60,10 @@
 }
 
 html {
-  --site-header-height: 2.15rem;
+  --site-header-height: 2.85rem;
+  --home-logo-hang: calc(2.65rem + 20px);
+  --home-logo-clear: calc(var(--home-logo-hang) + 6px);
+  --site-footer-mobile-h: 3.1rem;
   margin: 0;
   padding: 0;
   width: 100%;
@@ -91,4 +94,95 @@ body {
 
 app-root {
   display: block;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+main#main {
+  display: block;
+  flex: 1 1 auto;
+}
+
+/* Inner pages: sticky footer at the bottom on mobile + tablet. Home layout lives in home.scss. */
+@media screen and (max-width: 1279px) {
+  app-home-page {
+    display: grid;
+    grid-template-rows: 1fr auto 1fr;
+    width: 100%;
+    min-height: 100svh;
+    min-height: 100dvh;
+    box-sizing: border-box;
+    padding-top: calc(var(--site-header-height) + var(--home-logo-clear));
+    padding-bottom: calc(var(--site-footer-mobile-h) + env(safe-area-inset-bottom, 0px));
+  }
+
+  app-home-page > .card {
+    grid-row: 2;
+    align-self: center;
+    margin: 0;
+  }
+
+  app-home-page > app-site-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    pointer-events: none;
+    grid-row: 3;
+    align-self: end;
+  }
+
+  app-home-page > app-site-footer .site-footer {
+    pointer-events: auto;
+    text-align: center;
+    background: #ffffff;
+    color: #160430;
+    border-top: 1px solid rgba(22, 4, 32, 0.12);
+    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.1);
+  }
+
+  main#main:has(> app-home-page) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 100svh;
+    min-height: 100dvh;
+  }
+
+  app-root:has(app-home-page) {
+    display: flex;
+    flex-direction: column;
+    min-height: 100svh;
+    min-height: 100dvh;
+  }
+
+  app-about-page,
+  app-privacy-page,
+  app-terms-page,
+  app-login-page,
+  app-news-page,
+  app-account-page {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100dvh - var(--site-header-height, 2.85rem));
+    box-sizing: border-box;
+  }
+}
+
+@media screen and (max-width: 727px) {
+  html {
+    --home-logo-hang: calc(1.85rem + 10px);
+    --home-logo-clear: calc(var(--home-logo-hang) + 6px);
+  }
+}
+
+@media screen and (max-width: 400px) {
+  html {
+    --home-logo-hang: calc(1.55rem + 14px);
+    --home-logo-clear: calc(var(--home-logo-hang) + 14px);
+  }
 }

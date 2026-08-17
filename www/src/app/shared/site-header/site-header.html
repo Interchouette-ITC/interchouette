@@ -5,17 +5,28 @@
     routerLinkActive="is-current"
     [routerLinkActiveOptions]="{ exact: true }"
     aria-label="interchouette.net"
+    [attr.title]="copy.headerHomeTitle"
   >
     <span class="site-header__inter">inter</span>chouette<span
       class="site-header__dot"
       aria-hidden="true"
     ></span
-    >net
+    ><span class="site-header__tld">net</span>
   </a>
+  <marquee class="site-header__marquee" scrollamount="3" scrolldelay="35" aria-hidden="true">{{
+    copy.headerMarquee
+  }}</marquee>
   <nav class="site-header__nav" [attr.aria-label]="copy.headerBrand">
-    <a routerLink="/news" routerLinkActive="is-current">{{ copy.headerNews }}</a>
+    <a routerLink="/news" routerLinkActive="is-current" [attr.title]="copy.titleNews">{{
+      copy.headerNews
+    }}</a>
     @if (session.profile(); as profile) {
-      <a class="site-header__account" routerLink="/account" routerLinkActive="is-current">
+      <a
+        class="site-header__account"
+        routerLink="/account"
+        routerLinkActive="is-current"
+        [attr.title]="copy.titleAccount"
+      >
         <img
           class="site-header__avatar"
           [src]="profile.picture"
@@ -27,7 +38,9 @@
         <span>{{ session.firstName() }}</span>
       </a>
     } @else {
-      <a routerLink="/login" routerLinkActive="is-current">{{ copy.headerLogin }}</a>
+      <a routerLink="/login" routerLinkActive="is-current" [attr.title]="copy.titleLogin">{{
+        copy.headerLogin
+      }}</a>
     }
   </nav>
 </header>

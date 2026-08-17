@@ -1266,17 +1266,24 @@
   }
 }
 
-/* Mobile only — ignored on desktop. Do not edit for desktop spacing. */
-@media (max-width: 480px) {
+/* Mobile + tablet FAB — above footer; hide nudge so the owl is never clipped. */
+@media (max-width: 1279px) {
   :host {
     --chat-fab-size: 5.85rem;
     --chat-fab-face: calc(4.95rem - 4px);
     --chat-fab-right: 1.35rem;
-    --chat-fab-bottom: 1.5rem;
+    --chat-fab-bottom: calc(var(--site-footer-mobile-h, 3.1rem) + 1rem);
     --chat-fab-radius: 1.7rem;
     --chat-fab-face-radius: calc(1.25rem - 2px);
   }
 
+  .chat-nudge {
+    display: none;
+  }
+}
+
+/* Small phones — centered chat panel. */
+@media (max-width: 480px) {
   .chat-panel {
     right: max(0.65rem, env(safe-area-inset-right));
     left: max(0.65rem, env(safe-area-inset-left));

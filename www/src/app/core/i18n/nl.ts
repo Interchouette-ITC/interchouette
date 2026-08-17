@@ -8,8 +8,11 @@ import type { SiteCopy } from './en';
 
 export const NL: SiteCopy = {
   headerBrand: 'Interchouette',
+  headerHomeTitle: 'Home - interchouette.net',
   headerNews: 'Nieuws',
   headerLogin: 'Klantlogin',
+  headerMarquee:
+    '★ Internet, c\'est chouette ★ Rust · Wasm · Freelance ★ Interchouette - ITC ★ Gregory Roussac ★',
   footerHome: 'Home',
   footerAbout: 'Over',
   footerPrivacy: 'Privacy',
