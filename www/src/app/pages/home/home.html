@@ -1,0 +1,161 @@
+<div class="card animated fadeIn">
+  <div class="avatar">
+    <img
+      class="center animated rollIn"
+      src="/img/avatar-244.webp"
+      srcset="
+        /img/avatar-1x.webp  200w,
+        /img/avatar-244.webp 244w,
+        /img/avatar-340.webp 340w,
+        /img/avatar-2x.webp  379w
+      "
+      sizes="(max-width: 727px) 30vw, (max-width: 1499px) 22vw, 200px"
+      alt="Gregory Roussac, Interchouette ITC"
+      width="379"
+      height="353"
+      decoding="async"
+      fetchpriority="high"
+      [class.avatar--chat]="chat.ready()"
+      [attr.tabindex]="chat.ready() ? 0 : null"
+      [attr.role]="chat.ready() ? 'button' : null"
+      [attr.aria-label]="avatarAriaLabel()"
+      [attr.title]="avatarAriaLabel()"
+      (click)="openChat()"
+      (keydown.enter)="openChat()"
+      (keydown.space)="$event.preventDefault(); openChat()"
+    />
+  </div>
+  <hr />
+  <div class="name">Gregory Roussac</div>
+  <p class="subtitle">Rust - Wasm Freelance Developer</p>
+  <p class="location" [attr.title]="contactTitle()" (click)="onContactClick($event)">
+    <a
+      id="contact"
+      class="icons"
+      [attr.href]="chat.ready() ? null : mailHref"
+      [attr.role]="chat.ready() ? 'button' : null"
+      [attr.aria-label]="contactAriaLabel()"
+      [attr.title]="contactTitle()"
+    >
+      <span class="location__cluster" [class.location__cluster--mail-end]="chatEnabled">
+        @if (chat.ready()) {
+          <img
+            class="location__point"
+            src="/img/hand-right2.png"
+            width="28"
+            height="23"
+            alt=""
+            decoding="async"
+            aria-hidden="true"
+          />
+          <i class="fa fa-comments" aria-hidden="true" data-chat title="Chat with the team"></i>
+        }
+        @if (!chatEnabled) {
+          <i class="fa fa-envelope-o" aria-hidden="true" data-mail [attr.title]="email"></i>
+        }
+        <span class="location__label">Interchouette - ITC</span>
+        @if (chatEnabled) {
+          <i class="fa fa-envelope-o" aria-hidden="true" data-mail [attr.title]="email"></i>
+        }
+      </span>
+    </a>
+  </p>
+  <p class="icons animated pulse">
+    <a
+      routerLink="/CV"
+      title="Open CV of Gregory Roussac (PDF)"
+      aria-label="Open CV of Gregory Roussac (PDF)"
+    >
+      <span class="fa-stack fa-lg" aria-hidden="true">
+        <i class="fa fa-circle-thin fa-stack-2x"></i>
+        <i class="fa fa-file-pdf-o fa-stack-1x"></i>
+      </span>
+    </a>
+    <a
+      href="https://github.com/Interchouette-ITC"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="GitHub organization Interchouette ITC (opens in a new tab)"
+      aria-label="GitHub organization Interchouette ITC (opens in a new tab)"
+    >
+      <span class="fa-stack fa-lg" aria-hidden="true">
+        <i class="fa fa-circle-thin fa-stack-2x"></i>
+        <i class="fa fa-github fa-stack-1x"></i>
+      </span>
+    </a>
+    <a
+      href="https://www.linkedin.com/in/gregoryroussac/"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="LinkedIn profile of Gregory Roussac (opens in a new tab)"
+      aria-label="LinkedIn profile of Gregory Roussac (opens in a new tab)"
+    >
+      <span class="fa-stack fa-lg" aria-hidden="true">
+        <i class="fa fa-circle-thin fa-stack-2x"></i>
+        <i class="fa fa-linkedin fa-stack-1x"></i>
+      </span>
+    </a>
+    <a
+      id="whatsapp"
+      [href]="whatsappHref"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="WhatsApp Interchouette (opens in a new tab)"
+      aria-label="WhatsApp Interchouette (opens in a new tab)"
+    >
+      <span class="fa-stack fa-lg" aria-hidden="true">
+        <i class="fa fa-circle-thin fa-stack-2x"></i>
+        <i class="fa fa-whatsapp fa-stack-1x"></i>
+      </span>
+    </a>
+    <a
+      href="https://signal.me/#u/interchouette.42"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Signal username interchouette.42 (opens in a new tab)"
+      aria-label="Signal username interchouette.42 (opens in a new tab)"
+    >
+      <span class="fa-stack fa-lg" aria-hidden="true">
+        <i class="fa fa-circle-thin fa-stack-2x"></i>
+        <i class="fa fa-signal-messenger fa-stack-1x"></i>
+      </span>
+    </a>
+    <a
+      href="https://join.slack.com/t/interchouette/shared_invite/zt-2urug9dmr-PYzageTbj8bxD5c3n39QuA"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Slack workspace Interchouette (opens in a new tab)"
+      aria-label="Slack workspace Interchouette (opens in a new tab)"
+    >
+      <span class="fa-stack fa-lg" aria-hidden="true">
+        <i class="fa fa-circle-thin fa-stack-2x"></i>
+        <i class="fa fa-slack fa-stack-1x"></i>
+      </span>
+    </a>
+    <a
+      href="https://twitter.com/interchouette"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="X (Twitter) Interchouette (opens in a new tab)"
+      aria-label="X (Twitter) Interchouette (opens in a new tab)"
+    >
+      <span class="fa-stack fa-lg" aria-hidden="true">
+        <i class="fa fa-circle-thin fa-stack-2x"></i>
+        <i class="fa fa-twitter fa-stack-1x"></i>
+      </span>
+    </a>
+    <a
+      href="https://www.amazon.fr/hz/wishlist/ls/3OZTQ604Q7N29?ref_=wl_share"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Amazon wishlist of Gregory Roussac (opens in a new tab)"
+      aria-label="Amazon wishlist of Gregory Roussac (opens in a new tab)"
+    >
+      <span class="fa-stack fa-lg" aria-hidden="true">
+        <i class="fa fa-circle-thin fa-stack-2x"></i>
+        <i class="fa fa-amazon fa-stack-1x"></i>
+      </span>
+    </a>
+  </p>
+</div>
+<app-site-footer />

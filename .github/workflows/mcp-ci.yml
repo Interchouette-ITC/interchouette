@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [dev]
     paths:
-      - 'backend/**'
+      - 'mcp/**'
       - 'db/**'
       - 'docker/Dockerfile'
       - 'Makefile'
@@ -12,7 +12,7 @@ on:
   push:
     branches: [dev]
     paths:
-      - 'backend/**'
+      - 'mcp/**'
       - 'db/**'
       - 'docker/Dockerfile'
       - 'Makefile'
@@ -45,7 +45,7 @@ jobs:
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
         with:
-          workspaces: backend
+          workspaces: mcp
 
       - name: Lint + test
         run: make mcp-lint mcp-test

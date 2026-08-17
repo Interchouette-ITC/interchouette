@@ -1,13 +1,13 @@
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
 # Compiled output
-/dist
+/www/dist
 /tmp
 /out-tsc
 /bazel-out
 
 # Node
-/node_modules
+/www/node_modules
 npm-debug.log
 yarn-error.log
 
@@ -30,23 +30,32 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
-/.angular/cache
+/www/.angular/cache
 .sass-cache/
 /connect.lock
-/coverage
+/www/coverage
 /libpeerconnection.log
 testem.log
 /typings
 __screenshots__/
-/test-results/
-/playwright-report/
+/www/test-results/
+/www/playwright-report/
 /blob-report/
-/playwright/.cache/
+/www/playwright/.cache/
+
+# Local auth (never commit)
+.github_credentials
 
 # System files
 .DS_Store
 Thumbs.db
 
-# Rust MCP backend
+# Rust crates
+/mcp/target/
 /backend/target/
 /backend/data/
+
+# Local secrets
+.env
+.env.*
+!.env.example

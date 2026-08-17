@@ -1,6 +1,6 @@
-//! Interchouette knowledge MCP library.
+//! Website visitor chat: HTTP + WebSocket, Slack DM for live, remote MCP for away.
 
-pub mod db;
+pub mod chat;
 pub mod server;
 
-pub use server::{build_app, run_http, DEFAULT_ALLOWED_HOSTS, DEFAULT_HTTP_LISTEN};
+pub use server::{build_app, run_http, DEFAULT_HTTP_LISTEN};

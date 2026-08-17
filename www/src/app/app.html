@@ -1,0 +1,7 @@
+<main id="main">
+  <router-outlet />
+</main>
+<app-consent-banner />
+@if (chatEnabled) {
+  <app-chat-widget ngSkipHydration />
+}

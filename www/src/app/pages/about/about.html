@@ -1,0 +1,348 @@
+<article class="card about animated fadeIn">
+  <a class="back" routerLink="/">&larr; Interchouette - ITC</a>
+  <h1>About Interchouette - ITC</h1>
+
+  <h2>Organization</h2>
+  <p>
+    <a href="https://interchouette.net">interchouette.net</a>
+    <span aria-hidden="true"> · </span>
+    <a href="https://github.com/Interchouette-ITC" target="_blank" rel="noopener noreferrer"
+      >GitHub · Interchouette - ITC</a
+    >
+    <span aria-hidden="true"> · </span>
+    <a
+      href="https://www.linkedin.com/company/interchouette-itc"
+      target="_blank"
+      rel="noopener noreferrer"
+      >LinkedIn · Interchouette - ITC</a
+    >
+  </p>
+
+  <h2>The name</h2>
+  <p>
+    <strong>Interchouette</strong> is a French pun:
+    <em>Internet, c&rsquo;est chouette</em>
+    (&ldquo;the Internet is cool&rdquo;).
+    <strong>ITC</strong>
+    stands for Information Technology Company. Based in Hilversum, Amsterdam, and Paris.
+  </p>
+  <p>
+    The house bias is
+    <span class="about-ferris" title="Ferris" aria-hidden="true"
+      ><img src="/rust.png" width="24" height="23" alt="" decoding="async" /></span
+    >Rust-first systems work (Wasm, APIs, MCP, markets tooling) with clean architecture, tests that
+    stay honest, and shipping things that are fun to use. Public code lives on
+    <a href="https://github.com/Interchouette-ITC" target="_blank" rel="noopener noreferrer"
+      >Interchouette-ITC</a
+    >.
+  </p>
+
+  <h2>ITCy</h2>
+  <p>
+    <a href="https://github.com/Interchouette" target="_blank" rel="noopener noreferrer"
+      ><strong>ITCy</strong></a
+    >
+    is the Interchouette - ITC mascot: a little Linux owl who likes IT, humour, and wordplay. ITCy
+    is a disclosed AI experiment (LinkedIn / X operator for the company page), written by AI, with a
+    Rust-first build habit. On this site, ITCy also runs the away-mode
+    <strong>AI chatbot</strong>
+    in visitor chat. Profile:
+    <a href="https://github.com/Interchouette" target="_blank" rel="noopener noreferrer"
+      >github.com/Interchouette</a
+    >.
+  </p>
+
+  <h2>How interchouette.net is built</h2>
+  <p>
+    The public pages are an
+    <a href="https://angular.dev/" target="_blank" rel="noopener noreferrer">Angular</a>
+    app. Visitor chat and
+    <a href="https://mcp.interchouette.net/interchouette" target="_blank" rel="noopener noreferrer"
+      >Interchouette MCP</a
+    >
+    are
+    <a href="https://www.rust-lang.org/" target="_blank" rel="noopener noreferrer">Rust</a>
+    services. Images and services ship in
+    <a href="https://hub.docker.com/orgs/interchouette/" target="_blank" rel="noopener noreferrer"
+      >Docker</a
+    >
+    . Day-to-day editing, review, and shipping happen in
+    <a href="https://cursor.com/" target="_blank" rel="noopener noreferrer">Cursor</a>
+    .
+  </p>
+  <ul class="stack">
+    <li>
+      <a href="https://angular.dev/" target="_blank" rel="noopener noreferrer"
+        ><strong>Angular</strong></a
+      >
+      - home card, CV, legal pages, chat widget UI, prerender for the static host on
+      <a href="https://onrender.com/" target="_blank" rel="noopener noreferrer">onrender.com</a>
+      .
+    </li>
+    <li>
+      <span class="about-ferris" title="Ferris" aria-hidden="true"
+        ><img src="/rust.png" width="24" height="23" alt="" decoding="async" /></span
+      ><a href="https://www.rust-lang.org/" target="_blank" rel="noopener noreferrer"
+        ><strong>Rust</strong></a
+      >
+      - chat backend (WebSocket + Slack when
+      <a
+        href="https://www.linkedin.com/in/gregoryroussac/"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Greg</a
+      >
+      is live; AI away mode) and
+      <a
+        href="https://mcp.interchouette.net/interchouette"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Interchouette MCP</a
+      >.
+    </li>
+    <li>
+      <a href="https://openrouter.ai/" target="_blank" rel="noopener noreferrer"
+        ><strong>OpenRouter</strong></a
+      >
+      - model routing for ITCy away-mode answers in the site chat (when configured).
+    </li>
+    <li>
+      <a href="https://hub.docker.com/orgs/interchouette/" target="_blank" rel="noopener noreferrer"
+        ><strong>Docker</strong></a
+      >
+      - container images for the MCP and related services published for deploy.
+    </li>
+    <li>
+      <a href="https://cursor.com/" target="_blank" rel="noopener noreferrer"
+        ><strong>Cursor</strong></a
+      >
+      - the IDE and agent workflow used to build and maintain this site.
+    </li>
+  </ul>
+
+  <h2>Powered by</h2>
+  <ul class="links">
+    <li>
+      <a routerLink="/CV">CV</a>
+      - curriculum vitae (
+      <a routerLink="/CV">HTML</a>
+      ) and
+      <a href="/CV/Gregory_Roussac.pdf" target="_blank" rel="noopener noreferrer">PDF download</a>.
+    </li>
+    <li>
+      <a href="https://github.com/Interchouette-ITC" target="_blank" rel="noopener noreferrer"
+        >GitHub</a
+      >
+      -
+      <a href="https://github.com/Interchouette-ITC" target="_blank" rel="noopener noreferrer"
+        >Interchouette - ITC</a
+      >
+      organization ·
+      <a href="https://github.com/Interchouette" target="_blank" rel="noopener noreferrer">ITCy</a>
+      ·
+      <a href="https://github.com/gRoussac" target="_blank" rel="noopener noreferrer">gRoussac</a>.
+    </li>
+    <li>
+      <a
+        href="https://www.linkedin.com/in/gregoryroussac/"
+        target="_blank"
+        rel="noopener noreferrer"
+        >LinkedIn</a
+      >
+      - Gregory Roussac profile ·
+      <a
+        href="https://www.linkedin.com/company/interchouette-itc"
+        target="_blank"
+        rel="noopener noreferrer"
+        >LinkedIn company page</a
+      >.
+    </li>
+    <li>
+      <a href="https://wa.me/31620808454" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+      - Interchouette - ITC WhatsApp.
+    </li>
+    <li>
+      <a href="https://signal.me/#u/interchouette.42" target="_blank" rel="noopener noreferrer"
+        >Signal</a
+      >
+      - username
+      <code>interchouette.42</code>
+      .
+    </li>
+    <li>
+      <a
+        href="https://join.slack.com/t/interchouette/shared_invite/zt-2urug9dmr-PYzageTbj8bxD5c3n39QuA"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Slack</a
+      >
+      - Interchouette - ITC workspace invite.
+    </li>
+    <li>
+      <a href="https://twitter.com/interchouette" target="_blank" rel="noopener noreferrer">X</a>
+      - &#64;interchouette on X (Twitter).
+    </li>
+    @if (chat.ready()) {
+      <li>
+        <a
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="chat.hero() === 'greg' ? 'Open chat with Greg' : 'Open chat with ITCy'"
+          (click)="openChat($event)"
+          (keydown.enter)="openChat($event)"
+          (keydown.space)="$event.preventDefault(); openChat($event)"
+          >Chat with the team</a
+        >
+        - open the site chat.
+      </li>
+    }
+  </ul>
+
+  <h2>Public code</h2>
+  <p>
+    Selected public repositories under
+    <a
+      href="https://github.com/orgs/Interchouette-ITC/repositories"
+      target="_blank"
+      rel="noopener noreferrer"
+      >Interchouette-ITC</a
+    >:
+  </p>
+  <ul class="stack">
+    <li>
+      <a
+        href="https://github.com/Interchouette-ITC/tvscreener-rs"
+        target="_blank"
+        rel="noopener noreferrer"
+        >tvscreener-rs</a
+      >
+      - unofficial Rust TradingView Screener client (optional MCP).
+    </li>
+    <li>
+      <a
+        href="https://github.com/Interchouette-ITC/casper-rust-wasm-sdk"
+        target="_blank"
+        rel="noopener noreferrer"
+        >casper-rust-wasm-sdk</a
+      >
+      - Rust / Wasm / PyO3 Casper SDK.
+    </li>
+    <li>
+      <a
+        href="https://github.com/Interchouette-ITC/ceps-rust-ts-client"
+        target="_blank"
+        rel="noopener noreferrer"
+        >ceps-rust-ts-client</a
+      >
+      - unified Rust client for Casper CEP-18, CEP-78, CEP-85, and CEP-95.
+    </li>
+    <li>
+      <a
+        href="https://github.com/Interchouette-ITC/kms-secp256k1-api"
+        target="_blank"
+        rel="noopener noreferrer"
+        >kms-secp256k1-api</a
+      >
+      - custodial AWS KMS secp256k1 key generation and signing (Rust).
+    </li>
+    <li>
+      <a
+        href="https://github.com/Interchouette-ITC/casper-deployer"
+        target="_blank"
+        rel="noopener noreferrer"
+        >casper-deployer</a
+      >
+      - Casper Deployer UI / tooling.
+    </li>
+    <li>
+      <a
+        href="https://github.com/Interchouette-ITC/casper-nctl-2-docker"
+        target="_blank"
+        rel="noopener noreferrer"
+        >casper-nctl-2-docker</a
+      >
+      - NCTL 2.0 bundled in Docker.
+    </li>
+    <li>
+      <a
+        href="https://github.com/Interchouette-ITC/evaluator"
+        target="_blank"
+        rel="noopener noreferrer"
+        >evaluator</a
+      >
+      - JavaScript functions evaluator.
+    </li>
+    <li>
+      <a
+        href="https://github.com/Interchouette-ITC/itcy-tui"
+        target="_blank"
+        rel="noopener noreferrer"
+        >itcy-tui</a
+      >
+      - ITCy status TUI (ratatui).
+    </li>
+  </ul>
+  <p>
+    Coming soon:
+    <a
+      href="https://github.com/open-trading-ai/OpenTrading"
+      target="_blank"
+      rel="noopener noreferrer"
+      >open-trading-ai/OpenTrading</a
+    >.
+  </p>
+
+  <h2>Also edited by Interchouette - ITC</h2>
+  <p>
+    Interchouette - ITC also edits
+    <a href="https://open-trading.com" target="_blank" rel="noopener noreferrer">open-trading.com</a
+    >,
+    <a href="https://open-trading.dev" target="_blank" rel="noopener noreferrer">open-trading.dev</a
+    >,
+    <a href="https://open-trading.ai" target="_blank" rel="noopener noreferrer">open-trading.ai</a>,
+    <a href="https://mcpare.com" target="_blank" rel="noopener noreferrer">mcpare.com</a>,
+    <a href="https://mcpare.nl" target="_blank" rel="noopener noreferrer">mcpare.nl</a>,
+    <a href="https://mcpare.ai" target="_blank" rel="noopener noreferrer">mcpare.ai</a>,
+    <a href="https://model-compare.ai" target="_blank" rel="noopener noreferrer">model-compare.ai</a
+    >, and
+    <a href="https://model-compare.com" target="_blank" rel="noopener noreferrer"
+      >model-compare.com</a
+    >. Technical stack for the broker on
+    <a href="https://mcp.broker" target="_blank" rel="noopener noreferrer">mcp.broker</a>.
+  </p>
+  <p>
+    Demo sites:
+    <a href="https://casper-deployer.interchouette.net" target="_blank" rel="noopener noreferrer"
+      >casper-deployer.interchouette.net</a
+    >,
+    <a href="https://casper-webclient.interchouette.net" target="_blank" rel="noopener noreferrer"
+      >casper-webclient.interchouette.net</a
+    >,
+    <a href="https://evaluator.interchouette.net" target="_blank" rel="noopener noreferrer"
+      >evaluator.interchouette.net</a
+    >.
+  </p>
+  <p>
+    Also
+    <a href="https://interchouette.nl" target="_blank" rel="noopener noreferrer"
+      >interchouette.nl</a
+    >
+    and
+    <a href="https://interchouette.fr" target="_blank" rel="noopener noreferrer">interchouette.fr</a
+    >.
+  </p>
+
+  <h2>Legal</h2>
+  <p>
+    Interchouette - ITC is a Dutch sole proprietorship (eenmanszaak / ZZP) operated by Gregory
+    Roussac from Hilversum, the Netherlands. Public work under this brand includes freelance Rust
+    and Wasm development, this site, and related editorial care of the linked properties above.
+  </p>
+  <p class="legal-copy">&#169; Interchouette {{ currentYear }}.</p>
+  <p>
+    <a routerLink="/privacy">Privacy Policy</a>
+    <span aria-hidden="true"> · </span>
+    <a routerLink="/terms">Terms of Service</a>
+  </p>
+</article>
+<app-site-footer />

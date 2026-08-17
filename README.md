@@ -12,9 +12,19 @@ Public site for [interchouette.net](https://interchouette.net/): Gregory Roussac
 - Vitest (unit) · Playwright desktop / mobile / tablet (host Chrome; no browser download)
 - Render Static Site (CDN; build on deploy)
 
+## Layout
+
+| Path       | Role                                      |
+| ---------- | ----------------------------------------- |
+| `www/`     | Angular site (`package.json`, `node_modules`) |
+| `mcp/`     | Knowledge MCP crate (`interchouette-mcp`) |
+| `backend/` | Website chat crate (`interchouette-chat`) |
+| `db/`      | Committed knowledge SQLite                |
+
 ## Develop
 
 ```bash
+cd www
 npm ci
 npm start
 ```
@@ -22,30 +32,33 @@ npm start
 ## Build (static + prerender)
 
 ```bash
+cd www
 npm run build
 ```
 
-Publish directory for Render: `dist/interchouette/browser`
+Publish directory for Render: `www/dist/interchouette/browser`
 
-Node: **24.19.0** (or 22.22.3+ / 24.15.0+). See `.node-version`. On Render set `NODE_VERSION=24.19.0` and clear build cache after changing it.
+Node: **24.19.0** (or 22.22.3+ / 24.15.0+). See `www/.node-version`. On Render set `NODE_VERSION=24.19.0`, root directory / build command under `www/`, and clear build cache after changing it.
 
 ## Test
 
 ```bash
+cd www
 npm test
 ```
 
 Full local gate (same shape as GitHub Actions):
 
 ```bash
+cd www
 npm run ci
 ```
 
-CI (GitHub Actions on `dev` / PRs into `dev`): Prettier, `npm audit --audit-level=high`, production build + prerender, unit tests, and a static publish layout check (including MCP discovery files). Pin Node with `.nvmrc` (**24.19.0**). On push to `dev` after those steps succeed, CI calls the static-site Render deploy hook (`RENDER_DEPLOY_HOOK_URL` org secret). Keep Render Auto-Deploy **Off** so only that hook triggers production.
+CI (GitHub Actions on `dev` / PRs into `dev`): Prettier, `npm audit --audit-level=high`, production build + prerender, unit tests, and a static publish layout check (including MCP discovery files). Pin Node with `www/.nvmrc` (**24.19.0**). On push to `dev` after those steps succeed, CI calls the static-site Render deploy hook (`RENDER_DEPLOY_HOOK_URL` org secret). Keep Render Auto-Deploy **Off** so only that hook triggers production.
 
-Knowledge MCP image CI (on `backend/` / `db/` / Docker changes): builds and pushes `interchouette/interchouette-mcp` `:dev` and `:latest`, then calls the MCP Render deploy hook (`RENDER_DEPLOY_HOOK_URL_MCP` org secret).
+Knowledge MCP image CI (on `mcp/` / `db/` / Docker changes): builds and pushes `interchouette/interchouette-mcp` `:dev` and `:latest`, then calls the MCP Render deploy hook (`RENDER_DEPLOY_HOOK_URL_MCP` org secret).
 
-E2E: Playwright specs in `e2e/` (`npm run e2e`) with **desktop**, **mobile** (Pixel 7), and **tablet** (834×1194) projects via host Chrome. **Do not** run `playwright install` or download browsers in this repo. If you install npm deps in an environment that would fetch browsers, set `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`.
+E2E: Playwright specs in `www/e2e/` (`npm run e2e` from `www/`) with **desktop**, **mobile** (Pixel 7), and **tablet** (834×1194) projects via host Chrome. **Do not** run `playwright install` or download browsers in this repo. If you install npm deps in an environment that would fetch browsers, set `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`.
 
 ## Render redirects (required)
 
@@ -61,4 +74,4 @@ Dashboard → Redirects/Rewrites must **not** Redirect `/*` to `/index.html` (th
 | `/CV`                        | `/CV/index.html`          | **Rewrite**                  |
 | `/*`                         | `/index.html`             | **Rewrite** (never Redirect) |
 
-Same rules live in `public/_redirects` for hosts that honor it.
+Same rules live in `www/public/_redirects` for hosts that honor it.

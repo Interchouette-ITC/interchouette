@@ -1,0 +1,38 @@
+:host {
+  display: block;
+}
+
+.site-footer {
+  text-align: left;
+  color: white;
+  font-size: 0.78em;
+  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  padding: 0.4rem 1.1rem 0.85rem;
+}
+
+.site-footer a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+/* Hide Home (+ its leading separator) when already on `/`. */
+.site-footer__home-wrap:has(a.is-current) {
+  display: none;
+}
+
+/* Desktop / large laptop: pin footer to the viewport bottom. */
+@media screen and (min-width: 1280px) {
+  :host {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    pointer-events: none;
+  }
+
+  .site-footer {
+    pointer-events: auto;
+  }
+}
