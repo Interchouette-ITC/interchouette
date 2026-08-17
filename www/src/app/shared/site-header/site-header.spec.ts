@@ -24,11 +24,15 @@ describe('SiteHeader', () => {
       COPY.en.headerHomeTitle,
     );
     expect(el.querySelector('.site-header__dot')).toBeTruthy();
+    expect(el.querySelector('.site-header__marquee-slot')).toBeTruthy();
     expect(el.querySelector('.site-header__marquee')).toBeNull();
     expect(el.querySelector('a[routerlink="/news"]')?.getAttribute('title')).toBe(
       COPY.en.titleNews,
     );
     expect(el.querySelector('a[routerlink="/news"]')?.textContent?.trim()).toBe(COPY.en.headerNews);
+    expect(el.querySelector('a[href*="join.slack.com"]')?.textContent?.trim()).toBe(
+      COPY.en.headerSlack,
+    );
     expect(el.querySelector('a[routerlink="/login"]')?.getAttribute('title')).toBe(
       COPY.en.titleLogin,
     );

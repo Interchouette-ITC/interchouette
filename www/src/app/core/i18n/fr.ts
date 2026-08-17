@@ -10,6 +10,7 @@ export const FR: SiteCopy = {
   headerBrand: 'Interchouette',
   headerHomeTitle: 'Accueil - interchouette.net',
   headerNews: 'Actualités',
+  headerSlack: 'Rejoindre Slack',
   headerLogin: 'Connexion client',
   headerMarquee:
     "★ Internet, c'est chouette ★ Rust · Wasm · Freelance ★ Interchouette - ITC ★ Gregory Roussac ★",
@@ -31,6 +32,7 @@ export const FR: SiteCopy = {
   descHome:
     'Gregory Roussac, développeur freelance Rust et Wasm (Interchouette ITC). Contact, CV et liens.',
   titleNews: 'Actualités - Interchouette',
+  titleSlack: "Rejoindre l'espace Slack Interchouette (s'ouvre dans un nouvel onglet)",
   descNews: 'Actualités Interchouette ITC.',
   titleLogin: 'Connexion client - Interchouette',
   descLogin: 'Connectez-vous à Interchouette avec Google. La session reste dans ce navigateur.',

@@ -13,15 +13,25 @@
     ></span
     ><span class="site-header__tld">net</span>
   </a>
-  @if (marqueeLive()) {
-    <marquee class="site-header__marquee" scrollamount="3" scrolldelay="35" aria-hidden="true">{{
-      copy.headerMarquee
-    }}</marquee>
-  }
+  <div class="site-header__marquee-slot" aria-hidden="true">
+    @if (marqueeLive()) {
+      <marquee class="site-header__marquee" scrollamount="3" scrolldelay="35">
+        {{ copy.headerMarquee }}
+      </marquee>
+    }
+  </div>
   <nav class="site-header__nav" [attr.aria-label]="copy.headerBrand">
     <a routerLink="/news" routerLinkActive="is-current" [attr.title]="copy.titleNews">{{
       copy.headerNews
     }}</a>
+    <a
+      [href]="slackJoinUrl"
+      target="_blank"
+      rel="noopener noreferrer"
+      [attr.title]="copy.titleSlack"
+      [attr.aria-label]="copy.titleSlack"
+      >{{ copy.headerSlack }}</a
+    >
     @if (session.profile(); as profile) {
       <a
         class="site-header__account"

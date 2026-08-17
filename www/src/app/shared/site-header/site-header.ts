@@ -1,6 +1,14 @@
-import { ChangeDetectionStrategy, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
+import { SLACK_JOIN_URL } from '../../core/chat.constants';
 import { CustomerSession } from '../../core/customer-session';
 import { LocaleService } from '../../core/locale.service';
 
@@ -14,12 +22,13 @@ import { LocaleService } from '../../core/locale.service';
 export class SiteHeader implements OnInit, OnDestroy {
   protected readonly copy = inject(LocaleService).copy;
   protected readonly session = inject(CustomerSession);
+  protected readonly slackJoinUrl = SLACK_JOIN_URL;
   protected readonly marqueeLive = signal(false);
 
   private marqueeTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
-    this.marqueeTimer = setTimeout(() => this.marqueeLive.set(true), 20_000);
+    this.marqueeTimer = setTimeout(() => this.marqueeLive.set(true), 5_000);
   }
 
   ngOnDestroy(): void {

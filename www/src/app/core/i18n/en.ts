@@ -10,6 +10,7 @@ export const EN = {
   headerBrand: 'Interchouette',
   headerHomeTitle: 'Home - interchouette.net',
   headerNews: 'News',
+  headerSlack: 'Join our Slack',
   headerLogin: 'Client login',
   headerMarquee:
     "★ Internet, c'est chouette ★ Rust · Wasm · Freelance ★ Interchouette - ITC ★ Gregory Roussac ★",
@@ -31,6 +32,7 @@ export const EN = {
   descHome:
     'Gregory Roussac, Rust and Wasm freelance developer (Interchouette ITC). Contact, CV, and links.',
   titleNews: 'News - Interchouette',
+  titleSlack: 'Join the Interchouette Slack workspace (opens in a new tab)',
   descNews: 'News from Interchouette ITC.',
   titleLogin: 'Client login - Interchouette',
   descLogin: 'Sign in to Interchouette with Google. The session stays in this browser.',

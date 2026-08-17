@@ -17,6 +17,7 @@
 .site-header {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'brand marquee nav';
   align-items: center;
   column-gap: 0.75rem;
   box-sizing: border-box;
@@ -39,6 +40,7 @@
 .site-header__brand:visited,
 .site-header__brand:hover,
 .site-header__brand.is-current {
+  grid-area: brand;
   display: inline-flex;
   align-items: baseline;
   min-width: 0;
@@ -71,8 +73,17 @@
   color: #ffe8f0;
 }
 
-.site-header__marquee {
+.site-header__marquee-slot {
+  grid-area: marquee;
   min-width: 0;
+  overflow: hidden;
+}
+
+.site-header__marquee {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  transform: translateY(2px);
   color: #ffd24a;
   font-size: clamp(0.62rem, 2.2vw, 0.78rem);
   letter-spacing: 0.05em;
@@ -81,10 +92,20 @@
 }
 
 .site-header__nav {
+  grid-area: nav;
+  justify-self: end;
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: clamp(0.55rem, 2.4vw, 1.15rem);
+  gap: 0;
+}
+
+.site-header__nav > a + a::before {
+  content: '-';
+  margin: 0 0.45em;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 700;
+  pointer-events: none;
 }
 
 .site-header__nav a,
@@ -101,7 +122,11 @@
   white-space: nowrap;
 }
 
-.site-header__nav a:hover,
+.site-header__nav a:hover {
+  color: #ffd24a;
+  text-decoration: none;
+}
+
 .site-header__nav a.is-current {
   color: #fff;
   text-decoration: none;
