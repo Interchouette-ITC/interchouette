@@ -63,13 +63,13 @@ fn mcp_err(msg: impl Into<String>) -> McpError {
 struct SearchArgs {
     /// Full-text query (e.g. "Gregory Roussac", "Rust MCP", "Interchouette").
     query: String,
-    /// Optional language filter: `en` or `nl`.
+    /// Optional language filter: `en`, `nl`, or `fr` (default `en`).
     lang: Option<String>,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
 struct LangArgs {
-    /// Optional language: `en` or `nl` (default en for overviews that exist in both).
+    /// Optional language: `en`, `nl`, or `fr` (default `en`).
     lang: Option<String>,
 }
 
@@ -98,8 +98,8 @@ impl InterchouetteMcp {
         &self,
         Parameters(SearchArgs { query, lang }): Parameters<SearchArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let lang_ref = lang.as_deref();
-        match self.store.search(&query, lang_ref, 8) {
+        let lang = resolve_lang(lang.as_deref())?;
+        match self.store.search(&query, Some(lang.as_str()), 8) {
             Ok(hits) if hits.is_empty() => Ok(text_ok("No matches.")),
             Ok(hits) => {
                 let mut out = String::new();
@@ -116,31 +116,42 @@ impl InterchouetteMcp {
         }
     }
 
-    #[tool(description = "Interchouette ITC company overview (lang: en or nl).")]
+    #[tool(description = "Interchouette ITC company overview (lang: en, nl, or fr).")]
     async fn get_interchouette_overview(
         &self,
         Parameters(LangArgs { lang }): Parameters<LangArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let lang = lang.unwrap_or_else(|| "en".into());
-        let slug = format!("{lang}/interchouette-overview");
-        doc_or_err(&self.store, &slug, Some(lang.as_str()))
+        let lang = resolve_lang(lang.as_deref())?;
+        doc_or_err(&self.store, "overview", Some(&lang))
     }
 
     #[tool(description = "Profile of Gregory Roussac (founder of Interchouette ITC).")]
-    async fn get_gregory_profile(&self) -> Result<CallToolResult, McpError> {
-        doc_or_err(&self.store, "en/gregory-roussac", Some("en"))
+    async fn get_gregory_profile(
+        &self,
+        Parameters(LangArgs { lang }): Parameters<LangArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let lang = resolve_lang(lang.as_deref())?;
+        doc_or_err(&self.store, "gregory-roussac", Some(&lang))
     }
 
     #[tool(description = "CV summary for Gregory Roussac with links to HTML/PDF CV.")]
-    async fn get_cv_summary(&self) -> Result<CallToolResult, McpError> {
-        doc_or_err(&self.store, "en/cv-summary", Some("en"))
+    async fn get_cv_summary(
+        &self,
+        Parameters(LangArgs { lang }): Parameters<LangArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let lang = resolve_lang(lang.as_deref())?;
+        doc_or_err(&self.store, "cv-summary", Some(&lang))
     }
 
     #[tool(
         description = "Public Interchouette / Gregory Roussac project and image catalog blurbs."
     )]
-    async fn list_public_projects(&self) -> Result<CallToolResult, McpError> {
-        doc_or_err(&self.store, "en/public-projects", Some("en"))
+    async fn list_public_projects(
+        &self,
+        Parameters(LangArgs { lang }): Parameters<LangArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let lang = resolve_lang(lang.as_deref())?;
+        doc_or_err(&self.store, "public-projects", Some(&lang))
     }
 
     #[tool(description = "Public contact channels for Gregory Roussac / Interchouette.")]
@@ -225,9 +236,30 @@ impl InterchouetteMcp {
     }
 }
 
+fn resolve_lang(lang: Option<&str>) -> Result<String, McpError> {
+    let Some(raw) = lang.map(str::trim).filter(|s| !s.is_empty()) else {
+        return Ok("en".into());
+    };
+    match raw {
+        "en" | "nl" | "fr" => Ok(raw.to_string()),
+        other => Err(mcp_err(format!(
+            "unsupported lang `{other}`; use en, nl, or fr"
+        ))),
+    }
+}
+
+fn format_doc(title: &str, body: &str) -> String {
+    let body = body.trim();
+    if body.starts_with('#') {
+        body.to_string()
+    } else {
+        format!("# {title}\n\n{body}")
+    }
+}
+
 fn doc_or_err(store: &Store, slug: &str, lang: Option<&str>) -> Result<CallToolResult, McpError> {
     match store.get_by_slug(slug, lang) {
-        Ok(Some(doc)) => Ok(text_ok(format!("# {}\n\n{}", doc.title, doc.body))),
+        Ok(Some(doc)) => Ok(text_ok(format_doc(&doc.title, &doc.body))),
         Ok(None) => Err(mcp_err(format!("document not found: {slug}"))),
         Err(err) => Err(mcp_err(err.to_string())),
     }
@@ -330,33 +362,39 @@ mod tests {
     use tempfile::tempdir;
     use tower::ServiceExt;
 
-    use crate::db::KnowledgeDoc;
+    use crate::db::Document;
 
     fn seed_store(dir: &tempfile::TempDir) -> PathBuf {
         let db = dir.path().join("interchouette.db");
         let store = Store::open_writable(&db).unwrap();
         store
             .replace_all(&[
-                KnowledgeDoc {
-                    slug: "en/gregory-roussac".into(),
+                Document {
+                    slug: "gregory-roussac".into(),
                     lang: "en".into(),
                     title: "Gregory Roussac".into(),
                     body: "Gregory Roussac founded Interchouette ITC.".into(),
                 },
-                KnowledgeDoc {
-                    slug: "en/interchouette-overview".into(),
+                Document {
+                    slug: "overview".into(),
                     lang: "en".into(),
                     title: "Overview".into(),
                     body: "Interchouette overview body.".into(),
                 },
-                KnowledgeDoc {
-                    slug: "en/cv-summary".into(),
+                Document {
+                    slug: "overview".into(),
+                    lang: "nl".into(),
+                    title: "Overzicht".into(),
+                    body: "Nederlands overzicht opgericht.".into(),
+                },
+                Document {
+                    slug: "cv-summary".into(),
                     lang: "en".into(),
                     title: "CV".into(),
                     body: "CV summary body.".into(),
                 },
-                KnowledgeDoc {
-                    slug: "en/public-projects".into(),
+                Document {
+                    slug: "public-projects".into(),
                     lang: "en".into(),
                     title: "Projects".into(),
                     body: "Public projects body.".into(),
@@ -445,7 +483,7 @@ mod tests {
         let store = Arc::new(Store::open_readonly(db).unwrap());
         let mcp = InterchouetteMcp::new(store, ChatRelay::from_env());
 
-        let profile = mcp.get_gregory_profile().await.unwrap();
+        let profile = mcp.get_gregory_profile(none_lang()).await.unwrap();
         assert!(!profile.is_error.unwrap_or(false));
         let contact = mcp.get_contact().await.unwrap();
         assert!(!contact.is_error.unwrap_or(false));
@@ -456,18 +494,25 @@ mod tests {
             .await
             .unwrap();
         assert!(!overview.is_error.unwrap_or(false));
-        let cv = mcp.get_cv_summary().await.unwrap();
+        let cv = mcp.get_cv_summary(none_lang()).await.unwrap();
         assert!(!cv.is_error.unwrap_or(false));
-        let projects = mcp.list_public_projects().await.unwrap();
+        let projects = mcp.list_public_projects(none_lang()).await.unwrap();
         assert!(!projects.is_error.unwrap_or(false));
         let hits = mcp
             .search(Parameters(SearchArgs {
                 query: "Gregory Roussac".into(),
-                lang: Some("en".into()),
+                lang: None,
             }))
             .await
             .unwrap();
         assert!(!hits.is_error.unwrap_or(false));
+        let hit_text = tool_text(&hits);
+        assert!(hit_text.contains("en/gregory-roussac"));
+        assert!(!hit_text.contains("nl/"));
+        assert!(!hit_text.contains("Nederlands"));
+        let overview_text = tool_text(&overview);
+        assert!(overview_text.starts_with("# Overview\n"));
+        assert!(!overview_text.starts_with("# Overview\n\n# Overview"));
     }
 
     #[tokio::test]
@@ -478,10 +523,56 @@ mod tests {
         let mcp = InterchouetteMcp::new(store, ChatRelay::from_env());
         let err = mcp
             .get_interchouette_overview(Parameters(LangArgs {
-                lang: Some("nl".into()),
+                lang: Some("fr".into()),
             }))
             .await;
         assert!(err.is_err());
+    }
+
+    #[tokio::test]
+    async fn dutch_overview_is_isolated() {
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db).unwrap());
+        let mcp = InterchouetteMcp::new(store, ChatRelay::from_env());
+        let overview = mcp
+            .get_interchouette_overview(Parameters(LangArgs {
+                lang: Some("nl".into()),
+            }))
+            .await
+            .unwrap();
+        let text = tool_text(&overview);
+        assert!(text.contains("Nederlands"));
+        assert!(!text.contains("overview body"));
+        let err = mcp
+            .search(Parameters(SearchArgs {
+                query: "Interchouette".into(),
+                lang: Some("de".into()),
+            }))
+            .await;
+        assert!(err.is_err());
+    }
+
+    #[test]
+    fn format_doc_skips_existing_heading() {
+        assert_eq!(format_doc("T", "body"), "# T\n\nbody");
+        assert_eq!(format_doc("T", "# T\n\nbody"), "# T\n\nbody");
+    }
+
+    fn none_lang() -> Parameters<LangArgs> {
+        Parameters(LangArgs { lang: None })
+    }
+
+    fn tool_text(result: &CallToolResult) -> String {
+        result
+            .content
+            .iter()
+            .filter_map(|block| match block {
+                ContentBlock::Text(t) => Some(t.text.as_str()),
+                _ => None,
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 
     #[tokio::test]

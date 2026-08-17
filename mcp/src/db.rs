@@ -1,4 +1,4 @@
-//! Read-only knowledge store over committed `interchouette.db` (FTS5).
+//! Read-only Interchouette MCP store over committed `interchouette.db` (FTS5).
 
 use std::path::Path;
 use std::sync::{Mutex, MutexGuard};
@@ -6,54 +6,54 @@ use std::sync::{Mutex, MutexGuard};
 use anyhow::{bail, Context, Result};
 use rusqlite::{params, Connection, OpenFlags};
 
-/// Opened knowledge database.
+/// Opened MCP content database.
 pub struct Store {
-    knowledge: Mutex<Connection>,
+    conn: Mutex<Connection>,
 }
 
 impl Store {
-    /// Open the committed knowledge `.db` read-only.
+    /// Open the committed MCP `.db` read-only.
     ///
     /// # Errors
-    /// Returns when the knowledge file is missing or `SQLite` open fails.
-    pub fn open_readonly(knowledge_db: impl AsRef<Path>) -> Result<Self> {
-        let knowledge_db = knowledge_db.as_ref();
-        let knowledge = Connection::open_with_flags(
-            knowledge_db,
+    /// Returns when the file is missing or `SQLite` open fails.
+    pub fn open_readonly(db_path: impl AsRef<Path>) -> Result<Self> {
+        let db_path = db_path.as_ref();
+        let conn = Connection::open_with_flags(
+            db_path,
             OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
         )
-        .with_context(|| format!("open read-only {}", knowledge_db.display()))?;
+        .with_context(|| format!("open read-only {}", db_path.display()))?;
 
         Ok(Self {
-            knowledge: Mutex::new(knowledge),
+            conn: Mutex::new(conn),
         })
     }
 
-    /// Create/open a writable knowledge DB (tests / local rebuild of the committed file).
+    /// Create/open a writable MCP DB (tests / local rebuild of the committed file).
     ///
     /// # Errors
     /// Returns when directories or `SQLite` open/migrate fail.
-    pub fn open_writable(knowledge_db: impl AsRef<Path>) -> Result<Self> {
-        let knowledge_db = knowledge_db.as_ref();
-        if let Some(parent) = knowledge_db.parent() {
+    pub fn open_writable(db_path: impl AsRef<Path>) -> Result<Self> {
+        let db_path = db_path.as_ref();
+        if let Some(parent) = db_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
 
-        let knowledge = Connection::open(knowledge_db)
-            .with_context(|| format!("open writable {}", knowledge_db.display()))?;
-        migrate_knowledge(&knowledge)?;
+        let conn = Connection::open(db_path)
+            .with_context(|| format!("open writable {}", db_path.display()))?;
+        migrate(&conn)?;
 
         Ok(Self {
-            knowledge: Mutex::new(knowledge),
+            conn: Mutex::new(conn),
         })
     }
 
-    /// Replace all knowledge rows from prepared docs (writable DB only).
+    /// Replace all document rows from prepared docs (writable DB only).
     ///
     /// # Errors
     /// Returns when `SQLite` write fails.
-    pub fn replace_all(&self, docs: &[KnowledgeDoc]) -> Result<()> {
-        let mut conn = lock(&self.knowledge, "knowledge")?;
+    pub fn replace_all(&self, docs: &[Document]) -> Result<()> {
+        let mut conn = lock(&self.conn, "store")?;
         {
             let tx = conn.transaction()?;
             tx.execute_batch("DELETE FROM documents; DELETE FROM documents_fts;")?;
@@ -79,13 +79,13 @@ impl Store {
     /// # Errors
     /// Returns when the query fails.
     pub fn doc_count(&self) -> Result<i64> {
-        let conn = lock(&self.knowledge, "knowledge")?;
+        let conn = lock(&self.conn, "store")?;
         let n: i64 = conn.query_row("SELECT COUNT(*) FROM documents", [], |row| row.get(0))?;
         drop(conn);
         Ok(n)
     }
 
-    /// Full-text search.
+    /// Full-text search. `lang` defaults to `en` so locales never mix.
     ///
     /// # Errors
     /// Returns when the query fails.
@@ -94,34 +94,22 @@ impl Store {
         if q.is_empty() {
             bail!("empty search query");
         }
+        let lang = lang.unwrap_or("en");
         let limit = i64::try_from(limit.clamp(1, 25)).unwrap_or(25);
-        let conn = lock(&self.knowledge, "knowledge")?;
+        let conn = lock(&self.conn, "store")?;
+        let mut stmt = conn.prepare(
+            "SELECT slug, lang, title, snippet(documents_fts, 3, '', '', '…', 24)
+             FROM documents_fts
+             WHERE documents_fts MATCH ?1 AND lang = ?2
+             ORDER BY rank
+             LIMIT ?3",
+        )?;
+        let rows = stmt.query_map(params![q, lang, limit], map_hit)?;
         let mut hits = Vec::new();
-        if let Some(lang) = lang {
-            let mut stmt = conn.prepare(
-                "SELECT slug, lang, title, snippet(documents_fts, 3, '', '', '…', 24)
-                 FROM documents_fts
-                 WHERE documents_fts MATCH ?1 AND lang = ?2
-                 ORDER BY rank
-                 LIMIT ?3",
-            )?;
-            let rows = stmt.query_map(params![q, lang, limit], map_hit)?;
-            for row in rows {
-                hits.push(row?);
-            }
-        } else {
-            let mut stmt = conn.prepare(
-                "SELECT slug, lang, title, snippet(documents_fts, 3, '', '', '…', 24)
-                 FROM documents_fts
-                 WHERE documents_fts MATCH ?1
-                 ORDER BY rank
-                 LIMIT ?2",
-            )?;
-            let rows = stmt.query_map(params![q, limit], map_hit)?;
-            for row in rows {
-                hits.push(row?);
-            }
+        for row in rows {
+            hits.push(row?);
         }
+        drop(stmt);
         drop(conn);
         Ok(hits)
     }
@@ -130,8 +118,8 @@ impl Store {
     ///
     /// # Errors
     /// Returns when the query fails.
-    pub fn get_by_slug(&self, slug: &str, lang: Option<&str>) -> Result<Option<KnowledgeDoc>> {
-        let conn = lock(&self.knowledge, "knowledge")?;
+    pub fn get_by_slug(&self, slug: &str, lang: Option<&str>) -> Result<Option<Document>> {
+        let conn = lock(&self.conn, "store")?;
         let doc = if let Some(lang) = lang {
             let mut stmt = conn.prepare(
                 "SELECT slug, lang, title, body FROM documents WHERE slug = ?1 AND lang = ?2 LIMIT 1",
@@ -153,7 +141,7 @@ impl Store {
     /// # Errors
     /// Returns when the query fails.
     pub fn list_docs(&self) -> Result<Vec<(String, String, String)>> {
-        let conn = lock(&self.knowledge, "knowledge")?;
+        let conn = lock(&self.conn, "store")?;
         let mut stmt =
             conn.prepare("SELECT slug, lang, title FROM documents ORDER BY lang, slug")?;
         let rows = stmt.query_map([], |row| {
@@ -169,9 +157,9 @@ impl Store {
     }
 }
 
-/// One knowledge document.
+/// One MCP document.
 #[derive(Debug, Clone)]
-pub struct KnowledgeDoc {
+pub struct Document {
     pub slug: String,
     pub lang: String,
     pub title: String,
@@ -193,7 +181,7 @@ fn lock<'a>(mutex: &'a Mutex<Connection>, label: &str) -> Result<MutexGuard<'a, 
         .map_err(|_| anyhow::anyhow!("{label} db poisoned"))
 }
 
-fn migrate_knowledge(conn: &Connection) -> Result<()> {
+fn migrate(conn: &Connection) -> Result<()> {
     conn.execute_batch(
         "
         CREATE TABLE IF NOT EXISTS documents (
@@ -225,8 +213,8 @@ fn map_hit(row: &rusqlite::Row<'_>) -> rusqlite::Result<SearchHit> {
     })
 }
 
-fn row_to_doc(row: &rusqlite::Row<'_>) -> rusqlite::Result<KnowledgeDoc> {
-    Ok(KnowledgeDoc {
+fn row_to_doc(row: &rusqlite::Row<'_>) -> rusqlite::Result<Document> {
+    Ok(Document {
         slug: row.get(0)?,
         lang: row.get(1)?,
         title: row.get(2)?,
@@ -258,8 +246,8 @@ mod tests {
         let db = dir.path().join("interchouette.db");
         let store = Store::open_writable(&db).unwrap();
         store
-            .replace_all(&[KnowledgeDoc {
-                slug: "en/gregory-roussac".into(),
+            .replace_all(&[Document {
+                slug: "gregory-roussac".into(),
                 lang: "en".into(),
                 title: "Gregory Roussac".into(),
                 body: "Gregory Roussac Interchouette Rust MCP API freelance".into(),
@@ -270,17 +258,92 @@ mod tests {
         let ro = Store::open_readonly(&db).unwrap();
         let hits = ro.search("Gregory Roussac", Some("en"), 5).unwrap();
         assert!(!hits.is_empty());
-        assert_eq!(hits[0].slug, "en/gregory-roussac");
+        assert_eq!(hits[0].slug, "gregory-roussac");
         assert_eq!(ro.doc_count().unwrap(), 1);
     }
 
     #[test]
-    fn committed_repo_db_searches() {
+    fn search_without_lang_stays_english() {
+        let dir = tempdir().unwrap();
+        let db = dir.path().join("interchouette.db");
+        let store = Store::open_writable(&db).unwrap();
+        store
+            .replace_all(&[
+                Document {
+                    slug: "overview".into(),
+                    lang: "en".into(),
+                    title: "Interchouette ITC".into(),
+                    body: "English overview Hilversum Rust".into(),
+                },
+                Document {
+                    slug: "overview".into(),
+                    lang: "nl".into(),
+                    title: "Interchouette ITC".into(),
+                    body: "Nederlands overzicht Hilversum eenmanszaak".into(),
+                },
+                Document {
+                    slug: "overview".into(),
+                    lang: "fr".into(),
+                    title: "Interchouette ITC".into(),
+                    body: "Apercu francais Hilversum entreprise".into(),
+                },
+            ])
+            .unwrap();
+        let hits = store.search("Hilversum", None, 8).unwrap();
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].lang, "en");
+        assert!(!hits[0].snippet.contains("Nederlands"));
+        assert!(!hits[0].snippet.contains("Apercu"));
+        let nl = store.search("Hilversum", Some("nl"), 8).unwrap();
+        assert_eq!(nl.len(), 1);
+        assert_eq!(nl[0].lang, "nl");
+    }
+
+    #[test]
+    fn committed_repo_db_is_concentrated() {
         let db = Path::new(env!("CARGO_MANIFEST_DIR")).join("../db/interchouette.db");
         let store = Store::open_readonly(&db).unwrap();
-        assert!(store.doc_count().unwrap() >= 6);
-        let hits = store.search("Gregory Roussac", None, 5).unwrap();
+        let listed = store.list_docs().unwrap();
+        assert_eq!(listed.len(), 12);
+        let mut langs = listed
+            .iter()
+            .map(|(_, lang, _)| lang.as_str())
+            .collect::<Vec<_>>();
+        langs.sort_unstable();
+        langs.dedup();
+        assert_eq!(langs, ["en", "fr", "nl"]);
+        for (slug, _, _) in &listed {
+            assert!(
+                matches!(
+                    slug.as_str(),
+                    "overview" | "gregory-roussac" | "cv-summary" | "public-projects"
+                ),
+                "unexpected slug {slug}"
+            );
+            assert!(!slug.contains('/'), "slug still has lang prefix: {slug}");
+        }
+        let hits = store.search("Gregory Roussac", None, 8).unwrap();
         assert!(!hits.is_empty());
+        assert!(hits.iter().all(|h| h.lang == "en"));
+        let blob = hits
+            .iter()
+            .map(|h| format!("{} {}", h.title, h.snippet))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(!blob.contains("opgericht"));
+        assert!(!blob.contains("fondee"));
+        assert!(!blob.contains("Trefwoorden"));
+        assert!(!blob.contains("Keywords"));
+        let nl = store.search("Gregory Roussac", Some("nl"), 8).unwrap();
+        assert!(!nl.is_empty());
+        assert!(nl.iter().all(|h| h.lang == "nl"));
+        let nl_blob = nl
+            .iter()
+            .map(|h| format!("{} {}", h.title, h.snippet))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(!nl_blob.contains("Internet is cool"));
+        assert!(!nl_blob.contains("Keywords"));
     }
 
     #[test]
