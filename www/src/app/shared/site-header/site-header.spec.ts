@@ -24,7 +24,7 @@ describe('SiteHeader', () => {
       COPY.en.headerHomeTitle,
     );
     expect(el.querySelector('.site-header__dot')).toBeTruthy();
-    expect(el.querySelector('.site-header__marquee')?.textContent).toContain("Internet, c'est chouette");
+    expect(el.querySelector('.site-header__marquee')).toBeNull();
     expect(el.querySelector('a[routerlink="/news"]')?.getAttribute('title')).toBe(
       COPY.en.titleNews,
     );

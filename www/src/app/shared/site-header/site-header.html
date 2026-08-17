@@ -13,9 +13,11 @@
     ></span
     ><span class="site-header__tld">net</span>
   </a>
-  <marquee class="site-header__marquee" scrollamount="3" scrolldelay="35" aria-hidden="true">{{
-    copy.headerMarquee
-  }}</marquee>
+  @if (marqueeLive()) {
+    <marquee class="site-header__marquee" scrollamount="3" scrolldelay="35" aria-hidden="true">{{
+      copy.headerMarquee
+    }}</marquee>
+  }
   <nav class="site-header__nav" [attr.aria-label]="copy.headerBrand">
     <a routerLink="/news" routerLinkActive="is-current" [attr.title]="copy.titleNews">{{
       copy.headerNews
