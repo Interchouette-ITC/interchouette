@@ -1,5 +1,6 @@
 //! HTTP + WebSocket chat routes.
 
+use axum::body::Bytes;
 use axum::extract::ws::{Message, WebSocket};
 use axum::extract::{Path, State, WebSocketUpgrade};
 use axum::response::IntoResponse;
@@ -12,6 +13,7 @@ use uuid::Uuid;
 
 use crate::chat::hub::{ChatEvent, Hub};
 use crate::chat::llm::AwayBrain;
+use crate::chat::locale::ChatLocale;
 use crate::chat::presence::{PresenceMode, PresenceSource};
 use crate::chat::sessions::{Session, SessionRegistry};
 use crate::chat::slack::SlackRelay;
@@ -99,9 +101,20 @@ async fn get_presence(State(state): State<ChatState>) -> impl IntoResponse {
     }))
 }
 
-async fn create_session(State(state): State<ChatState>) -> impl IntoResponse {
+#[derive(Debug, Default, Deserialize)]
+struct CreateSessionRequest {
+    locale: Option<String>,
+}
+
+async fn create_session(State(state): State<ChatState>, body: Bytes) -> impl IntoResponse {
+    let req: CreateSessionRequest = if body.is_empty() {
+        CreateSessionRequest::default()
+    } else {
+        serde_json::from_slice(&body).unwrap_or_default()
+    };
+    let locale = ChatLocale::parse(req.locale.as_deref());
     let snap = state.presence.snapshot().await;
-    let session = state.sessions.create(snap.mode).await;
+    let session = state.sessions.create(snap.mode, locale).await;
     // Slack thread starts on the first visitor message (avoid flood on open/refresh).
     Json(CreateSessionResponse {
         session_id: session.id,
@@ -367,7 +380,7 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
             },
         )
         .await;
-    let reply = state.away.reply(text).await;
+    let reply = state.away.reply(text, session.locale).await;
     state
         .hub
         .publish(
@@ -434,6 +447,28 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn create_session_stores_locale() {
+        let state = test_state();
+        let app = chat_router(state.clone());
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/v1/sessions")
+                    .header("content-type", "application/json")
+                    .body(Body::from(r#"{"locale":"nl"}"#))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        let id = body["session_id"].as_str().unwrap();
+        assert_eq!(state.sessions.get(id).await.unwrap().locale, ChatLocale::Nl);
+    }
+
+    #[tokio::test]
     async fn presence_endpoint() {
         let state = test_state();
         let app = chat_router(state);
@@ -455,7 +490,10 @@ mod tests {
     #[tokio::test]
     async fn greg_tagged_reply_reaches_hub() {
         let state = test_state();
-        let session = state.sessions.create(PresenceMode::Live).await;
+        let session = state
+            .sessions
+            .create(PresenceMode::Live, ChatLocale::En)
+            .await;
         let mut rx = state.hub.subscribe(&session.id).await;
         let tagged = format!("[{}] hello from Greg", session.short_code);
         assert!(crate::chat::forward_greg_reply(&state, &tagged, None).await);
@@ -472,7 +510,10 @@ mod tests {
     #[tokio::test]
     async fn greg_thread_reply_reaches_hub() {
         let state = test_state();
-        let session = state.sessions.create(PresenceMode::Live).await;
+        let session = state
+            .sessions
+            .create(PresenceMode::Live, ChatLocale::En)
+            .await;
         state
             .sessions
             .set_slack_thread(&session.id, "D1".into(), "171.999".into())

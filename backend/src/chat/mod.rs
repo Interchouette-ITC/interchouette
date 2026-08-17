@@ -7,6 +7,7 @@ mod api;
 mod env_label;
 mod hub;
 mod llm;
+mod locale;
 mod presence;
 mod reply_parse;
 mod sessions;

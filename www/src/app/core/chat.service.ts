@@ -9,6 +9,7 @@ import {
   chatWsUrl,
 } from './chat.constants';
 import { icConsoleWrite } from './ic-console';
+import { siteLocale } from './site-locale';
 
 const CHAT_OPENED_KEY = 'ic.chat.opened';
 
@@ -258,6 +259,8 @@ export class ChatService {
       const timeoutMs = this.attempt === 0 ? 15_000 : 30_000;
       const res = await fetch(`${chatApiBase()}/v1/sessions`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale: siteLocale() }),
         signal: AbortSignal.timeout(timeoutMs),
       });
       if (!res.ok) {
@@ -624,7 +627,7 @@ export function isTransientChatError(err: unknown): boolean {
   );
 }
 
-/** Visitor-facing copy only — never browser "Failed to fetch" / undefined. */
+/** Visitor-facing copy only: never browser "Failed to fetch" / undefined. */
 export function humanizeChatError(err: unknown): string {
   const text = rawChatError(err);
   if (isTransientChatError(err)) {

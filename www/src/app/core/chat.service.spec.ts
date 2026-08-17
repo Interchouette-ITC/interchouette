@@ -75,19 +75,17 @@ describe('ChatService', () => {
   });
 
   it('opens a session and applies away presence', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({
-          session_id: 'sess-1',
-          short_code: 'S-00AB',
-          mode: 'away',
-          label: 'Away',
-          hero: 'itcy',
-        }),
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        session_id: 'sess-1',
+        short_code: 'S-00AB',
+        mode: 'away',
+        label: 'Away',
+        hero: 'itcy',
       }),
-    );
+    });
+    vi.stubGlobal('fetch', fetchMock);
 
     class FakeSocket {
       readyState = 1;
@@ -114,6 +112,14 @@ describe('ChatService', () => {
     vi.stubGlobal('WebSocket', FakeSocket);
 
     await service.openPanel();
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/v1/sessions'),
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale: 'en' }),
+      }),
+    );
     expect(service.open()).toBe(true);
     expect(service.mode()).toBe('away');
     expect(service.hero()).toBe('itcy');

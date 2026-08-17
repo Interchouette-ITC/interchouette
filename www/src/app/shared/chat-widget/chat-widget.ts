@@ -13,6 +13,7 @@ import {
 
 import { ChatRole, ChatService } from '../../core/chat.service';
 import { SLACK_JOIN_URL } from '../../core/chat.constants';
+import { siteLocale } from '../../core/site-locale';
 import { RouterLink } from '@angular/router';
 
 const NUDGE_EVERY_MS = 60 * 1000;
@@ -92,7 +93,7 @@ export class ChatWidget implements OnDestroy {
   protected readonly canSend = signal(false);
   /** Brief “Copied” state for the ticket button. */
   protected readonly ticketCopied = signal(false);
-  /** Always a string — never leave compose bindings as undefined. */
+  /** Always a string: never leave compose bindings as undefined. */
   protected draft = '';
   protected showEmail = false;
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
@@ -259,10 +260,11 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected quickChips(): string[] {
+    const book = bookingChip();
     if (this.chat.hero() === 'greg') {
-      return ['Hi Greg', 'Rust / Wasm project?', 'Availability this month?'];
+      return ['Hi Greg', 'Rust / Wasm project?', book];
     }
-    return ['What is Interchouette?', 'Who is Greg?', 'Leave my email'];
+    return ['What is Interchouette?', 'Who is Greg?', book];
   }
 
   protected title(): string {
@@ -504,5 +506,16 @@ export class ChatWidget implements OnDestroy {
     if (el) {
       el.scrollTop = el.scrollHeight;
     }
+  }
+}
+
+function bookingChip(): string {
+  switch (siteLocale()) {
+    case 'nl':
+      return 'Afspraak maken';
+    case 'fr':
+      return 'Prendre rendez-vous';
+    default:
+      return 'Book a meeting';
   }
 }

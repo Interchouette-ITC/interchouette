@@ -7,6 +7,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
+use crate::chat::locale::ChatLocale;
 use crate::chat::presence::PresenceMode;
 
 /// One active visitor session.
@@ -16,6 +17,7 @@ pub struct Session {
     /// Opaque resume / ticket code (`IC-A3F9K2M7`). Shown in the visitor header.
     pub short_code: String,
     pub mode: PresenceMode,
+    pub locale: ChatLocale,
     pub visitor_email: Option<String>,
     pub created_at: i64,
     /// Slack DM channel id (`D…`).
@@ -34,13 +36,14 @@ pub struct SessionRegistry {
 
 impl SessionRegistry {
     /// Create a session for the current presence mode.
-    pub async fn create(&self, mode: PresenceMode) -> Session {
+    pub async fn create(&self, mode: PresenceMode, locale: ChatLocale) -> Session {
         let id = Uuid::new_v4().to_string();
         let short_code = new_resume_code();
         let session = Session {
             id: id.clone(),
             short_code: short_code.clone(),
             mode,
+            locale,
             visitor_email: None,
             created_at: now_secs(),
             slack_channel: None,
@@ -145,7 +148,8 @@ mod tests {
     #[tokio::test]
     async fn create_and_lookup() {
         let reg = SessionRegistry::default();
-        let s = reg.create(PresenceMode::Away).await;
+        let s = reg.create(PresenceMode::Away, ChatLocale::En).await;
+        assert_eq!(s.locale, ChatLocale::En);
         assert!(s.short_code.starts_with("IC-"));
         assert_eq!(s.short_code.len(), 11);
         assert_eq!(reg.get(&s.id).await.unwrap().short_code, s.short_code);
