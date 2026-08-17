@@ -33,7 +33,7 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./pages/login/login').then((m) => m.LoginPage),
-    title: 'Customer login - Interchouette',
+    title: 'Client login - Interchouette',
     data: {
       description: 'Sign in to Interchouette with Google. The session stays in this browser.',
       titleKey: 'titleLogin',
@@ -60,6 +60,8 @@ export const routes: Routes = [
       description:
         'Curriculum vitae of Gregory Roussac: Rust, Wasm, full-stack engineering experience and PDF download.',
       ogType: 'profile',
+      titleKey: 'titleCv',
+      descriptionKey: 'descCv',
     },
   },
   {
@@ -69,6 +71,8 @@ export const routes: Routes = [
     data: {
       description:
         'Interchouette - ITC: how interchouette.net is built (Angular, Rust, Docker, Cursor) and public links.',
+      titleKey: 'titleAbout',
+      descriptionKey: 'descAbout',
     },
   },
   {
@@ -77,6 +81,8 @@ export const routes: Routes = [
     title: 'Privacy Policy - Interchouette',
     data: {
       description: 'Privacy Policy for Interchouette services operated by Gregory Roussac.',
+      titleKey: 'titlePrivacy',
+      descriptionKey: 'descPrivacy',
     },
   },
   {
@@ -85,6 +91,8 @@ export const routes: Routes = [
     title: 'Terms of Service - Interchouette',
     data: {
       description: 'Terms of Service for Interchouette websites and applications.',
+      titleKey: 'titleTerms',
+      descriptionKey: 'descTerms',
     },
   },
   {

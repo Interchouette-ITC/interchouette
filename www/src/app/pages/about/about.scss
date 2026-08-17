@@ -10,6 +10,8 @@
   display: block;
   font-family: 'Montserrat', sans-serif;
   font-weight: 400;
+  padding-top: 2.15rem;
+  box-sizing: border-box;
 }
 
 @media screen and (min-width: 1280px) {
@@ -104,6 +106,18 @@
   height: 1.45em;
   object-fit: contain;
   display: block;
+}
+
+.back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #27084e;
+  text-decoration: none;
+}
+
+.back:hover {
+  color: #3a1868;
+  text-decoration: underline;
 }
 
 @media screen and (max-width: 768px) {

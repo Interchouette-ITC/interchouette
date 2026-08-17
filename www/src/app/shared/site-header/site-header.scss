@@ -1,8 +1,11 @@
 :host {
   display: block;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 40;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  width: 100%;
 }
 
 @media print {
@@ -15,21 +18,47 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
   box-sizing: border-box;
-  min-height: var(--site-header-height, 2.85rem);
-  padding: 0.35rem 1.1rem;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 1px 0 rgba(39, 8, 78, 0.12);
+  min-height: 2.15rem;
+  padding: 0.2rem 1.25rem;
+  background:
+    linear-gradient(180deg, rgba(255, 236, 248, 0.22) 0%, transparent 46%),
+    linear-gradient(105deg, #160430 0%, #27084e 26%, #3a1868 52%, #54267a 78%, #7a3bb8 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 228, 236, 0.18) inset,
+    0 8px 22px rgba(22, 4, 48, 0.28);
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
 }
 
-.site-header__brand {
-  color: #27084e;
+.site-header__brand,
+.site-header__brand:link,
+.site-header__brand:visited,
+.site-header__brand:hover,
+.site-header__brand.is-current {
+  display: inline-flex;
+  align-items: baseline;
+  color: #fff;
   text-decoration: none;
-  font-size: 1.05rem;
+  font-size: 0.88rem;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
   white-space: nowrap;
+  transform: translateY(1px);
+}
+
+.site-header__inter {
+  color: #ffd24a;
+}
+
+.site-header__dot {
+  display: inline-block;
+  width: 0.28em;
+  height: 0.28em;
+  margin: 0 0.07em 0.02em;
+  background: #e10600;
+  border-radius: 0.06em;
+  flex-shrink: 0;
+  transform: translateY(0.12em);
 }
 
 .site-header__nav {
@@ -38,16 +67,20 @@
   gap: 1.15rem;
 }
 
-.site-header__nav a {
-  color: #27084e;
+.site-header__nav a,
+.site-header__nav a:link,
+.site-header__nav a:visited {
+  color: #fff;
   text-decoration: none;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
 }
 
 .site-header__nav a:hover,
-.site-header__nav a.is-current,
-.site-header__brand.is-current {
+.site-header__nav a.is-current {
+  color: #fff;
   text-decoration: underline;
+  text-underline-offset: 0.18em;
 }
 
 .site-header__account {
@@ -57,9 +90,9 @@
 }
 
 .site-header__avatar {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 1.5rem;
+  height: 1.5rem;
   border-radius: 50%;
   object-fit: cover;
-  background: #eee;
+  background: rgba(255, 255, 255, 0.2);
 }

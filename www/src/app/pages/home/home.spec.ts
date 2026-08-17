@@ -17,7 +17,7 @@ describe('HomePage', () => {
     const el = fixture.nativeElement as HTMLElement;
 
     expect(el.querySelector('h1.name')?.textContent).toContain('Gregory Roussac');
-    expect(el.querySelector('.promise')?.textContent).toContain('Rust and Wasm');
+    expect(el.querySelector('.promise')?.textContent).toContain('product teams');
     expect(el.querySelector('a[routerlink="/CV"], a[href="/CV"]')).toBeTruthy();
     expect(el.querySelector('a[href="https://github.com/Interchouette-ITC"]')).toBeTruthy();
     expect(el.querySelector('a[href="mailto:contact@interchouette.net"]')).toBeTruthy();

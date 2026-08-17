@@ -6,15 +6,18 @@
   /* Desktop: light greys as before. Mobile overrides below for WCAG AA. */
   --home-title: #808080;
   --home-muted: #a9a9a9;
+  --home-header-h: 2.15rem;
+  --home-logo-hang: calc(2.65rem + 20px);
+  --home-logo-clear: calc(var(--home-logo-hang) + 6px);
 }
 
-/* Desktop: room for sticky header, fixed footer, and vertical center of the card. */
+/* Desktop: room for fixed header, hanging logo, fixed footer, vertical center of the card. */
 @media screen and (min-width: 1280px) {
   :host {
     display: flex;
     flex-direction: column;
-    min-height: calc(100vh - var(--site-header-height, 2.85rem));
-    min-height: calc(100dvh - var(--site-header-height, 2.85rem));
+    min-height: calc(100dvh - var(--home-header-h));
+    padding-top: calc(var(--home-header-h) + var(--home-logo-clear));
     padding-bottom: 2.75rem;
     box-sizing: border-box;
   }
@@ -23,6 +26,25 @@
     margin-top: auto;
     margin-bottom: auto;
   }
+}
+
+.card {
+  position: relative;
+  overflow: visible;
+  z-index: 45;
+}
+
+.card-logo {
+  position: absolute;
+  z-index: 45;
+  left: 0.45rem;
+  top: calc(-1 * var(--home-logo-hang));
+  width: 11.5rem;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  background: transparent;
 }
 
 /* Lighthouse mobile / narrow viewports: darker muted text on white. */
@@ -135,7 +157,6 @@
   :host {
     width: 100%;
     margin: 0;
-    overflow-x: hidden;
   }
 
   hr {
@@ -222,7 +243,6 @@
   :host {
     width: 100%;
     margin: 0;
-    overflow-x: hidden;
   }
 
   hr {
@@ -311,7 +331,6 @@
   :host {
     width: 100%;
     margin: 0;
-    overflow-x: hidden;
   }
 
   hr {
@@ -466,6 +485,23 @@
 
 /*---------- Responsive Grid Ends ---------------*/
 
+@media (max-width: 1279px) {
+  :host {
+    padding-top: calc(var(--home-header-h) + var(--home-logo-clear));
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 727px) {
+  :host {
+    --home-logo-hang: calc(1.85rem + 10px);
+  }
+
+  .card-logo {
+    width: 8rem;
+  }
+}
+
 /*---------- ICONS ---------------*/
 
 .fa-stack:hover {
@@ -529,6 +565,8 @@
 
 .avatar {
   text-align: center;
+  position: relative;
+  z-index: 3;
 }
 
 h1.name {

@@ -28,6 +28,6 @@ describe('AboutPage', () => {
     ).toBeTruthy();
     expect(el.querySelector('a[routerlink="/privacy"], a[href="/privacy"]')).toBeTruthy();
     expect(el.querySelector('a[routerlink="/terms"], a[href="/terms"]')).toBeTruthy();
-    expect(el.querySelector('a[routerlink="/"], a[href="/"]')).toBeTruthy();
+    expect(el.querySelector('a.back[routerlink="/"], a.back[href="/"]')).toBeTruthy();
   });
 });

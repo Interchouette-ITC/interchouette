@@ -14,7 +14,7 @@ import { SiteHeader } from './shared/site-header/site-header';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ChatWidget, ConsentBanner, SiteHeader],
+  imports: [RouterOutlet, SiteHeader, ChatWidget, ConsentBanner],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

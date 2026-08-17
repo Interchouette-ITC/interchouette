@@ -10,11 +10,13 @@
   display: block;
   font-family: 'Montserrat', sans-serif;
   font-weight: 400;
+  padding-top: 2.15rem;
+  box-sizing: border-box;
 }
 
 @media screen and (min-width: 1280px) {
   :host {
-    min-height: calc(100dvh - var(--site-header-height, 2.85rem));
+    min-height: 100dvh;
     padding-bottom: 2.75rem;
     box-sizing: border-box;
   }
@@ -46,6 +48,21 @@
 
 .inner-page a {
   color: #27084e;
+}
+
+.back,
+.back:link,
+.back:visited {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #27084e;
+  text-decoration: none;
+}
+
+.back:hover,
+.back:focus-visible {
+  color: #3a1868;
+  text-decoration: underline;
 }
 
 .google-btn {

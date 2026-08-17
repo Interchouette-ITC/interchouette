@@ -4,7 +4,7 @@
 
 .consent {
   position: fixed;
-  top: max(0.85rem, env(safe-area-inset-top));
+  top: calc(2.15rem + max(0.85rem, env(safe-area-inset-top)));
   left: max(0.85rem, env(safe-area-inset-left));
   z-index: 60;
   width: min(22rem, calc(100vw - 1.7rem));

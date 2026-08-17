@@ -1,3 +1,9 @@
+import { NL_ABOUT } from './nl-about';
+import { NL_CHAT } from './nl-chat';
+import { NL_CONSENT } from './nl-consent';
+import { NL_HOME } from './nl-home';
+import { NL_PRIVACY } from './nl-privacy';
+import { NL_TERMS } from './nl-terms';
 import type { SiteCopy } from './en';
 
 export const NL: SiteCopy = {
@@ -8,7 +14,7 @@ export const NL: SiteCopy = {
   footerAbout: 'Over',
   footerPrivacy: 'Privacy',
   footerTerms: 'Voorwaarden',
-  homePromise: 'Freelance Rust- en Wasm-ontwikkeling voor productteams.',
+  homePromise: 'Ontwikkeling voor productteams.',
   homeSubtitle: 'Rust - Wasm freelance-ontwikkelaar',
   newsTitle: 'Nieuws',
   newsEmpty: 'Nog geen berichten.',
@@ -27,4 +33,24 @@ export const NL: SiteCopy = {
   descLogin: 'Log in bij Interchouette met Google. De sessie blijft in deze browser.',
   titleAccount: 'Account - Interchouette',
   descAccount: 'Klantruimte van Interchouette.',
+  titleAbout: 'Over Interchouette - ITC',
+  descAbout:
+    'Interchouette - ITC: hoe interchouette.net is gebouwd (Angular, Rust, Docker, Cursor) en openbare links.',
+  titlePrivacy: 'Privacybeleid - Interchouette',
+  descPrivacy: 'Privacybeleid voor Interchouette-diensten, geëxploiteerd door Gregory Roussac.',
+  titleTerms: 'Algemene voorwaarden - Interchouette',
+  descTerms: 'Algemene voorwaarden voor websites en toepassingen van Interchouette.',
+  titleCv: 'Gregory Roussac - CV',
+  descCv:
+    'Curriculum vitae of Gregory Roussac: Rust, Wasm, full-stack engineering experience and PDF download.',
+  home: NL_HOME,
+  consent: { ...NL_CONSENT, jokes: [...NL_CONSENT.jokes] },
+  chat: {
+    ...NL_CHAT,
+    nudgeHooks: [...NL_CHAT.nudgeHooks],
+    resumeNudgeHooks: [...NL_CHAT.resumeNudgeHooks],
+  },
+  about: NL_ABOUT,
+  privacy: NL_PRIVACY,
+  terms: NL_TERMS,
 };

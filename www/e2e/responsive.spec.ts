@@ -11,6 +11,13 @@ test.describe('responsive rendering', () => {
       return doc.scrollWidth > doc.clientWidth + 1;
     });
     expect(overflowX, `horizontal overflow on ${testInfo.project.name}`).toBe(false);
+
+    const logoTop = await page
+      .locator('.card-logo')
+      .evaluate((el) => el.getBoundingClientRect().top);
+    expect(logoTop, `owl ears clipped at top on ${testInfo.project.name}`).toBeGreaterThanOrEqual(
+      -1,
+    );
   });
 
   test('document exposes a single main landmark', async ({ page }) => {
@@ -48,16 +55,16 @@ test.describe('responsive rendering', () => {
     const avatar = page.locator('.avatar img');
     const box = await avatar.boundingBox();
     expect(box).not.toBeNull();
-    const ratio = box!.width / box!.height;
-    expect(ratio).toBeGreaterThan(1.0);
-    expect(ratio).toBeLessThan(1.2);
-
     const src = await avatar.evaluate((img: HTMLImageElement) => ({
       srcset: (img.getAttribute('srcset') ?? '').replace(/\s+/g, ' ').trim(),
       sizes: img.getAttribute('sizes'),
       current: img.currentSrc,
       naturalWidth: img.naturalWidth,
+      naturalHeight: img.naturalHeight,
     }));
+    const ratio = box!.width / box!.height;
+    const natural = src.naturalWidth / src.naturalHeight;
+    expect(Math.abs(ratio - natural)).toBeLessThan(0.12);
     expect(src.srcset).toContain('avatar-1x.webp 200w');
     expect(src.srcset).toContain('avatar-244.webp 244w');
     expect(src.srcset).toContain('avatar-340.webp 340w');

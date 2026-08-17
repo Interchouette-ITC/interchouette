@@ -1,0 +1,18 @@
+export const FR_HOME = {
+  altAvatar: 'Gregory Roussac, Interchouette ITC',
+  avatarGreg: 'Ouvrir le chat avec Greg',
+  avatarItcy: 'Ouvrir le chat avec ITCy',
+  contactChat: 'Ouvrir le chat avec {who} ou nous contacter à {email}',
+  contactWarming: 'Contactez-nous à {email}. Le chat se connecte.',
+  contactMail: 'Contactez-nous à {email}',
+  emailCopied: 'E-mail copié dans le presse-papiers',
+  chatIcon: "Discuter avec l'équipe",
+  cv: 'Ouvrir le CV de Gregory Roussac (PDF)',
+  github: "Organisation GitHub Interchouette ITC (s'ouvre dans un nouvel onglet)",
+  linkedin: "Profil LinkedIn de Gregory Roussac (s'ouvre dans un nouvel onglet)",
+  whatsapp: "WhatsApp Interchouette (s'ouvre dans un nouvel onglet)",
+  signal: "Identifiant Signal interchouette.42 (s'ouvre dans un nouvel onglet)",
+  slack: "Espace Slack Interchouette (s'ouvre dans un nouvel onglet)",
+  twitter: "X (Twitter) Interchouette (s'ouvre dans un nouvel onglet)",
+  amazon: "Liste d'envies Amazon de Gregory Roussac (s'ouvre dans un nouvel onglet)",
+} as const;

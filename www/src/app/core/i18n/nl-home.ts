@@ -1,0 +1,18 @@
+export const NL_HOME = {
+  altAvatar: 'Gregory Roussac, Interchouette ITC',
+  avatarGreg: 'Open de chat met Greg',
+  avatarItcy: 'Open de chat met ITCy',
+  contactChat: 'Open de chat met {who} of neem contact op via {email}',
+  contactWarming: 'Neem contact op via {email}. De chat verbindt.',
+  contactMail: 'Neem contact op via {email}',
+  emailCopied: 'E-mail gekopieerd naar het klembord',
+  chatIcon: 'Chat met het team',
+  cv: 'Open het CV van Gregory Roussac (PDF)',
+  github: 'GitHub-organisatie Interchouette ITC (opent in een nieuw tabblad)',
+  linkedin: 'LinkedIn-profiel van Gregory Roussac (opent in een nieuw tabblad)',
+  whatsapp: 'WhatsApp Interchouette (opent in een nieuw tabblad)',
+  signal: 'Signal-gebruikersnaam interchouette.42 (opent in een nieuw tabblad)',
+  slack: 'Slack-workspace Interchouette (opent in een nieuw tabblad)',
+  twitter: 'X (Twitter) Interchouette (opent in een nieuw tabblad)',
+  amazon: 'Amazon-verlanglijst van Gregory Roussac (opent in een nieuw tabblad)',
+} as const;

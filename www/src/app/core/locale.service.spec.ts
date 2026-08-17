@@ -10,6 +10,6 @@ describe('LocaleService', () => {
 
     expect(loc.locale).toBe('en');
     expect(loc.copy.headerNews).toBe(COPY.en.headerNews);
-    expect(loc.copy.homePromise).toContain('Rust and Wasm');
+    expect(loc.copy.homePromise).toContain('product teams');
   });
 });

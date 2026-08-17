@@ -17,6 +17,6 @@ describe('PrivacyPage', () => {
     const el = fixture.nativeElement as HTMLElement;
 
     expect(el.querySelector('h1')?.textContent).toMatch(/privacy/i);
-    expect(el.querySelector('a[routerlink="/"], a[href="/"]')).toBeTruthy();
+    expect(el.querySelector('a.back[routerlink="/"], a.back[href="/"]')).toBeTruthy();
   });
 });

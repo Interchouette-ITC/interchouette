@@ -10,3 +10,8 @@ export const COPY: Record<SiteLocale, SiteCopy> = {
   nl: NL,
   fr: FR,
 };
+
+/** Replace `{name}` tokens in a catalog string. */
+export function fillCopy(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{(\w+)\}/g, (_match, key: string) => vars[key] ?? '');
+}

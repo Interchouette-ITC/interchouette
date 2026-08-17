@@ -4,8 +4,14 @@
     routerLink="/"
     routerLinkActive="is-current"
     [routerLinkActiveOptions]="{ exact: true }"
-    >{{ copy.headerBrand }}</a
+    aria-label="interchouette.net"
   >
+    <span class="site-header__inter">inter</span>chouette<span
+      class="site-header__dot"
+      aria-hidden="true"
+    ></span
+    >net
+  </a>
   <nav class="site-header__nav" [attr.aria-label]="copy.headerBrand">
     <a routerLink="/news" routerLinkActive="is-current">{{ copy.headerNews }}</a>
     @if (session.profile(); as profile) {

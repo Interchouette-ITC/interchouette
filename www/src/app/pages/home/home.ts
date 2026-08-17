@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 
 import { CONTACT_EMAIL, CHAT_WIDGET_ENABLED } from '../../core/chat.constants';
 import { ChatService } from '../../core/chat.service';
+import { fillCopy } from '../../core/i18n/catalog';
 import { LocaleService } from '../../core/locale.service';
 import { SiteFooter } from '../../shared/site-footer/site-footer';
 
@@ -38,23 +39,23 @@ export class HomePage {
     if (!this.chat.ready()) {
       return null;
     }
-    return this.chat.hero() === 'greg' ? 'Open chat with Greg' : 'Open chat with ITCy';
+    return this.chat.hero() === 'greg' ? this.copy.home.avatarGreg : this.copy.home.avatarItcy;
   }
 
   protected contactAriaLabel(): string {
     if (this.chat.ready()) {
       const who = this.chat.hero() === 'greg' ? 'Greg' : 'ITCy';
-      return `Open chat with ${who} or contact us at ${this.email}`;
+      return fillCopy(this.copy.home.contactChat, { who, email: this.email });
     }
     if (this.chatEnabled) {
-      return `Contact us at ${this.email}. Chat is connecting.`;
+      return fillCopy(this.copy.home.contactWarming, { email: this.email });
     }
-    return `Contact us at ${this.email}`;
+    return fillCopy(this.copy.home.contactMail, { email: this.email });
   }
 
   protected contactTitle(): string {
     if (this.copied()) {
-      return 'Email copied to clipboard';
+      return this.copy.home.emailCopied;
     }
     return this.contactAriaLabel();
   }

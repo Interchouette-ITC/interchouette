@@ -12,12 +12,15 @@ describe('SiteHeader', () => {
     }).compileComponents();
   });
 
-  it('renders brand, News, and Customer login', () => {
+  it('renders News and Client login on the right', () => {
     const fixture = TestBed.createComponent(SiteHeader);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
 
-    expect(el.querySelector('.site-header__brand')?.textContent?.trim()).toBe(COPY.en.headerBrand);
+    expect(el.querySelector('.site-header__brand')?.getAttribute('aria-label')).toBe(
+      'interchouette.net',
+    );
+    expect(el.querySelector('.site-header__dot')).toBeTruthy();
     expect(el.querySelector('a[routerlink="/news"]')?.textContent?.trim()).toBe(COPY.en.headerNews);
     expect(el.querySelector('a[routerlink="/login"]')?.textContent?.trim()).toBe(
       COPY.en.headerLogin,

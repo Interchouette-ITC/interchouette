@@ -3,7 +3,7 @@
     <button
       type="button"
       class="chat-backdrop"
-      aria-label="Dismiss chat"
+      [attr.aria-label]="copy.chat.dismiss"
       (click)="onClose()"
     ></button>
   }
@@ -44,8 +44,7 @@
         <span class="chat-fab__face" aria-hidden="true">
           <img
             class="chat-fab__owl"
-            [class.chat-fab__owl--itcy]="chat.hero() === 'itcy'"
-            [src]="fabFaceSrc()"
+            src="/img/avatar-interchouette.png"
             width="40"
             height="40"
             alt=""
@@ -82,8 +81,7 @@
               <span class="chat-panel__orbit"><i></i></span>
             } @else {
               <img
-                [src]="panelFaceSrc()"
-                [class.chat-panel__avatar-img--itcy]="chat.hero() === 'itcy'"
+                src="/img/avatar-interchouette.png"
                 width="72"
                 height="72"
                 alt=""
@@ -94,14 +92,14 @@
         </div>
 
         <div class="chat-panel__main">
-          <p class="chat-panel__eyebrow">Interchouette Concierge</p>
+          <p class="chat-panel__eyebrow">{{ copy.chat.eyebrow }}</p>
           <div class="chat-panel__actions">
             <button
               type="button"
               class="chat-panel__icon-btn"
               (click)="onToggleExpand()"
-              [attr.aria-label]="expanded() ? 'Exit full screen chat' : 'Expand chat'"
-              [attr.title]="expanded() ? 'Exit full screen' : 'Expand chat'"
+              [attr.aria-label]="expandAria()"
+              [attr.title]="expandTitle()"
               [attr.aria-pressed]="expanded()"
             >
               @if (expanded()) {
@@ -124,8 +122,8 @@
               type="button"
               class="chat-panel__icon-btn chat-panel__close"
               (click)="onClose()"
-              aria-label="Close chat"
-              title="Close chat"
+              [attr.aria-label]="copy.chat.close"
+              [attr.title]="copy.chat.close"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -153,10 +151,8 @@
                   type="button"
                   class="chat-panel__ticket-copy"
                   (click)="onCopyTicket($event)"
-                  [attr.aria-label]="
-                    ticketCopied() ? 'Ticket copied' : 'Copy ticket ' + ticketDisplay()
-                  "
-                  [attr.title]="ticketCopied() ? 'Copied' : 'Copy ticket'"
+                  [attr.aria-label]="ticketCopyAria()"
+                  [attr.title]="ticketCopyTitle()"
                 >
                   @if (ticketCopied()) {
                     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -196,14 +192,7 @@
           <div class="chat-welcome">
             <div class="chat-welcome__halo" aria-hidden="true"></div>
             <div class="chat-welcome__mark" aria-hidden="true">
-              <img
-                [src]="panelFaceSrc()"
-                [class.chat-welcome__mark-img--itcy]="chat.hero() === 'itcy'"
-                width="88"
-                height="88"
-                alt=""
-                decoding="async"
-              />
+              <img src="/img/itcy-mascot-2x.webp" width="88" height="88" alt="" decoding="async" />
             </div>
             <p class="chat-welcome__kicker">{{ emptyKicker() }}</p>
             <h3>{{ emptyTitle() }}</h3>
@@ -212,14 +201,7 @@
 
           <article class="chat-row chat-row--intro" [attr.data-role]="introRole()">
             <div class="chat-row__avatar" aria-hidden="true">
-              <img
-                [src]="rowFaceSrc(introRole())"
-                [class.chat-row__avatar-img--itcy]="introRole() === 'itcy'"
-                width="32"
-                height="32"
-                alt=""
-                decoding="async"
-              />
+              <img src="/img/itcy-mascot-1x.webp" width="32" height="32" alt="" decoding="async" />
             </div>
             <div class="chat-bubble" [attr.data-role]="introRole()">
               <span class="chat-bubble__who">{{ whoLabel(introRole()) }}</span>
@@ -244,8 +226,7 @@
             @if (msg.role === 'greg' || msg.role === 'itcy') {
               <div class="chat-row__avatar" aria-hidden="true">
                 <img
-                  [src]="rowFaceSrc(msg.role)"
-                  [class.chat-row__avatar-img--itcy]="msg.role === 'itcy'"
+                  src="/img/itcy-mascot-1x.webp"
                   width="32"
                   height="32"
                   alt=""
@@ -265,24 +246,14 @@
         @if (chat.typing()) {
           <article class="chat-row" [attr.data-role]="chat.hero() === 'greg' ? 'greg' : 'itcy'">
             <div class="chat-row__avatar" aria-hidden="true">
-              <img
-                [src]="fabFaceSrc()"
-                [class.chat-row__avatar-img--itcy]="chat.hero() !== 'greg'"
-                width="32"
-                height="32"
-                alt=""
-                decoding="async"
-              />
+              <img src="/img/itcy-mascot-1x.webp" width="32" height="32" alt="" decoding="async" />
             </div>
             <div
               class="chat-bubble chat-bubble--typing"
               [attr.data-role]="chat.hero() === 'greg' ? 'greg' : 'itcy'"
             >
-              <span class="chat-bubble__who">{{ chat.hero() === 'greg' ? 'Greg' : 'ITCy' }}</span>
-              <div
-                class="chat-bubble__dots"
-                [attr.aria-label]="chat.hero() === 'greg' ? 'Greg is typing' : 'ITCy is typing'"
-              >
+              <span class="chat-bubble__who">{{ typingWho() }}</span>
+              <div class="chat-bubble__dots" [attr.aria-label]="typingAria()">
                 <span></span><span></span><span></span>
               </div>
             </div>
@@ -292,7 +263,9 @@
         @if (chat.open() && chat.error(); as err) {
           <div class="chat-panel__error-card">
             <p>{{ err }}</p>
-            <button type="button" title="Try again" (click)="onRetry()">Try again</button>
+            <button type="button" [attr.title]="copy.chat.tryAgain" (click)="onRetry()">
+              {{ copy.chat.tryAgain }}
+            </button>
           </div>
         }
       </div>
@@ -323,15 +296,15 @@
               required
               placeholder="you@company.com"
               autocomplete="email"
-              aria-label="Email for Greg to follow up"
+              [attr.aria-label]="copy.chat.emailAria"
             />
             <button
               type="submit"
               class="chat-panel__email-save"
-              title="Save email"
-              aria-label="Save email"
+              [attr.title]="copy.chat.saveEmail"
+              [attr.aria-label]="copy.chat.saveEmail"
             >
-              Save
+              {{ copy.chat.saveEmail }}
             </button>
           </form>
         }
@@ -346,22 +319,22 @@
             class="chat-panel__email-toggle"
             (click)="toggleEmail()"
             [attr.aria-pressed]="showEmail"
-            title="Leave email"
-            aria-label="Leave email for follow-up"
+            [attr.title]="copy.chat.leaveEmailTitle"
+            [attr.aria-label]="copy.chat.leaveEmailAria"
           >
             @
           </button>
           <label class="chat-panel__field">
-            <span class="visually-hidden">Message</span>
+            <span class="visually-hidden">{{ copy.chat.message }}</span>
             <input
               #messageField
               type="text"
               name="message"
               value=""
-              placeholder="Ask anything…"
+              [attr.placeholder]="copy.chat.placeholder"
               autocomplete="off"
               maxlength="2000"
-              aria-label="Message"
+              [attr.aria-label]="copy.chat.message"
               toolparamdescription="Visitor chat message to send to Greg or ITCy"
               [disabled]="!chat.wsReady() || !!chat.error()"
               (input)="onDraftInput($event)"
@@ -371,8 +344,8 @@
             type="submit"
             class="chat-panel__send"
             [disabled]="!canSend() || !chat.wsReady() || !!chat.error()"
-            title="Send message"
-            aria-label="Send message"
+            [attr.title]="copy.chat.send"
+            [attr.aria-label]="copy.chat.send"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path
@@ -387,10 +360,8 @@
           </button>
         </form>
         <p class="chat-panel__fineprint">
-          <a routerLink="/privacy" class="chat-panel__fineprint-link"
-            >Private · Encrypted in transit</a
-          >
-          <span class="chat-panel__fineprint-powered">Powered by Rust, Node &amp; ITC</span>
+          <a routerLink="/privacy" class="chat-panel__fineprint-link">{{ copy.chat.fineprint }}</a>
+          <span class="chat-panel__fineprint-powered">{{ copy.chat.powered }}</span>
         </p>
       </footer>
     </div>

@@ -10,6 +10,8 @@
   display: block;
   font-family: 'Montserrat', sans-serif;
   font-weight: 400;
+  padding-top: 2.15rem;
+  box-sizing: border-box;
 }
 
 @media screen and (min-width: 1280px) {
@@ -78,6 +80,21 @@
   background: #f4f0fa;
   padding: 0.1em 0.35em;
   border-radius: 0.25rem;
+}
+
+.back,
+.back:link,
+.back:visited {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #27084e;
+  text-decoration: none;
+}
+
+.back:hover,
+.back:focus-visible {
+  color: #3a1868;
+  text-decoration: underline;
 }
 
 @media screen and (max-width: 768px) {

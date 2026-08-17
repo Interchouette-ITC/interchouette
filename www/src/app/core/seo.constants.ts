@@ -1,4 +1,4 @@
-import type { SiteCopy } from './i18n/en';
+import type { SiteCopyStringKey } from './i18n/en';
 import type { SiteLocale } from './site-locale';
 
 /** Public site origin (canonical + Open Graph) for English. */
@@ -19,6 +19,6 @@ export interface SeoRouteData {
   description: string;
   ogType?: 'website' | 'profile';
   robots?: string;
-  titleKey?: keyof SiteCopy;
-  descriptionKey?: keyof SiteCopy;
+  titleKey?: SiteCopyStringKey;
+  descriptionKey?: SiteCopyStringKey;
 }
