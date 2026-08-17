@@ -13,7 +13,7 @@ struct Cli {
     #[arg(long, env = "MCP_LISTEN", default_value = DEFAULT_HTTP_LISTEN)]
     listen: String,
 
-    /// Committed read-only SQLite database (`db/interchouette.db`).
+    /// Committed read-only `SQLite` database (`db/interchouette.db`).
     #[arg(long = "db", env = "MCP_DB", default_value = "../db/interchouette.db")]
     db_path: PathBuf,
 
