@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatService, humanizeChatError } from './chat.service';
+import { ChatService, humanizeChatError, isTransientChatError } from './chat.service';
 
 describe('humanizeChatError', () => {
   it('never returns Failed to fetch or undefined', () => {
@@ -35,7 +35,10 @@ describe('ChatService', () => {
   });
 
   afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it('starts closed with connecting defaults', () => {
@@ -44,17 +47,31 @@ describe('ChatService', () => {
   });
 
   it('warm failure does not set a visitor-facing error', async () => {
+    vi.useFakeTimers();
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     await service.warm();
     expect(service.error()).toBeNull();
     expect(service.wsReady()).toBe(false);
+    expect(service.mode()).toBe('connecting');
   });
 
-  it('openPanel failure shows a friendly error', async () => {
+  it('openPanel failure keeps the opening state instead of an error card', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
     await service.openPanel();
     expect(service.open()).toBe(true);
-    expect(service.error()).toBe('Chat is temporarily unavailable. Please try again.');
+    expect(service.error()).toBeNull();
+    expect(service.mode()).toBe('connecting');
+    expect(service.connecting()).toBe(true);
+    expect(service.statusLabel()).toBe('Connecting…');
+  });
+
+  it('treats Connection error as transient', () => {
+    expect(isTransientChatError('Connection error')).toBe(true);
+    expect(humanizeChatError('Connection error')).toBe(
+      'Chat is temporarily unavailable. Please try again.',
+    );
   });
 
   it('opens a session and applies away presence', async () => {

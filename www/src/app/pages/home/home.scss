@@ -478,6 +478,16 @@
   background-color: #3a76f0;
 }
 
+.icons .fa-stack svg.fa-signal-messenger {
+  left: 50%;
+  top: 50%;
+  width: 0.85em;
+  height: 0.85em;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  overflow: visible;
+}
+
 /*---------- ICONS ENDS---------------*/
 
 .avatar {
