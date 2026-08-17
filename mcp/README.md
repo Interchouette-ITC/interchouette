@@ -1,28 +1,30 @@
 # Interchouette MCP
 
-Read-only committed SQLite file:
+Read-only Streamable HTTP MCP over committed **`db/interchouette.db`**.
 
-**`db/interchouette.db`**
+Official MCP URL: `https://mcp.interchouette.net/` (alias `/interchouette` kept for old clients).
 
-Official MCP URL: `https://mcp.interchouette.net/interchouette`
-
-## How to update content
+## Update content
 
 1. Edit `db/interchouette.db` (DB Browser for SQLite, `sqlite3`, etc.)
-2. Commit + merge to `dev`
+2. Commit + push to `dev`
 3. CI publishes `interchouette/interchouette-mcp:latest`
-4. CI calls the Render deploy hook for the MCP service
 
-No content inserts at runtime. No Postgres for this MCP.
+No Postgres. No markdown ingest pipeline. No admin upsert API.
 
-## Images
+## Run (image)
 
-`interchouette/interchouette-mcp:latest` or `:dev` - port `8080`, path `/interchouette`.
-Tags: **`:dev`** and **`:latest` only** (no semver tags).
-
-## Local
+`interchouette/interchouette-mcp:latest` or `:dev` - port `8080`, path `/`.
 
 ```bash
-make mcp-lint mcp-test
-cargo run --manifest-path mcp/Cargo.toml -- --knowledge-db db/interchouette.db
+docker run --rm -p 8080:8080 interchouette/interchouette-mcp:latest
+curl -sS http://127.0.0.1:8080/health
 ```
+
+## Local binary
+
+```bash
+cargo run --manifest-path mcp/Cargo.toml -- --db db/interchouette.db
+```
+
+Env: `MCP_DB` (path to `.db`), `MCP_LISTEN`, `CORS_ORIGIN`, `MCP_ALLOWED_HOSTS`.

@@ -1,4 +1,4 @@
-//! `interchouette-mcp` - knowledge MCP for Gregory Roussac / Interchouette.
+//! `interchouette-mcp` - MCP for Gregory Roussac / Interchouette.
 
 use std::path::PathBuf;
 
@@ -7,19 +7,15 @@ use clap::Parser;
 use interchouette_mcp::server::{run_http, DEFAULT_ALLOWED_HOSTS, DEFAULT_HTTP_LISTEN};
 
 #[derive(Debug, Parser)]
-#[command(
-    name = "interchouette-mcp",
-    about = "Interchouette knowledge MCP",
-    version
-)]
+#[command(name = "interchouette-mcp", about = "Interchouette MCP", version)]
 struct Cli {
     /// HTTP bind address (`PORT` on Render is mapped by the start command).
     #[arg(long, env = "MCP_LISTEN", default_value = DEFAULT_HTTP_LISTEN)]
     listen: String,
 
-    /// Committed read-only knowledge database.
-    #[arg(long, env = "KNOWLEDGE_DB", default_value = "../db/interchouette.db")]
-    knowledge_db: PathBuf,
+    /// Committed read-only SQLite database (`db/interchouette.db`).
+    #[arg(long = "db", env = "MCP_DB", default_value = "../db/interchouette.db")]
+    db_path: PathBuf,
 
     /// CORS allow origin for browser callers.
     #[arg(long, env = "CORS_ORIGIN", default_value = "https://interchouette.net")]
@@ -51,16 +47,10 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
     tracing::info!(
         addr = %cli.listen,
-        db = %cli.knowledge_db.display(),
+        db = %cli.db_path.display(),
         hosts = ?cli.allowed_hosts,
         "interchouette-mcp starting"
     );
-    run_http(
-        &cli.listen,
-        cli.knowledge_db,
-        cli.cors_origin,
-        cli.allowed_hosts,
-    )
-    .await?;
+    run_http(&cli.listen, cli.db_path, cli.cors_origin, cli.allowed_hosts).await?;
     Ok(())
 }

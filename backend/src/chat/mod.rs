@@ -1,7 +1,7 @@
 //! Website visitor chat: WebSocket + Slack DM (no chat database).
 //!
 //! Active sessions live in memory. Durable retrieval is Slack threads only.
-//! Away mode queries knowledge via the remote MCP HTTP API (not local `SQLite`).
+//! Away mode queries content via the remote MCP HTTP API (not local `SQLite`).
 
 mod api;
 mod env_label;

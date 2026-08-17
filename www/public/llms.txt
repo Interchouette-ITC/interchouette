@@ -21,7 +21,7 @@ Gregory Roussac is a Rust and Wasm freelance developer operating Interchouette I
 
 Streamable HTTP MCP for Interchouette (Gregory Roussac, CV, public projects, Rust / Wasm / MCP / API topics):
 
-- Endpoint: https://mcp.interchouette.net/interchouette
+- Endpoint: https://mcp.interchouette.net/
 - Transport: streamable-http
 - Server card: /.well-known/mcp.json
 

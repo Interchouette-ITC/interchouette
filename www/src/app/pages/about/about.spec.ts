@@ -21,7 +21,7 @@ describe('AboutPage', () => {
     expect(el.textContent).toContain('Rust');
     expect(el.textContent).toContain('Docker');
     expect(el.textContent).toContain('Cursor');
-    expect(el.querySelector('a[href="https://mcp.interchouette.net/interchouette"]')).toBeTruthy();
+    expect(el.querySelector('a[href="https://mcp.interchouette.net/"]')).toBeTruthy();
     expect(el.querySelector('a[href="https://github.com/Interchouette-ITC"]')).toBeTruthy();
     expect(
       el.querySelector('a[href="https://www.linkedin.com/company/interchouette-itc"]'),

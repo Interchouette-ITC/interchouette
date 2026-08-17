@@ -28,8 +28,8 @@ WORKDIR /app
 COPY --from=builder /interchouette-chat /usr/local/bin/interchouette-chat
 
 USER chat
-ENV CHAT_LISTEN=0.0.0.0:8080 \
-    CORS_ORIGIN=https://interchouette.net \
+# Do not set CHAT_LISTEN here: Render injects PORT; the binary binds 0.0.0.0:$PORT when CHAT_LISTEN is unset.
+ENV CORS_ORIGIN=https://interchouette.net \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 EXPOSE 8080

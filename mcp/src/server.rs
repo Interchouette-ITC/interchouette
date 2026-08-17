@@ -1,4 +1,4 @@
-//! MCP tools + HTTP listener (`/interchouette`, `/health`).
+//! MCP tools + HTTP listener (`/`, `/interchouette` alias, `/health`).
 
 #![allow(unknown_lints)]
 #![allow(clippy::unused_async)]
@@ -37,11 +37,11 @@ pub const DEFAULT_ALLOWED_HOSTS: &[&str] = &[
 
 /// Shared MCP server state.
 #[derive(Clone)]
-pub struct KnowledgeMcp {
+pub struct InterchouetteMcp {
     store: Arc<Store>,
 }
 
-impl KnowledgeMcp {
+impl InterchouetteMcp {
     /// Build an MCP handler over an opened store.
     #[must_use]
     pub const fn new(store: Arc<Store>) -> Self {
@@ -72,11 +72,11 @@ struct LangArgs {
 }
 
 #[tool_router]
-impl KnowledgeMcp {
+impl InterchouetteMcp {
     #[tool(
-        description = "Full-text search over Interchouette / Gregory Roussac knowledge (Rust, Wasm, MCP, API, CV, projects). Prefer full name Gregory Roussac."
+        description = "Full-text search over Interchouette / Gregory Roussac content (Rust, Wasm, MCP, API, CV, projects). Prefer full name Gregory Roussac."
     )]
-    async fn search_knowledge(
+    async fn search(
         &self,
         Parameters(SearchArgs { query, lang }): Parameters<SearchArgs>,
     ) -> Result<CallToolResult, McpError> {
@@ -149,35 +149,35 @@ fn doc_or_err(store: &Store, slug: &str, lang: Option<&str>) -> Result<CallToolR
 }
 
 #[tool_handler]
-impl ServerHandler for KnowledgeMcp {
+impl ServerHandler for InterchouetteMcp {
     fn get_info(&self) -> ServerInfo {
         ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
             .with_server_info(Implementation::new(
-                "interchouette-knowledge",
+                "interchouette-mcp",
                 env!("CARGO_PKG_VERSION"),
             ))
             .with_instructions(
-                "Knowledge MCP for Gregory Roussac and Interchouette ITC. \
+                "Interchouette MCP for Gregory Roussac and Interchouette ITC. \
                  Search with full name Gregory Roussac, Interchouette, Rust MCP, Rust API, Wasm. \
-                 Official URL: https://mcp.interchouette.net/interchouette",
+                 Official URL: https://mcp.interchouette.net/",
             )
     }
 }
 
-/// Build the HTTP router (health + Streamable HTTP MCP).
+/// Build the HTTP router (health + Streamable HTTP MCP at `/`, alias `/interchouette`).
 ///
 /// # Errors
-/// Returns when the knowledge DB cannot be opened.
+/// Returns when the committed DB cannot be opened.
 pub fn build_app(
-    knowledge_db: &std::path::Path,
+    db_path: &std::path::Path,
     cors_origin: &str,
     allowed_hosts: Vec<String>,
 ) -> Result<Router> {
-    let store = Arc::new(Store::open_readonly(knowledge_db)?);
+    let store = Arc::new(Store::open_readonly(db_path)?);
     let n = store.doc_count()?;
-    tracing::info!(documents = n, db = %knowledge_db.display(), "interchouette.db ready (read-only)");
+    tracing::info!(documents = n, db = %db_path.display(), "interchouette.db ready (read-only)");
 
-    let mcp = KnowledgeMcp::new(Arc::clone(&store));
+    let mcp = InterchouetteMcp::new(Arc::clone(&store));
     let mut config =
         rmcp::transport::streamable_http_server::tower::StreamableHttpServerConfig::default();
     config = config.with_allowed_hosts(allowed_hosts);
@@ -193,6 +193,7 @@ pub fn build_app(
     let cors = build_cors(cors_origin);
     Ok(Router::new()
         .route("/health", get(|| async { Json(json!({ "ok": true })) }))
+        .route("/", mcp_router.clone())
         .route("/interchouette", mcp_router.clone())
         .route("/interchouette/", mcp_router)
         .layer(cors))
@@ -222,11 +223,11 @@ fn build_cors(cors_origin: &str) -> CorsLayer {
 /// Returns when bind or serve fails.
 pub async fn run_http(
     addr: &str,
-    knowledge_db: PathBuf,
+    db_path: PathBuf,
     cors_origin: String,
     allowed_hosts: Vec<String>,
 ) -> Result<()> {
-    let app = build_app(&knowledge_db, &cors_origin, allowed_hosts)?;
+    let app = build_app(&db_path, &cors_origin, allowed_hosts)?;
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!(%addr, "interchouette-mcp listening");
     axum::serve(listener, app).await?;
@@ -316,11 +317,46 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn root_and_alias_accept_post() {
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let hosts: Vec<String> = DEFAULT_ALLOWED_HOSTS
+            .iter()
+            .map(|h| (*h).to_string())
+            .collect();
+        let app = build_app(&db, "https://interchouette.net", hosts).unwrap();
+
+        for uri in ["/", "/interchouette", "/interchouette/"] {
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .method("POST")
+                        .uri(uri)
+                        .header("content-type", "application/json")
+                        .header("accept", "application/json, text/event-stream")
+                        .header("host", "localhost")
+                        .body(Body::from(
+                            r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}"#,
+                        ))
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_ne!(
+                response.status(),
+                StatusCode::NOT_FOUND,
+                "expected MCP route at {uri}"
+            );
+        }
+    }
+
+    #[tokio::test]
     async fn tools_return_seeded_documents() {
         let dir = tempdir().unwrap();
         let db = seed_store(&dir);
         let store = Arc::new(Store::open_readonly(db).unwrap());
-        let mcp = KnowledgeMcp::new(store);
+        let mcp = InterchouetteMcp::new(store);
 
         let profile = mcp.get_gregory_profile().await.unwrap();
         assert!(!profile.is_error.unwrap_or(false));
@@ -338,7 +374,7 @@ mod tests {
         let projects = mcp.list_public_projects().await.unwrap();
         assert!(!projects.is_error.unwrap_or(false));
         let hits = mcp
-            .search_knowledge(Parameters(SearchArgs {
+            .search(Parameters(SearchArgs {
                 query: "Gregory Roussac".into(),
                 lang: Some("en".into()),
             }))
@@ -352,7 +388,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let db = seed_store(&dir);
         let store = Arc::new(Store::open_readonly(db).unwrap());
-        let mcp = KnowledgeMcp::new(store);
+        let mcp = InterchouetteMcp::new(store);
         let err = mcp
             .get_interchouette_overview(Parameters(LangArgs {
                 lang: Some("nl".into()),

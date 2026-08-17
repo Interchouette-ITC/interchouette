@@ -1,21 +1,21 @@
-//! Away mode: `OpenRouter` plus remote knowledge MCP over HTTP.
+//! Away mode: `OpenRouter` plus remote Interchouette MCP over HTTP.
 //!
-//! Chat does not open `interchouette.db`. Knowledge comes from the MCP HTTP API.
+//! Chat does not open `interchouette.db`. Context comes from the MCP HTTP API.
 
 use serde_json::{json, Value};
 
 const SYSTEM_PROMPT: &str = "You are ITCy, the Linux owl assistant for Interchouette ITC \
     (Gregory Roussac). Speak English only. You are an AI, never pretend to be Greg. \
     Be concise, friendly, and helpful. Prefer inviting the visitor to leave an email \
-    so Greg can follow up. Use only the knowledge context provided.";
+    so Greg can follow up. Use only the MCP context provided.";
 
-const DEFAULT_MCP_URL: &str = "https://mcp.interchouette.net/interchouette";
+const DEFAULT_MCP_URL: &str = "https://mcp.interchouette.net/";
 
 /// Away LLM helper backed by remote MCP search.
 #[derive(Clone)]
 pub struct AwayBrain {
     mcp_url: String,
-    openrouter_key: Option<String>,
+    openrouter_key: String,
     model: String,
     client: reqwest::Client,
     /// Test-only static context (skips MCP HTTP).
@@ -23,19 +23,17 @@ pub struct AwayBrain {
 }
 
 impl AwayBrain {
-    /// From env: `KNOWLEDGE_MCP_URL`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`.
+    /// From env: `MCP_URL`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (all required).
+    ///
+    /// # Panics
+    /// When any of those env vars is missing or empty.
     #[must_use]
     pub fn from_env() -> Self {
-        let mcp_url = std::env::var("KNOWLEDGE_MCP_URL").unwrap_or_else(|_| DEFAULT_MCP_URL.into());
-        let openrouter_key = std::env::var("OPENROUTER_API_KEY")
-            .ok()
-            .filter(|s| !s.is_empty());
-        let model = std::env::var("OPENROUTER_MODEL").unwrap_or_else(|_| "openrouter/auto".into());
-        let model = if model == "openrouter/auto" {
-            "meta-llama/llama-3.2-3b-instruct:free".into()
-        } else {
-            model
-        };
+        let mcp_url = required_env("MCP_URL").unwrap_or_else(|| DEFAULT_MCP_URL.into());
+        let openrouter_key = required_env("OPENROUTER_API_KEY")
+            .unwrap_or_else(|| panic!("OPENROUTER_API_KEY is required"));
+        let model = required_env("OPENROUTER_MODEL")
+            .unwrap_or_else(|| panic!("OPENROUTER_MODEL is required"));
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(45))
             .build()
@@ -49,30 +47,36 @@ impl AwayBrain {
         }
     }
 
-    /// Test helper with fixed knowledge context (no MCP / `OpenRouter`).
+    /// Test helper with fixed MCP context (no MCP / `OpenRouter` network calls).
     #[cfg(test)]
     #[must_use]
     pub fn with_static_context(context: impl Into<String>) -> Self {
         Self {
             mcp_url: "http://127.0.0.1/unused".into(),
-            openrouter_key: None,
+            openrouter_key: "test-key".into(),
             model: "none".into(),
             client: reqwest::Client::new(),
             static_context: Some(context.into()),
         }
     }
 
-    /// Answer as `ITCy` using remote MCP context (+ optional `OpenRouter`).
+    /// Answer as `ITCy` using remote MCP context + `OpenRouter`.
     pub async fn reply(&self, visitor_text: &str) -> String {
         let context = self.rag_context(visitor_text).await;
-        if let Some(key) = &self.openrouter_key {
-            match self.call_openrouter(key, &context, visitor_text).await {
-                Ok(text) if !text.trim().is_empty() => return text,
-                Ok(_) => tracing::warn!("openrouter empty reply; falling back to RAG snippet"),
-                Err(err) => tracing::warn!(error = %err, "openrouter failed; RAG fallback"),
+        match self
+            .call_openrouter(&self.openrouter_key, &context, visitor_text)
+            .await
+        {
+            Ok(text) if !text.trim().is_empty() => text,
+            Ok(_) => {
+                tracing::warn!("openrouter empty reply; falling back to MCP snippet");
+                rag_fallback(&context, visitor_text)
+            }
+            Err(err) => {
+                tracing::warn!(error = %err, "openrouter failed; MCP snippet fallback");
+                rag_fallback(&context, visitor_text)
             }
         }
-        rag_fallback(&context, visitor_text)
     }
 
     async fn rag_context(&self, query: &str) -> String {
@@ -81,10 +85,10 @@ impl AwayBrain {
         }
         match self.mcp_search(query).await {
             Ok(text) if !text.trim().is_empty() => text,
-            Ok(_) => String::from("(no knowledge hits)"),
+            Ok(_) => String::from("(no MCP hits)"),
             Err(err) => {
                 tracing::warn!(error = %err, mcp = %self.mcp_url, "remote MCP search failed");
-                String::from("(knowledge unavailable)")
+                String::from("(MCP unavailable)")
             }
         }
     }
@@ -114,7 +118,7 @@ impl AwayBrain {
                 "id": 2,
                 "method": "tools/call",
                 "params": {
-                    "name": "search_knowledge",
+                    "name": "search",
                     "arguments": { "query": query }
                 }
             }))
@@ -237,8 +241,12 @@ fn extract_tool_text(payload: &Value) -> anyhow::Result<String> {
     anyhow::bail!("MCP tools/call missing text content")
 }
 
+fn required_env(name: &str) -> Option<String> {
+    std::env::var(name).ok().filter(|s| !s.is_empty())
+}
+
 fn rag_fallback(context: &str, visitor_text: &str) -> String {
-    if context.contains("(no knowledge") || context.contains("(knowledge unavailable)") {
+    if context.contains("(no MCP") || context.contains("(MCP unavailable)") {
         return String::from(
             "Hi, I am ITCy, Greg's AI. Greg is away and I could not match that to our public notes yet. \
              Leave your email here or write contact@interchouette.net and he will follow up.",
@@ -308,7 +316,7 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    async fn fallback_uses_static_context_without_openrouter() {
+    async fn fallback_uses_static_context_when_openrouter_fails() {
         let brain = AwayBrain::with_static_context(
             "### Gregory\nGregory Roussac does Rust and Wasm freelance work.",
         );
@@ -319,8 +327,8 @@ mod tests {
 
     #[test]
     fn parses_sse_tool_result() {
-        let body = "data: \nid: 0\n\ndata: {\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"hello knowledge\"}]}}\n\n";
+        let body = "data: \nid: 0\n\ndata: {\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"hello mcp\"}]}}\n\n";
         let v = parse_sse_jsonrpc(body).unwrap();
-        assert_eq!(extract_tool_text(&v).unwrap(), "hello knowledge");
+        assert_eq!(extract_tool_text(&v).unwrap(), "hello mcp");
     }
 }
