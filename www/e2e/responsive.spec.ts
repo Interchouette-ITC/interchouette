@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test.describe('responsive rendering', () => {
   test('home fits viewport without horizontal overflow', async ({ page }, testInfo) => {
     await page.goto('/');
-    await expect(page.getByText('Gregory Roussac')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gregory Roussac' })).toBeVisible();
     await expect(page.getByText('Rust - Wasm Freelance Developer')).toBeVisible();
 
     const overflowX = await page.evaluate(() => {
