@@ -1,5 +1,7 @@
 //! `interchouette-chat` - website visitor chat.
 
+use std::path::Path;
+
 use anyhow::Result;
 use clap::Parser;
 use interchouette_chat::server::{run_http, DEFAULT_HTTP_LISTEN};
@@ -30,8 +32,18 @@ fn init_logging() {
         .init();
 }
 
+fn load_dotenv() {
+    for candidate in [".env", "../.env"] {
+        if Path::new(candidate).is_file() {
+            let _ = dotenvy::from_filename(candidate);
+            return;
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
+    load_dotenv();
     init_logging();
     let mut cli = Cli::parse();
     if std::env::var("CHAT_LISTEN").is_err() {

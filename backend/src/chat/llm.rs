@@ -168,7 +168,7 @@ impl AwayBrain {
         context: &str,
         visitor_text: &str,
     ) -> anyhow::Result<String> {
-        let user = format!("Knowledge context:\n{context}\n\nVisitor message:\n{visitor_text}");
+        let user = format!("MCP context:\n{context}\n\nVisitor message:\n{visitor_text}");
         let resp = self
             .client
             .post("https://openrouter.ai/api/v1/chat/completions")
@@ -339,10 +339,9 @@ mod tests {
     }
 
     #[test]
-    fn tools_call_uses_search_not_search_knowledge() {
+    fn tools_call_uses_search() {
         let body = mcp_search_call_body("Gregory Roussac");
         assert_eq!(body["params"]["name"], MCP_SEARCH_TOOL);
-        assert_ne!(body["params"]["name"], "search_knowledge");
         assert_eq!(body["params"]["arguments"]["query"], "Gregory Roussac");
     }
 }
