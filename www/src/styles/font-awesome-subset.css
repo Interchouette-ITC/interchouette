@@ -1,15 +1,7 @@
-/* Font Awesome subsets: only glyphs used on the home page. */
+/* Font Awesome subset: solid glyphs used on the home page (brands load deferred). */
 @font-face {
   font-family: 'FontAwesome';
   src: url('/fonts/fontawesome-subset.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'FontAwesomeBrands';
-  src: url('/fonts/fontawesome-brands-subset.woff2') format('woff2');
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -93,12 +85,4 @@
 
 .fa-amazon:before {
   content: '\f270';
-}
-
-.fa.fa-signal-messenger {
-  font-family: 'FontAwesomeBrands';
-}
-
-.fa-signal-messenger:before {
-  content: '\e663';
 }

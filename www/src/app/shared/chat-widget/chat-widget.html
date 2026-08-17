@@ -58,13 +58,14 @@
       </button>
     </div>
 
-    <section
+    <div
       id="interchouette-chat-panel"
       class="chat-panel"
       [class.chat-panel--open]="chat.open()"
       [class.chat-panel--expanded]="expanded()"
       [attr.data-hero]="chat.hero()"
       [attr.role]="chat.open() ? 'dialog' : null"
+      tabindex="-1"
       [attr.aria-hidden]="chat.open() ? null : 'true'"
       [attr.aria-modal]="chat.open() ? 'true' : null"
       [attr.aria-label]="title()"
@@ -334,7 +335,12 @@
             </button>
           </form>
         }
-        <form class="chat-panel__compose" (submit)="onSubmit($event)">
+        <form
+          class="chat-panel__compose"
+          toolname="send_site_chat_message"
+          tooldescription="Send a visitor message in the Interchouette site chat panel (Greg live or ITCy away)."
+          (submit)="onSubmit($event)"
+        >
           <button
             type="button"
             class="chat-panel__email-toggle"
@@ -356,6 +362,7 @@
               autocomplete="off"
               maxlength="2000"
               aria-label="Message"
+              toolparamdescription="Visitor chat message to send to Greg or ITCy"
               [disabled]="!chat.wsReady() || !!chat.error()"
               (input)="onDraftInput($event)"
             />
@@ -386,6 +393,6 @@
           <span class="chat-panel__fineprint-powered">Powered by Rust, Node &amp; ITC</span>
         </p>
       </footer>
-    </section>
+    </div>
   }
 }

@@ -28,3 +28,5 @@ cargo run --manifest-path mcp/Cargo.toml -- --db db/interchouette.db
 ```
 
 Env: `MCP_DB` (path to `.db`), `MCP_LISTEN`, `CORS_ORIGIN`, `MCP_ALLOWED_HOSTS`.
+
+Chat write tools (`send_message_to_greg`, `get_chat_relay_status`) require `MCP_CHAT_TOKEN` plus `SLACK_BOT_TOKEN` and `GREG_SLACK_USER_ID`. `list_chat_capabilities` needs no token.

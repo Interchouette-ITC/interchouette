@@ -1,0 +1,16 @@
+/* Brands glyphs only (Signal). Loaded deferred so it is not on the home LCP critical path. */
+@font-face {
+  font-family: 'FontAwesomeBrands';
+  src: url('/fonts/fontawesome-brands-subset.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+.fa.fa-signal-messenger {
+  font-family: 'FontAwesomeBrands';
+}
+
+.fa-signal-messenger:before {
+  content: '\e663';
+}
