@@ -89,12 +89,22 @@ function startStaticServer(listenPort) {
   });
 }
 
+function isIgnorableConsoleError(text) {
+  // Chat warm hits :8080 / chat host; CI and packed-dist gate have no chat process.
+  return /net::ERR_CONNECTION_REFUSED/i.test(text);
+}
+
 async function collectErrors(page, base, path) {
   const errors = [];
   page.on('console', (msg) => {
-    if (msg.type() === 'error') {
-      errors.push(`console.error: ${msg.text()}`);
+    if (msg.type() !== 'error') {
+      return;
     }
+    const text = msg.text();
+    if (isIgnorableConsoleError(text)) {
+      return;
+    }
+    errors.push(`console.error: ${text}`);
   });
   page.on('pageerror', (err) => {
     errors.push(`pageerror: ${err.message}`);
