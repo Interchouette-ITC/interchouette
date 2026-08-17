@@ -4,10 +4,7 @@
 
 use serde_json::{json, Value};
 
-const SYSTEM_PROMPT: &str = "You are ITCy, the Linux owl assistant for Interchouette ITC \
-    (Gregory Roussac). Speak English only. You are an AI, never pretend to be Greg. \
-    Be concise, friendly, and helpful. Prefer inviting the visitor to leave an email \
-    so Greg can follow up. Use only the MCP context provided.";
+use crate::chat::locale::ChatLocale;
 
 const DEFAULT_MCP_URL: &str = "https://mcp.interchouette.net/";
 const MCP_SEARCH_TOOL: &str = "search";
@@ -62,29 +59,29 @@ impl AwayBrain {
     }
 
     /// Answer as `ITCy` using remote MCP context + `OpenRouter`.
-    pub async fn reply(&self, visitor_text: &str) -> String {
-        let context = self.rag_context(visitor_text).await;
+    pub async fn reply(&self, visitor_text: &str, locale: ChatLocale) -> String {
+        let context = self.rag_context(visitor_text, locale).await;
         match self
-            .call_openrouter(&self.openrouter_key, &context, visitor_text)
+            .call_openrouter(&self.openrouter_key, &context, visitor_text, locale)
             .await
         {
             Ok(text) if !text.trim().is_empty() => text,
             Ok(_) => {
                 tracing::warn!("openrouter empty reply; falling back to MCP snippet");
-                rag_fallback(&context, visitor_text)
+                rag_fallback(&context, visitor_text, locale)
             }
             Err(err) => {
                 tracing::warn!(error = %err, "openrouter failed; MCP snippet fallback");
-                rag_fallback(&context, visitor_text)
+                rag_fallback(&context, visitor_text, locale)
             }
         }
     }
 
-    async fn rag_context(&self, query: &str) -> String {
+    async fn rag_context(&self, query: &str, locale: ChatLocale) -> String {
         if let Some(ctx) = &self.static_context {
             return ctx.clone();
         }
-        match self.mcp_search(query).await {
+        match self.mcp_search(query, locale).await {
             Ok(text) if !text.trim().is_empty() => text,
             Ok(_) => String::from("(no MCP hits)"),
             Err(err) => {
@@ -94,7 +91,7 @@ impl AwayBrain {
         }
     }
 
-    async fn mcp_search(&self, query: &str) -> anyhow::Result<String> {
+    async fn mcp_search(&self, query: &str, locale: ChatLocale) -> anyhow::Result<String> {
         let session_id = self.mcp_initialize().await?;
         let _ = self
             .client
@@ -114,7 +111,7 @@ impl AwayBrain {
             .header("Content-Type", "application/json")
             .header("Accept", "application/json, text/event-stream")
             .header("mcp-session-id", &session_id)
-            .json(&mcp_search_call_body(query))
+            .json(&mcp_search_call_body(query, locale.as_str()))
             .send()
             .await?;
         let status = resp.status();
@@ -167,6 +164,7 @@ impl AwayBrain {
         key: &str,
         context: &str,
         visitor_text: &str,
+        locale: ChatLocale,
     ) -> anyhow::Result<String> {
         let user = format!("MCP context:\n{context}\n\nVisitor message:\n{visitor_text}");
         let resp = self
@@ -179,7 +177,7 @@ impl AwayBrain {
                 "model": self.model,
                 "max_tokens": 320,
                 "messages": [
-                    { "role": "system", "content": SYSTEM_PROMPT },
+                    { "role": "system", "content": system_prompt(locale) },
                     { "role": "user", "content": user }
                 ]
             }))
@@ -239,36 +237,101 @@ fn required_env(name: &str) -> Option<String> {
     std::env::var(name).ok().filter(|s| !s.is_empty())
 }
 
-fn mcp_search_call_body(query: &str) -> Value {
+fn system_prompt(locale: ChatLocale) -> String {
+    let lang = locale.language_name();
+    let meeting = required_env("BOOKING_SCHEDULE_URL").map_or_else(
+        || {
+            String::from(
+                "If they want a meeting, ask for a preferred slot and an email so Greg can follow up. \
+                 There is no public booking page yet.",
+            )
+        },
+        |url| format!("If they want a meeting, send them to this public booking page: {url}."),
+    );
+    format!(
+        "You are ITCy, the Linux owl assistant for Interchouette ITC (Gregory Roussac). \
+         Reply in {lang} only. You are an AI, never pretend to be Greg. \
+         Be concise, friendly, and helpful. Prefer inviting the visitor to leave an email \
+         so Greg can follow up. Use only the MCP context provided. {meeting}"
+    )
+}
+
+fn mcp_search_call_body(query: &str, lang: &str) -> Value {
     json!({
         "jsonrpc": "2.0",
         "id": 2,
         "method": "tools/call",
         "params": {
             "name": MCP_SEARCH_TOOL,
-            "arguments": { "query": query }
+            "arguments": { "query": query, "lang": lang }
         }
     })
 }
 
-fn rag_fallback(context: &str, visitor_text: &str) -> String {
-    if context.contains("(no MCP") || context.contains("(MCP unavailable)") {
-        return String::from(
-            "Hi, I am ITCy, Greg's AI. Greg is away and I could not match that to our public notes yet. \
-             Leave your email here or write contact@interchouette.net and he will follow up.",
-        );
+fn rag_fallback(context: &str, visitor_text: &str, locale: ChatLocale) -> String {
+    let unavailable = context.contains("(no MCP") || context.contains("(MCP unavailable)");
+    match locale {
+        ChatLocale::Nl => {
+            if unavailable {
+                return String::from(
+                    "Hoi, ik ben ITCy, de AI van Greg. Greg is afwezig en ik kon dit nog niet \
+                     koppelen aan onze publieke notities. Laat hier je e-mail achter of schrijf \
+                     contact@interchouette.net, dan neemt hij contact op.",
+                );
+            }
+            let snippet = synthesize_brief(context);
+            if snippet.is_empty() {
+                return format!(
+                    "Hoi, ik ben ITCy, de AI van Greg. Greg is afwezig. Vraag me over Interchouette, \
+                     Rust of Wasm, of laat je e-mail achter. (Je vroeg: {visitor_text})"
+                );
+            }
+            format!(
+                "Hoi, ik ben ITCy, de AI van Greg. {snippet} Wil je Greg persoonlijk? Laat hier je \
+                 e-mail achter of schrijf contact@interchouette.net."
+            )
+        }
+        ChatLocale::Fr => {
+            if unavailable {
+                return String::from(
+                    "Bonjour, je suis ITCy, l'IA de Greg. Greg est absent et je n'ai pas encore \
+                     pu relier cela a nos notes publiques. Laissez votre e-mail ici ou ecrivez \
+                     contact@interchouette.net, il vous recontactera.",
+                );
+            }
+            let snippet = synthesize_brief(context);
+            if snippet.is_empty() {
+                return format!(
+                    "Bonjour, je suis ITCy, l'IA de Greg. Greg est absent. Posez-moi une question \
+                     sur Interchouette, Rust ou Wasm, ou laissez votre e-mail. (Vous avez demande : \
+                     {visitor_text})"
+                );
+            }
+            format!(
+                "Bonjour, je suis ITCy, l'IA de Greg. {snippet} Vous voulez Greg en personne ? \
+                 Laissez votre e-mail ici ou ecrivez a contact@interchouette.net."
+            )
+        }
+        ChatLocale::En => {
+            if unavailable {
+                return String::from(
+                    "Hi, I am ITCy, Greg's AI. Greg is away and I could not match that to our public notes yet. \
+                     Leave your email here or write contact@interchouette.net and he will follow up.",
+                );
+            }
+            let snippet = synthesize_brief(context);
+            if snippet.is_empty() {
+                return format!(
+                    "Hi, I am ITCy, Greg's AI. Greg is away. Ask me about Interchouette, Rust, Wasm, or leave \
+                     your email so Greg can follow up. (You asked about: {visitor_text})"
+                );
+            }
+            format!(
+                "Hi, I am ITCy, Greg's AI. {snippet} Want Greg personally? Leave your email here or write \
+                 contact@interchouette.net."
+            )
+        }
     }
-    let snippet = synthesize_brief(context);
-    if snippet.is_empty() {
-        return format!(
-            "Hi, I am ITCy, Greg's AI. Greg is away. Ask me about Interchouette, Rust, Wasm, or leave \
-             your email so Greg can follow up. (You asked about: {visitor_text})"
-        );
-    }
-    format!(
-        "Hi, I am ITCy, Greg's AI. {snippet} Want Greg personally? Leave your email here or write \
-         contact@interchouette.net."
-    )
 }
 
 /// Turn raw MCP markdown into one short visitor-facing sentence (never dump headings).
@@ -277,7 +340,8 @@ fn synthesize_brief(context: &str) -> String {
         .split("## ")
         .find(|block| {
             let lower = block.to_ascii_lowercase();
-            lower.contains("interchouette itc (english)")
+            lower.contains("interchouette itc")
+                || lower.contains("(en/overview)")
                 || lower.contains("gregory roussac\n")
                 || lower.starts_with("gregory roussac")
         })
@@ -326,7 +390,7 @@ mod tests {
         let brain = AwayBrain::with_static_context(
             "### Gregory\nGregory Roussac does Rust and Wasm freelance work.",
         );
-        let reply = brain.reply("Rust Wasm").await;
+        let reply = brain.reply("Rust Wasm", ChatLocale::En).await;
         assert!(reply.contains("ITCy"));
         assert!(reply.contains("Gregory") || reply.contains("Rust"));
     }
@@ -340,8 +404,18 @@ mod tests {
 
     #[test]
     fn tools_call_uses_search() {
-        let body = mcp_search_call_body("Gregory Roussac");
+        let body = mcp_search_call_body("Gregory Roussac", "en");
         assert_eq!(body["params"]["name"], MCP_SEARCH_TOOL);
         assert_eq!(body["params"]["arguments"]["query"], "Gregory Roussac");
+        assert_eq!(body["params"]["arguments"]["lang"], "en");
+    }
+
+    #[test]
+    fn system_prompt_asks_for_locale() {
+        let en = system_prompt(ChatLocale::En);
+        assert!(en.contains("Reply in English only"));
+        assert!(en.contains("no public booking page yet"));
+        let nl = system_prompt(ChatLocale::Nl);
+        assert!(nl.contains("Reply in Dutch only"));
     }
 }

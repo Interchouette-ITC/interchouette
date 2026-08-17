@@ -322,6 +322,10 @@ fn build_cors(cors_origin: &str) -> CorsLayer {
     use axum::http::{HeaderValue, Method};
     let mut origins = vec![
         HeaderValue::from_static("https://interchouette.net"),
+        HeaderValue::from_static("https://interchouette.nl"),
+        HeaderValue::from_static("https://www.interchouette.nl"),
+        HeaderValue::from_static("https://interchouette.fr"),
+        HeaderValue::from_static("https://www.interchouette.fr"),
         HeaderValue::from_static("http://127.0.0.1:4200"),
         HeaderValue::from_static("http://localhost:4200"),
     ];
