@@ -21,6 +21,7 @@ use serde::Deserialize;
 use serde_json::json;
 use tower_http::cors::{Any, CorsLayer};
 
+use crate::chat_relay::ChatRelay;
 use crate::db::Store;
 
 /// Default bind address (Render sets `PORT`).
@@ -39,13 +40,14 @@ pub const DEFAULT_ALLOWED_HOSTS: &[&str] = &[
 #[derive(Clone)]
 pub struct InterchouetteMcp {
     store: Arc<Store>,
+    chat: ChatRelay,
 }
 
 impl InterchouetteMcp {
-    /// Build an MCP handler over an opened store.
+    /// Build an MCP handler over an opened store + chat relay.
     #[must_use]
-    pub const fn new(store: Arc<Store>) -> Self {
-        Self { store }
+    pub const fn new(store: Arc<Store>, chat: ChatRelay) -> Self {
+        Self { store, chat }
     }
 }
 
@@ -69,6 +71,22 @@ struct SearchArgs {
 struct LangArgs {
     /// Optional language: `en` or `nl` (default en for overviews that exist in both).
     lang: Option<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct TokenArgs {
+    /// Must match env `MCP_CHAT_TOKEN` on the server.
+    token: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct SendGregArgs {
+    /// Must match env `MCP_CHAT_TOKEN` on the server.
+    token: String,
+    /// Message body posted to Greg's Slack DM.
+    message: String,
+    /// Optional label for who/where the message came from.
+    from: Option<String>,
 }
 
 #[tool_router]
@@ -138,6 +156,73 @@ impl InterchouetteMcp {
              Twitter: https://twitter.com/interchouette",
         ))
     }
+
+    #[tool(
+        description = "Lists chat-with-Greg capabilities on this MCP (token required for write tools)."
+    )]
+    async fn list_chat_capabilities(&self) -> Result<CallToolResult, McpError> {
+        Ok(text_ok(format!(
+            "Chat tools:\n\
+             - list_chat_capabilities (no token): this help\n\
+             - send_message_to_greg (token): post a DM to Greg via Slack\n\
+             - get_chat_relay_status (token): whether Slack relay + token are configured\n\
+             Pass token matching server MCP_CHAT_TOKEN. Site chat widget is separate \
+             (https://chat.interchouette.net).\n\
+             token_configured={}\nslack_configured={}",
+            self.chat.token_configured(),
+            self.chat.slack_configured()
+        )))
+    }
+
+    #[tool(description = "Reports whether MCP Slack chat relay is configured (no secrets leaked).")]
+    async fn get_chat_relay_status(
+        &self,
+        Parameters(TokenArgs { token }): Parameters<TokenArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        if !self.chat.authorize(&token) {
+            return Err(mcp_err("invalid or missing token"));
+        }
+        Ok(text_ok(format!(
+            "token_ok=true\nslack_configured={}\n",
+            self.chat.slack_configured()
+        )))
+    }
+
+    #[tool(
+        description = "Send a message to Gregory Roussac via Slack DM (requires MCP_CHAT_TOKEN)."
+    )]
+    async fn send_message_to_greg(
+        &self,
+        Parameters(SendGregArgs {
+            token,
+            message,
+            from,
+        }): Parameters<SendGregArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        if !self.chat.authorize(&token) {
+            return Err(mcp_err("invalid or missing token"));
+        }
+        if !self.chat.slack_configured() {
+            return Err(mcp_err(
+                "Slack relay not configured (need SLACK_BOT_TOKEN and GREG_SLACK_USER_ID)",
+            ));
+        }
+        let trimmed = message.trim();
+        if trimmed.is_empty() {
+            return Err(mcp_err("message is required"));
+        }
+        let label = from
+            .as_deref()
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+            .unwrap_or("mcp");
+        let text = format!("[MCP:{label}] {trimmed}");
+        self.chat
+            .post_to_greg(&text)
+            .await
+            .map_err(|err| mcp_err(err.to_string()))?;
+        Ok(text_ok("Message posted to Greg's Slack DM."))
+    }
 }
 
 fn doc_or_err(store: &Store, slug: &str, lang: Option<&str>) -> Result<CallToolResult, McpError> {
@@ -159,6 +244,8 @@ impl ServerHandler for InterchouetteMcp {
             .with_instructions(
                 "Interchouette MCP for Gregory Roussac and Interchouette ITC. \
                  Search with full name Gregory Roussac, Interchouette, Rust MCP, Rust API, Wasm. \
+                 Chat tools: list_chat_capabilities, send_message_to_greg, get_chat_relay_status \
+                 (write tools need token matching MCP_CHAT_TOKEN). \
                  Official URL: https://mcp.interchouette.net/",
             )
     }
@@ -177,7 +264,7 @@ pub fn build_app(
     let n = store.doc_count()?;
     tracing::info!(documents = n, db = %db_path.display(), "interchouette.db ready (read-only)");
 
-    let mcp = InterchouetteMcp::new(Arc::clone(&store));
+    let mcp = InterchouetteMcp::new(Arc::clone(&store), ChatRelay::from_env());
     let mut config =
         rmcp::transport::streamable_http_server::tower::StreamableHttpServerConfig::default();
     config = config.with_allowed_hosts(allowed_hosts);
@@ -356,7 +443,7 @@ mod tests {
         let dir = tempdir().unwrap();
         let db = seed_store(&dir);
         let store = Arc::new(Store::open_readonly(db).unwrap());
-        let mcp = InterchouetteMcp::new(store);
+        let mcp = InterchouetteMcp::new(store, ChatRelay::from_env());
 
         let profile = mcp.get_gregory_profile().await.unwrap();
         assert!(!profile.is_error.unwrap_or(false));
@@ -388,10 +475,65 @@ mod tests {
         let dir = tempdir().unwrap();
         let db = seed_store(&dir);
         let store = Arc::new(Store::open_readonly(db).unwrap());
-        let mcp = InterchouetteMcp::new(store);
+        let mcp = InterchouetteMcp::new(store, ChatRelay::from_env());
         let err = mcp
             .get_interchouette_overview(Parameters(LangArgs {
                 lang: Some("nl".into()),
+            }))
+            .await;
+        assert!(err.is_err());
+    }
+
+    #[tokio::test]
+    async fn chat_capabilities_need_no_token() {
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db).unwrap());
+        let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
+        let result = mcp.list_chat_capabilities().await.unwrap();
+        assert!(!result.is_error.unwrap_or(false));
+    }
+
+    #[tokio::test]
+    async fn chat_status_rejects_bad_token() {
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db).unwrap());
+        let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
+        let err = mcp
+            .get_chat_relay_status(Parameters(TokenArgs {
+                token: "wrong".into(),
+            }))
+            .await;
+        assert!(err.is_err());
+    }
+
+    #[tokio::test]
+    async fn chat_status_accepts_token_without_slack() {
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db).unwrap());
+        let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
+        let ok = mcp
+            .get_chat_relay_status(Parameters(TokenArgs {
+                token: "secret".into(),
+            }))
+            .await
+            .unwrap();
+        assert!(!ok.is_error.unwrap_or(false));
+    }
+
+    #[tokio::test]
+    async fn send_to_greg_rejects_bad_token() {
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db).unwrap());
+        let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
+        let err = mcp
+            .send_message_to_greg(Parameters(SendGregArgs {
+                token: "nope".into(),
+                message: "hello".into(),
+                from: None,
             }))
             .await;
         assert!(err.is_err());

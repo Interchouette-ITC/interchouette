@@ -25,6 +25,10 @@ rmcp = { version = "3.1", default-features = false, features = [
     "transport-io",
     "transport-streamable-http-server",
 ] }
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "rustls-tls",
+] }
 rusqlite = { version = "0.40", default-features = false, features = [
     "bundled",
 ] }

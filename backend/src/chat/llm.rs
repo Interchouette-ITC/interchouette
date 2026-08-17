@@ -10,6 +10,7 @@ const SYSTEM_PROMPT: &str = "You are ITCy, the Linux owl assistant for Interchou
     so Greg can follow up. Use only the MCP context provided.";
 
 const DEFAULT_MCP_URL: &str = "https://mcp.interchouette.net/";
+const MCP_SEARCH_TOOL: &str = "search";
 
 /// Away LLM helper backed by remote MCP search.
 #[derive(Clone)]
@@ -113,15 +114,7 @@ impl AwayBrain {
             .header("Content-Type", "application/json")
             .header("Accept", "application/json, text/event-stream")
             .header("mcp-session-id", &session_id)
-            .json(&json!({
-                "jsonrpc": "2.0",
-                "id": 2,
-                "method": "tools/call",
-                "params": {
-                    "name": "search",
-                    "arguments": { "query": query }
-                }
-            }))
+            .json(&mcp_search_call_body(query))
             .send()
             .await?;
         let status = resp.status();
@@ -131,6 +124,7 @@ impl AwayBrain {
         }
         let payload = parse_sse_jsonrpc(&body)?;
         if let Some(err) = payload.get("error") {
+            tracing::warn!(mcp = %self.mcp_url, error = %err, "MCP tools/call JSON-RPC error");
             anyhow::bail!("MCP tools/call error: {err}");
         }
         extract_tool_text(&payload)
@@ -245,6 +239,18 @@ fn required_env(name: &str) -> Option<String> {
     std::env::var(name).ok().filter(|s| !s.is_empty())
 }
 
+fn mcp_search_call_body(query: &str) -> Value {
+    json!({
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/call",
+        "params": {
+            "name": MCP_SEARCH_TOOL,
+            "arguments": { "query": query }
+        }
+    })
+}
+
 fn rag_fallback(context: &str, visitor_text: &str) -> String {
     if context.contains("(no MCP") || context.contains("(MCP unavailable)") {
         return String::from(
@@ -330,5 +336,13 @@ mod tests {
         let body = "data: \nid: 0\n\ndata: {\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"hello mcp\"}]}}\n\n";
         let v = parse_sse_jsonrpc(body).unwrap();
         assert_eq!(extract_tool_text(&v).unwrap(), "hello mcp");
+    }
+
+    #[test]
+    fn tools_call_uses_search_not_search_knowledge() {
+        let body = mcp_search_call_body("Gregory Roussac");
+        assert_eq!(body["params"]["name"], MCP_SEARCH_TOOL);
+        assert_ne!(body["params"]["name"], "search_knowledge");
+        assert_eq!(body["params"]["arguments"]["query"], "Gregory Roussac");
     }
 }

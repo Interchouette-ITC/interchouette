@@ -15,7 +15,7 @@ Website visitor chat: WebSocket sessions, Slack DM for live replies, remote Inte
 | `SLACK_APP_TOKEN`    | App token (`xapp-…`): Socket Mode so Greg DM replies reach the widget               |
 | `GREG_SLACK_USER_ID` | Greg's Slack user id                                                                |
 | `OPENROUTER_API_KEY` | Away LLM (required)                                                                 |
-| `OPENROUTER_MODEL`   | Away model id (required), e.g. `openrouter/owl-alpha`                          |
+| `OPENROUTER_MODEL`   | Away model id (required), e.g. `google/gemini-2.5-flash`                        |
 | `MCP_URL`            | Interchouette MCP Streamable HTTP URL (default `https://mcp.interchouette.net/`)    |
 | `CORS_ORIGIN`        | Browser origin (default `https://interchouette.net`)                                |
 
@@ -31,11 +31,9 @@ Website static site stays separate. Chat needs its **own** web service (WebSocke
 
 1. Build `backend/Dockerfile` (context = repo root) → Docker web service from Git.
 2. Custom domain **`chat.interchouette.net`** → that service.
-3. Env on the chat service (all required): `CHAT_ENV=prod`, `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `GREG_SLACK_USER_ID`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL=openrouter/owl-alpha`, `MCP_URL=https://mcp.interchouette.net/`, `CORS_ORIGIN=https://interchouette.net`. Prefer `PORT` from the host (binary picks it up when `CHAT_LISTEN` is unset). Slack thread headers include `env=prod|local|e2e`.
+3. Env on the chat service (all required): `CHAT_ENV=prod`, `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `GREG_SLACK_USER_ID`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL=google/gemini-2.5-flash`, `MCP_URL=https://mcp.interchouette.net/`, `CORS_ORIGIN=https://interchouette.net`. Prefer `PORT` from the host (binary picks it up when `CHAT_LISTEN` is unset). Slack thread headers include `env=prod|local|e2e`.
 4. Slack app: Socket Mode on; scopes include `dnd:read`.
-5. Static site build: `CHAT_WIDGET_ENABLED=true` (default). Widget calls `https://chat.interchouette.net`.
-
-Static site deploy on Render is **manual** (`autoDeploy` off): trigger Deploy in the dashboard (or deploy hook), not on every `www/` commit.
+5. Static site: CI on `dev` posts the Render deploy hook after checks (`RENDER_DEPLOY_HOOK_URL`). Keep Render Auto-Deploy **Off**. Widget calls `https://chat.interchouette.net`.
 
 ## Local
 

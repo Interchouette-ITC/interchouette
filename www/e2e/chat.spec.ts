@@ -21,6 +21,10 @@ test.describe('chat widget', () => {
     const panel = page.locator('#interchouette-chat-panel');
     await expect(panel).toHaveClass(/chat-panel--open/);
     await expect(page.getByRole('dialog', { name: /Chat with/i })).toBeVisible();
+    await expect(page.locator('form.chat-panel__compose')).toHaveAttribute(
+      'toolname',
+      'send_site_chat_message',
+    );
 
     const input = page.getByRole('textbox', { name: 'Message' });
     await expect(input).toBeEnabled({ timeout: 15_000 });
