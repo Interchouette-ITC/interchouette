@@ -1,4 +1,4 @@
-/* Font Awesome subset: solid glyphs used on the home page (brands load deferred). */
+/* Font Awesome subset: glyphs used on the home page. Signal uses an inline SVG. */
 @font-face {
   font-family: 'FontAwesome';
   src: url('/fonts/fontawesome-subset.woff2') format('woff2');

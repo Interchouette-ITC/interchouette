@@ -8,6 +8,7 @@ import {
   chatApiBase,
   chatWsUrl,
 } from './chat.constants';
+import { icConsoleWrite } from './ic-console';
 
 const CHAT_OPENED_KEY = 'ic.chat.opened';
 
@@ -71,6 +72,9 @@ export class ChatService {
   private socket: WebSocket | null = null;
   private sessionId: string | null = null;
   private warming = false;
+  private inFlight: Promise<boolean> | null = null;
+  private retryTimer: number | null = null;
+  private attempt = 0;
   /** Last email posted on this socket session (dedupe Save spam). */
   private lastPostedEmail = '';
 
@@ -106,7 +110,6 @@ export class ChatService {
     }
     this.warming = true;
     try {
-      // Never surface browser/network noise during background warm.
       await this.connect({ silent: true });
     } finally {
       this.warming = false;
@@ -160,12 +163,78 @@ export class ChatService {
   }
 
   async connect(options: { silent?: boolean } = {}): Promise<void> {
-    const silent = options.silent === true;
+    if (!CHAT_WIDGET_ENABLED) {
+      return;
+    }
+    if (this.wsReady() && this.socket?.readyState === WebSocket.OPEN) {
+      this.connecting.set(false);
+      this.error.set(null);
+      return;
+    }
+    if (this.inFlight) {
+      await this.inFlight;
+      if (this.wsReady()) {
+        this.connecting.set(false);
+        this.error.set(null);
+      }
+      return;
+    }
+    this.showOpening();
+    this.inFlight = this.connectAttempt(options);
+    try {
+      const ok = await this.inFlight;
+      if (ok) {
+        this.attempt = 0;
+        this.clearRetry();
+        this.connecting.set(false);
+        this.error.set(null);
+        return;
+      }
+      this.scheduleRetry(options);
+    } finally {
+      this.inFlight = null;
+    }
+  }
+
+  private showOpening(): void {
     this.connecting.set(true);
     this.wsReady.set(false);
-    if (!silent) {
-      this.error.set(null);
+    this.error.set(null);
+    this.mode.set('connecting');
+    this.hero.set('neutral');
+    this.statusLabel.set('Connecting…');
+  }
+
+  private clearRetry(): void {
+    if (this.retryTimer) {
+      window.clearTimeout(this.retryTimer);
+      this.retryTimer = null;
     }
+  }
+
+  private scheduleRetry(options: { silent?: boolean }): void {
+    if (this.retryTimer || this.wsReady()) {
+      return;
+    }
+    this.attempt += 1;
+    const delayMs = Math.min(15_000, 1000 * 2 ** Math.min(this.attempt - 1, 4));
+    if (this.open()) {
+      icConsoleWrite({
+        ns: 'ic:chat',
+        topic: 'retry',
+        level: 'warn',
+        kv: { attempt: this.attempt, delayMs },
+      });
+    }
+    this.retryTimer = window.setTimeout(() => {
+      this.retryTimer = null;
+      void this.connect({ silent: options.silent === true && !this.open() });
+    }, delayMs);
+  }
+
+  private async connectAttempt(options: { silent?: boolean }): Promise<boolean> {
+    const silent = options.silent === true && !this.open();
+    this.showOpening();
 
     const stored = this.readStore();
     if (stored?.sessionId) {
@@ -175,26 +244,22 @@ export class ChatService {
       this.applyPresence(stored.mode, stored.label, stored.hero);
       const resumed = await this.bindSocket(stored.sessionId);
       if (resumed) {
-        this.connecting.set(false);
-        this.error.set(null);
-        return;
+        return true;
       }
-      // Stale id after chat restart: drop it and mint a fresh session (keep transcript).
       this.clearStore();
-      if (!silent) {
-        this.error.set(null);
-      }
+      this.showOpening();
     }
 
-    this.mode.set('connecting');
-    this.hero.set('neutral');
-    this.statusLabel.set('Connecting…');
     if (!stored?.messages.length) {
       this.messages.set([]);
     }
 
     try {
-      const res = await fetch(`${chatApiBase()}/v1/sessions`, { method: 'POST' });
+      const timeoutMs = this.attempt === 0 ? 15_000 : 30_000;
+      const res = await fetch(`${chatApiBase()}/v1/sessions`, {
+        method: 'POST',
+        signal: AbortSignal.timeout(timeoutMs),
+      });
       if (!res.ok) {
         throw new Error(`Session failed (${res.status})`);
       }
@@ -206,21 +271,26 @@ export class ChatService {
       if (!linked) {
         throw new Error('Could not open chat socket');
       }
-      this.error.set(null);
+      return true;
     } catch (err) {
-      this.mode.set('away');
-      this.hero.set('itcy');
-      this.statusLabel.set('Offline');
       this.wsReady.set(false);
-      if (silent) {
-        // Background warm: keep FAB usable, never flash browser fetch noise.
-        this.error.set(null);
-      } else {
-        this.error.set(humanizeChatError(err));
-      }
-    } finally {
-      this.connecting.set(false);
+      this.showOpening();
+      this.logConnectFailure(err, silent);
+      return false;
     }
+  }
+
+  private logConnectFailure(err: unknown, silent: boolean): void {
+    const transient = isTransientChatError(err);
+    if (silent && transient) {
+      return;
+    }
+    icConsoleWrite({
+      ns: 'ic:chat',
+      topic: 'connect',
+      level: transient ? 'warn' : 'error',
+      kv: { err, transient },
+    });
   }
 
   send(text: string): void {
@@ -314,13 +384,19 @@ export class ChatService {
     const ws = new WebSocket(chatWsUrl(sessionId));
     this.socket = ws;
     let settled = false;
+    const handshakeMs = Math.min(25_000, 8_000 + this.attempt * 4_000);
 
     return new Promise((resolve) => {
+      const isCurrent = (): boolean => this.socket === ws;
+      let handshakeTimer = 0;
+      let dropped = false;
+
       const succeed = (): void => {
         if (settled) {
           return;
         }
         settled = true;
+        window.clearTimeout(handshakeTimer);
         this.wsReady.set(true);
         this.error.set(null);
         resolve(true);
@@ -331,6 +407,7 @@ export class ChatService {
           return;
         }
         settled = true;
+        window.clearTimeout(handshakeTimer);
         this.wsReady.set(false);
         try {
           ws.close();
@@ -341,6 +418,9 @@ export class ChatService {
       };
 
       ws.onmessage = (ev) => {
+        if (!isCurrent()) {
+          return;
+        }
         try {
           const data = JSON.parse(String(ev.data)) as Record<string, unknown>;
           const type = String(data['type'] ?? '');
@@ -352,24 +432,20 @@ export class ChatService {
               this.shortCode.set(data['short_code']);
             }
             succeed();
+            this.onEvent(data);
+            return;
           }
           if (type === 'error') {
-            const message = humanizeChatError(data['message'] ?? 'Chat error');
-            // Dead resume id after chat process restart — soft-fail, mint a new session.
-            if (/unknown session/i.test(String(data['message'] ?? ''))) {
+            const raw = String(data['message'] ?? 'Chat error');
+            if (/unknown session/i.test(raw)) {
               fail();
               return;
             }
+            this.reportServerError(raw);
             if (!settled) {
-              if (this.open()) {
-                this.error.set(message);
-              }
               fail();
-              return;
             }
-            if (this.open()) {
-              this.error.set(message);
-            }
+            return;
           }
           this.onEvent(data);
         } catch {
@@ -377,26 +453,69 @@ export class ChatService {
         }
       };
       ws.onerror = () => {
+        if (!isCurrent()) {
+          return;
+        }
         if (!settled) {
           fail();
-        } else if (this.open()) {
-          this.error.set(humanizeChatError('Connection error'));
+          return;
         }
+        if (dropped) {
+          return;
+        }
+        dropped = true;
+        this.handleDrop('socket error');
       };
       ws.onclose = () => {
+        if (!isCurrent()) {
+          return;
+        }
         this.wsReady.set(false);
         if (!settled) {
           fail();
-        } else if (this.open() && !this.error()) {
-          this.statusLabel.set('Disconnected');
+          return;
         }
+        if (dropped) {
+          return;
+        }
+        dropped = true;
+        this.handleDrop('socket closed');
       };
-      window.setTimeout(() => {
-        if (!settled) {
-          fail();
+      handshakeTimer = window.setTimeout(() => {
+        if (!isCurrent() || settled) {
+          return;
         }
-      }, 2500);
+        fail();
+      }, handshakeMs);
     });
+  }
+
+  private handleDrop(reason: string): void {
+    this.wsReady.set(false);
+    this.error.set(null);
+    this.showOpening();
+    if (this.open()) {
+      icConsoleWrite({
+        ns: 'ic:chat',
+        topic: 'disconnect',
+        level: 'warn',
+        kv: { err: reason },
+      });
+    }
+    this.scheduleRetry({ silent: !this.open() });
+  }
+
+  private reportServerError(raw: string): void {
+    const message = humanizeChatError(raw);
+    icConsoleWrite({
+      ns: 'ic:chat',
+      topic: 'server',
+      level: 'error',
+      kv: { err: raw },
+    });
+    if (this.open()) {
+      this.error.set(message);
+    }
   }
 
   private onEvent(data: Record<string, unknown>): void {
@@ -426,13 +545,6 @@ export class ChatService {
       case 'typing':
         this.typing.set(Boolean(data['active']));
         break;
-      case 'error': {
-        if (!this.open()) {
-          break;
-        }
-        this.error.set(humanizeChatError(data['message'] ?? 'Chat error'));
-        break;
-      }
       default:
         break;
     }
@@ -501,8 +613,30 @@ function sanitizeStoredMessages(messages: ChatMessage[]): ChatMessage[] {
   });
 }
 
+/** Handshake / wake / network noise: keep the opening placeholder, do not flash an error card. */
+export function isTransientChatError(err: unknown): boolean {
+  const text = rawChatError(err);
+  if (!text) {
+    return true;
+  }
+  return /failed to fetch|networkerror|load failed|network request failed|session failed|could not open chat socket|could not connect|connection error|timeout|abort/i.test(
+    text,
+  );
+}
+
 /** Visitor-facing copy only — never browser "Failed to fetch" / undefined. */
 export function humanizeChatError(err: unknown): string {
+  const text = rawChatError(err);
+  if (isTransientChatError(err)) {
+    return 'Chat is temporarily unavailable. Please try again.';
+  }
+  if (/unknown session/i.test(text)) {
+    return 'Session expired. Please try again.';
+  }
+  return text;
+}
+
+function rawChatError(err: unknown): string {
   const raw =
     typeof err === 'string'
       ? err
@@ -512,19 +646,8 @@ export function humanizeChatError(err: unknown): string {
           ? String((err as { message: unknown }).message)
           : '';
   const text = raw.trim();
-  if (
-    !text ||
-    text === 'undefined' ||
-    text === 'null' ||
-    /failed to fetch|networkerror|load failed|network request failed/i.test(text)
-  ) {
-    return 'Chat is temporarily unavailable. Please try again.';
-  }
-  if (/session failed|could not open chat socket|could not connect/i.test(text)) {
-    return 'Chat is temporarily unavailable. Please try again.';
-  }
-  if (/unknown session/i.test(text)) {
-    return 'Session expired. Please try again.';
+  if (!text || text === 'undefined' || text === 'null') {
+    return '';
   }
   return text;
 }

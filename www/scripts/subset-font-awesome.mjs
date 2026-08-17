@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 /**
- * Regenerate Font Awesome subsets used on the home page:
- * - public/fonts/fontawesome-subset.woff2 (FA 4.7 glyphs)
- * - public/fonts/fontawesome-brands-subset.woff2 (FA brands: Signal Messenger)
+ * Regenerate the Font Awesome subset used on the home page:
+ * public/fonts/fontawesome-subset.woff2 (FA 4.7 glyphs).
  *
- * Requires: npm install --no-save subset-font font-awesome @fortawesome/fontawesome-free
+ * Requires: npm install --no-save subset-font font-awesome
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -18,9 +17,7 @@ let subsetFont;
 try {
   subsetFont = (await import('subset-font')).default;
 } catch {
-  console.error(
-    'Install deps first: npm install --no-save subset-font font-awesome @fortawesome/fontawesome-free',
-  );
+  console.error('Install deps first: npm install --no-save subset-font font-awesome');
   process.exit(1);
 }
 
@@ -37,10 +34,6 @@ const fa4Unicodes = [
   0xf270, // amazon
 ];
 
-const brandsUnicodes = [
-  0xe663, // signal-messenger (Font Awesome Brands)
-];
-
 const fontsDir = join(root, 'public/fonts');
 mkdirSync(fontsDir, { recursive: true });
 
@@ -52,14 +45,3 @@ const fa4Woff2 = await subsetFont(readFileSync(fa4Ttf), String.fromCodePoint(...
 });
 writeFileSync(fa4Out, fa4Woff2);
 console.log(`wrote ${fa4Out} (${fa4Woff2.length} bytes)`);
-
-const brandsRoot = dirname(require.resolve('@fortawesome/fontawesome-free/package.json'));
-const brandsSrc = join(brandsRoot, 'webfonts/fa-brands-400.woff2');
-const brandsOut = join(fontsDir, 'fontawesome-brands-subset.woff2');
-const brandsWoff2 = await subsetFont(
-  readFileSync(brandsSrc),
-  String.fromCodePoint(...brandsUnicodes),
-  { targetFormat: 'woff2' },
-);
-writeFileSync(brandsOut, brandsWoff2);
-console.log(`wrote ${brandsOut} (${brandsWoff2.length} bytes)`);

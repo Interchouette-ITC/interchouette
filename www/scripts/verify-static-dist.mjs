@@ -19,6 +19,7 @@ const required = [
   'llms.txt',
   '.well-known/mcp.json',
   'fonts/fontawesome-subset.woff2',
+  'workers/cold-start.js',
   'fonts/montserrat-latin-700.woff2',
   'fonts/montserrat-latin-400.woff2',
   'img/avatar-1x.webp',

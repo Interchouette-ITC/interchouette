@@ -105,6 +105,17 @@
         ]
       }
     </script>
+    <script>
+      (() => {
+        try {
+          if ('Worker' in window) {
+            new Worker('/workers/cold-start.js');
+          }
+        } catch {
+          /* private mode / blocked workers */
+        }
+      })();
+    </script>
   </head>
   <body>
     <app-root></app-root>
