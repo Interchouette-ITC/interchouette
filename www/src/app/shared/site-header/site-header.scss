@@ -173,10 +173,28 @@
 .site-header__lang > summary {
   display: inline-flex;
   align-items: center;
-  min-height: 1.5rem;
+  min-height: 1.15rem;
   cursor: pointer;
   list-style: none;
   color: #fff;
+  font-size: clamp(0.72rem, 2.8vw, 0.88rem);
+  font-weight: 700;
+  line-height: 1.15;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.28);
+}
+
+.site-header__lang-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.22em 0.55em;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.site-header__lang > summary:hover .site-header__lang-code {
+  color: #ffd24a;
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .site-header__lang > summary::-webkit-details-marker {
@@ -220,31 +238,4 @@
 
 .site-header__nav .site-header__lang-menu .is-current {
   color: #ffd24a;
-}
-
-.site-header__flag {
-  display: inline-block;
-  width: 1.15rem;
-  height: 0.8rem;
-  flex-shrink: 0;
-  border-radius: 0.12rem;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.28);
-  background-size: cover;
-}
-
-.site-header__flag[data-locale='en'] {
-  background:
-    linear-gradient(#c8102e 0 0) center / 100% 22% no-repeat,
-    linear-gradient(#c8102e 0 0) center / 22% 100% no-repeat,
-    linear-gradient(#fff 0 0) center / 100% 38% no-repeat,
-    linear-gradient(#fff 0 0) center / 38% 100% no-repeat,
-    #012169;
-}
-
-.site-header__flag[data-locale='nl'] {
-  background: linear-gradient(to bottom, #ae1c28 33.33%, #fff 33.33%, #fff 66.66%, #21468b 66.66%);
-}
-
-.site-header__flag[data-locale='fr'] {
-  background: linear-gradient(to right, #002395 33.33%, #fff 33.33%, #fff 66.66%, #ed2939 66.66%);
 }

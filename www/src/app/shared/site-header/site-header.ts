@@ -34,6 +34,8 @@ export class SiteHeader implements OnInit, OnDestroy {
   protected readonly tld = LOCALE_TLDS[this.locale.locale];
   protected readonly brandHost = `interchouette.${this.tld}`;
   protected readonly langs = LOCALE_LINKS;
+  protected readonly currentCode =
+    LOCALE_LINKS.find((item) => item.locale === this.currentLocale)?.code ?? 'EN';
   protected readonly session = inject(CustomerSession);
   private readonly gis = inject(GisOneTapService);
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
