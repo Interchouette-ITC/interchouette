@@ -6,6 +6,9 @@ test.describe('site header and locale', () => {
     const header = page.locator('app-site-header');
     await expect(header.getByRole('link', { name: 'interchouette.net' })).toBeVisible();
     await expect(header.getByRole('link', { name: 'News' })).toBeVisible();
+    const slack = header.locator('a.site-header__slack');
+    await expect(slack).toBeVisible();
+    await expect(slack).toHaveCSS('color', 'rgb(255, 210, 74)');
     await expect(header.getByRole('button', { name: 'Client login' })).toBeVisible();
     await expect(header.locator('.site-header__lang summary')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Gregory Roussac' })).toBeVisible();
