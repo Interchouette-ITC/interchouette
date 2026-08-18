@@ -21,6 +21,9 @@ describe('i18n catalogs', () => {
   it('uses real Dutch and French for chrome, not English copies', () => {
     expect(COPY.nl.headerNews).toBe('Nieuws');
     expect(COPY.fr.headerNews).toBe('Actualités');
+    expect(COPY.en.headerMenu).toBe('Menu');
+    expect(COPY.nl.headerMenu).toBe('Menu');
+    expect(COPY.fr.headerMenu).toBe('Menu');
     expect(COPY.nl.newsEmpty).not.toBe(COPY.en.newsEmpty);
     expect(COPY.fr.homePromise).toMatch(/produit/);
     expect(COPY.fr.homePromise).not.toBe(COPY.en.homePromise);

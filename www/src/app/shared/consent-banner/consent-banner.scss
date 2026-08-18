@@ -6,9 +6,13 @@
   position: fixed;
   top: calc(2.15rem + max(0.85rem, env(safe-area-inset-top)));
   left: max(0.85rem, env(safe-area-inset-left));
+  right: max(0.85rem, env(safe-area-inset-right));
   z-index: 60;
-  width: min(22rem, calc(100vw - 1.7rem));
+  box-sizing: border-box;
+  width: auto;
+  max-width: 22rem;
   padding: 0.95rem 1rem 0.85rem;
+  overflow: hidden;
   border-radius: 0.85rem;
   background: #fff;
   color: #444;
@@ -38,6 +42,7 @@
 
 .consent__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.45rem;
   justify-content: flex-end;
   align-items: center;
@@ -67,7 +72,7 @@
 .consent__btn--primary {
   gap: 0.3rem;
   padding-right: 0.35rem;
-  overflow: visible;
+  overflow: hidden;
   background: #27084e;
   color: #fff;
 }
@@ -82,4 +87,13 @@
 
 .consent__btn:hover {
   filter: brightness(1.05);
+}
+
+@media (max-width: 479px) {
+  .consent {
+    top: auto;
+    /* Nudge up just enough to cover the purple contact bar, not the name. */
+    bottom: calc(var(--site-footer-mobile-h, 3.1rem) + 1.65rem + env(safe-area-inset-bottom, 0px));
+    max-width: none;
+  }
 }
