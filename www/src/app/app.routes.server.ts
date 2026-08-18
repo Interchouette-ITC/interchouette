@@ -5,6 +5,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: '', renderMode: RenderMode.Prerender },
   { path: 'news', renderMode: RenderMode.Prerender },
   { path: 'account', renderMode: RenderMode.Prerender },
+  { path: 'gis-signin', renderMode: RenderMode.Prerender },
   { path: 'CV', renderMode: RenderMode.Prerender },
   { path: 'about', renderMode: RenderMode.Prerender },
   { path: 'privacy', renderMode: RenderMode.Prerender },
