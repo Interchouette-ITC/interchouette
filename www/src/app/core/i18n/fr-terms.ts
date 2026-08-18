@@ -21,7 +21,7 @@ export const FR_TERMS = {
   accountsNotResponsible:
     "Nous ne sommes pas responsables des plateformes tierces, de leur disponibilité ou de leur traitement de vos données. Leurs propres conditions et politiques de confidentialité s'appliquent.",
   gisHeading: '4. Connexion client et prise de rendez-vous calendrier',
-  gisP: "La connexion client, lorsqu'elle est proposée, utilise Google Identity Services dans ce navigateur. Le profil Google que nous conservons (nom, e-mail, photo, identifiant subject) reste dans localStorage sur votre appareil. Il ne crée pas de compte Interchouette, de JWT ni d'accès à un arrière-bureau. La prise de rendez-vous calendrier, lorsqu'une URL publique de planning de rendez-vous est configurée, est un lien vers Google Calendar et est régie par les conditions de Google. Tant que ces chaînes Google ne sont pas configurées, la connexion et la réservation peuvent apparaître dans l'interface comme non configurées et ne doivent pas être traitées comme des fonctionnalités produit opérationnelles.",
+  gisP: "La connexion client, lorsqu'elle est proposée, utilise Google Identity Services dans ce navigateur. Le profil Google que nous conservons (nom, e-mail, photo, identifiant subject) reste dans localStorage sur votre appareil. Il ne crée pas de compte Interchouette, de JWT ni d'accès à un arrière-bureau. La prise de rendez-vous calendrier est un lien vers le planning public Google Calendar et est régie par les conditions de Google. Ce site n'écrit pas d'événements dans votre calendrier depuis les serveurs d'Interchouette.",
   acceptableHeading: '5. Usage acceptable',
   acceptableLead: 'Vous acceptez de ne pas :',
   acceptableUnlawful: 'Utiliser les Services à des fins illicites, nuisibles ou frauduleuses ;',

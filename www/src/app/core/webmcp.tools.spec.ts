@@ -27,6 +27,7 @@ describe('webmcp.tools helpers', () => {
     expect(siteOverviewText()).toContain('https://interchouette.net/about');
     expect(siteOverviewText()).not.toContain('mcp.interchouette.net');
     expect(contactText()).toContain('GitHub org:');
+    expect(contactText()).toContain('calendar.app.google');
     expect(listPagesText()).toContain('https://interchouette.net/about');
     expect(listPagesText()).toContain('https://interchouette.net/privacy');
   });

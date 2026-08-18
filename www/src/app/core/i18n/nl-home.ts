@@ -8,6 +8,7 @@ export const NL_HOME = {
   emailCopied: 'E-mail gekopieerd naar het klembord',
   chatIcon: 'Chat met het team',
   cv: 'Open het CV van Gregory Roussac (PDF)',
+  calendar: 'Afspraak maken in Google Calendar (opent in een nieuw tabblad)',
   github: 'GitHub-organisatie Interchouette ITC (opent in een nieuw tabblad)',
   linkedin: 'LinkedIn-profiel van Gregory Roussac (opent in een nieuw tabblad)',
   whatsapp: 'WhatsApp Interchouette (opent in een nieuw tabblad)',

@@ -20,7 +20,7 @@ export const NL_TERMS = {
   accountsNotResponsible:
     'Wij zijn niet verantwoordelijk voor platforms van derden, hun beschikbaarheid of hun omgang met uw gegevens. Hun eigen voorwaarden en privacybeleid gelden.',
   gisHeading: '4. Klantlogin en agenda-afspraak',
-  gisP: 'Klantlogin, wanneer aangeboden, gebruikt Google Identity Services in deze browser. Het Google-profiel dat wij bewaren (naam, e-mail, foto, subject-id) blijft in localStorage op uw apparaat. Het creëert geen Interchouette-account, JWT of backoffice-toegang. Agenda-afspraak, wanneer een openbare URL voor een afspraakrooster is geconfigureerd, is een link naar Google Calendar en valt onder de voorwaarden van Google. Totdat die Google-strings zijn geconfigureerd, kunnen login en boeken in de UI als niet geconfigureerd verschijnen en mogen ze niet als werkende productfuncties worden behandeld.',
+  gisP: 'Klantlogin, wanneer aangeboden, gebruikt Google Identity Services in deze browser. Het Google-profiel dat wij bewaren (naam, e-mail, foto, subject-id) blijft in localStorage op uw apparaat. Het creëert geen Interchouette-account, JWT of backoffice-toegang. Agenda-afspraak is een link naar het openbare afspraakrooster van Google Calendar en valt onder de voorwaarden van Google. Deze site schrijft geen evenementen naar uw agenda vanaf servers van Interchouette.',
   acceptableHeading: '5. Aanvaardbaar gebruik',
   acceptableLead: 'U stemt ermee in om niet:',
   acceptableUnlawful: 'De Diensten te gebruiken voor onwettige, schadelijke of frauduleuze doelen;',

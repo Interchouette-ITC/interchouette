@@ -9,7 +9,11 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
-import { CONTACT_EMAIL, CHAT_WIDGET_ENABLED } from '../../core/chat.constants';
+import {
+  BOOKING_SCHEDULE_URL,
+  CHAT_WIDGET_ENABLED,
+  CONTACT_EMAIL,
+} from '../../core/chat.constants';
 import { ChatService } from '../../core/chat.service';
 import { fillCopy } from '../../core/i18n/catalog';
 import { LocaleService } from '../../core/locale.service';
@@ -32,6 +36,7 @@ export class HomePage {
   protected readonly chatEnabled = CHAT_WIDGET_ENABLED;
   protected readonly email = CONTACT_EMAIL;
   protected readonly mailHref = `mailto:${CONTACT_EMAIL}`;
+  protected readonly bookingHref = BOOKING_SCHEDULE_URL.trim();
   protected readonly whatsappHref = 'https://wa.me/31620808454';
   protected readonly copied = signal(false);
   protected readonly logoHintVisible = signal(false);

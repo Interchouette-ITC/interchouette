@@ -20,6 +20,10 @@ describe('HomePage', () => {
     expect(el.querySelector('.promise')?.textContent).toContain('product teams');
     expect(el.querySelector('a[routerlink="/CV"], a[href="/CV"]')).toBeTruthy();
     expect(el.querySelector('a[href="https://github.com/Interchouette-ITC"]')).toBeTruthy();
+    expect(
+      el.querySelector('a[href="https://calendar.app.google/tw9hhtJkmcssZQCY7"]'),
+    ).toBeTruthy();
+    expect(el.querySelector('i.fa-calendar')).toBeTruthy();
     expect(el.querySelector('a[href="mailto:contact@interchouette.net"]')).toBeTruthy();
     expect(el.querySelector('svg.fa-signal-messenger')).toBeTruthy();
   });

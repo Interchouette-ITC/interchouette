@@ -8,6 +8,7 @@ export const FR_HOME = {
   emailCopied: 'E-mail copié dans le presse-papiers',
   chatIcon: "Discuter avec l'équipe",
   cv: 'Ouvrir le CV de Gregory Roussac (PDF)',
+  calendar: "Prendre rendez-vous sur Google Calendar (s'ouvre dans un nouvel onglet)",
   github: "Organisation GitHub Interchouette ITC (s'ouvre dans un nouvel onglet)",
   linkedin: "Profil LinkedIn de Gregory Roussac (s'ouvre dans un nouvel onglet)",
   whatsapp: "WhatsApp Interchouette (s'ouvre dans un nouvel onglet)",

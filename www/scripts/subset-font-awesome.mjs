@@ -23,6 +23,7 @@ try {
 
 const fa4Unicodes = [
   0xf003, // envelope-o
+  0xf073, // calendar
   0xf086, // comments
   0xf099, // twitter
   0xf09b, // github

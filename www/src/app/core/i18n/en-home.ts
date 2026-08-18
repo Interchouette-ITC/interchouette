@@ -8,6 +8,7 @@ export const EN_HOME = {
   emailCopied: 'Email copied to clipboard',
   chatIcon: 'Chat with the team',
   cv: 'Open CV of Gregory Roussac (PDF)',
+  calendar: 'Book a meeting on Google Calendar (opens in a new tab)',
   github: 'GitHub organization Interchouette ITC (opens in a new tab)',
   linkedin: 'LinkedIn profile of Gregory Roussac (opens in a new tab)',
   whatsapp: 'WhatsApp Interchouette (opens in a new tab)',

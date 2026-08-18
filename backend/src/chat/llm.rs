@@ -266,8 +266,16 @@ fn required_env(name: &str) -> Option<String> {
     std::env::var(name).ok().filter(|s| !s.is_empty())
 }
 
+/// Public Google Calendar appointment schedule (same URL as the site widget).
+const BOOKING_SCHEDULE_URL: &str = "https://calendar.app.google/tw9hhtJkmcssZQCY7";
+
+fn booking_schedule_url() -> String {
+    required_env("BOOKING_SCHEDULE_URL").unwrap_or_else(|| BOOKING_SCHEDULE_URL.to_owned())
+}
+
 fn system_prompt(locale: ChatLocale) -> String {
-    system_prompt_with_booking(locale, required_env("BOOKING_SCHEDULE_URL").as_deref())
+    let url = booking_schedule_url();
+    system_prompt_with_booking(locale, Some(url.as_str()))
 }
 
 fn system_prompt_with_booking(locale: ChatLocale, booking_url: Option<&str>) -> String {
@@ -566,6 +574,7 @@ mod tests {
         assert!(en.contains("on-site assistant"));
         assert!(en.contains("Confidentiality (must follow)"));
         assert!(en.contains("warm receptionist"));
+        assert!(en.contains("calendar.app.google"));
         let booked = system_prompt_with_booking(
             ChatLocale::En,
             Some("https://calendar.google.com/calendar/appointments/schedules/example"),

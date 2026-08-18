@@ -20,7 +20,7 @@ export const EN_TERMS = {
   accountsNotResponsible:
     'We are not responsible for third-party platforms, their availability, or their handling of your data. Their own terms and privacy policies apply.',
   gisHeading: '4. Customer login and calendar booking',
-  gisP: "Customer login, when offered, uses Google Identity Services in this browser. The Google profile we keep (name, email, picture, subject id) stays in localStorage on your device. It does not create an Interchouette account, JWT, or backoffice access. Calendar booking, when a public appointment schedule URL is configured, is a link to Google Calendar and is governed by Google's terms. Until those Google strings are configured, login and booking may appear in the UI as not configured and must not be treated as working product features.",
+  gisP: "Customer login, when offered, uses Google Identity Services in this browser. The Google profile we keep (name, email, picture, subject id) stays in localStorage on your device. It does not create an Interchouette account, JWT, or backoffice access. Calendar booking is a link to Google Calendar's public appointment schedule and is governed by Google's terms. This site does not write events to your calendar from Interchouette servers.",
   acceptableHeading: '5. Acceptable use',
   acceptableLead: 'You agree not to:',
   acceptableUnlawful: 'Use the Services for unlawful, harmful, or fraudulent purposes;',

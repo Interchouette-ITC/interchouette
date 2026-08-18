@@ -41,7 +41,7 @@ export const FR_PRIVACY = {
   gisP2:
     "Tant qu'un identifiant client Google n'est pas configuré, le bouton est visible mais la connexion ne s'exécute pas. La déconnexion (lorsqu'elle est proposée) ou l'effacement des données du site supprime le profil stocké.",
   calHeading: '5. Prise de rendez-vous calendrier',
-  calP: "Lorsqu'un planning de rendez-vous public Google Calendar est publié, la réservation a lieu sur la page de Google, sous les conditions de Google. Ce site ne fait que lier vers cette page. Nous n'écrivons pas d'événements dans votre calendrier depuis les serveurs d'Interchouette. Tant que cette URL de planning n'est pas configurée, la réservation n'est pas proposée comme fonctionnalité produit opérationnelle.",
+  calP: "La prise de rendez-vous utilise le planning public Google Calendar. Elle a lieu sur la page de Google, sous les conditions de Google. Ce site ne fait que lier vers cette page. Nous n'écrivons pas d'événements dans votre calendrier depuis les serveurs d'Interchouette.",
   whyHeading: '6. Pourquoi nous collectons des données',
   whyLead: 'Nous utilisons les données personnelles pour :',
   whyProvide: 'Fournir, maintenir et améliorer les Services ;',

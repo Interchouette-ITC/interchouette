@@ -41,7 +41,7 @@ export const NL_PRIVACY = {
   gisP2:
     'Totdat een Google-client-id is geconfigureerd, is de knop zichtbaar maar wordt login niet uitgevoerd. Uitloggen (wanneer aangeboden) of het wissen van sitegegevens verwijdert het opgeslagen profiel.',
   calHeading: '5. Agenda-afspraak',
-  calP: 'Wanneer een openbaar Google Calendar-afspraakrooster is gepubliceerd, vindt het boeken plaats op de pagina van Google, onder de voorwaarden van Google. Deze site linkt alleen naar die pagina. Wij schrijven geen evenementen naar uw agenda vanaf servers van Interchouette. Totdat die rooster-URL is geconfigureerd, wordt boeken niet als werkend product aangeboden.',
+  calP: 'Boeken gebruikt het openbare afspraakrooster van Google Calendar. Het vindt plaats op de pagina van Google, onder de voorwaarden van Google. Deze site linkt alleen naar die pagina. Wij schrijven geen evenementen naar uw agenda vanaf servers van Interchouette.',
   whyHeading: '6. Waarom wij gegevens verzamelen',
   whyLead: 'Wij gebruiken persoonsgegevens om:',
   whyProvide: 'De Diensten te leveren, te onderhouden en te verbeteren;',

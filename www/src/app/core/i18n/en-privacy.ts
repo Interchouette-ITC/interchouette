@@ -40,7 +40,7 @@ export const EN_PRIVACY = {
   gisP2:
     'Until a Google client id is configured, the button is visible but login does not run. Sign out (when offered) or clearing site data removes the stored profile.',
   calHeading: '5. Calendar booking',
-  calP: "When a public Google Calendar appointment schedule is published, booking happens on Google's page under Google's terms. This site only links to that page. We do not write events to your calendar from Interchouette servers. Until that schedule URL is configured, booking is not offered as a working product.",
+  calP: "Booking uses Google Calendar's public appointment schedule. It happens on Google's page under Google's terms. This site only links to that page. We do not write events to your calendar from Interchouette servers.",
   whyHeading: '6. Why we collect data',
   whyLead: 'We use personal data to:',
   whyProvide: 'Provide, maintain, and improve the Services;',

@@ -51,6 +51,10 @@
   content: '\f003';
 }
 
+.fa-calendar:before {
+  content: '\f073';
+}
+
 .fa-comments:before {
   content: '\f086';
 }
