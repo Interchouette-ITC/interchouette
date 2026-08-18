@@ -1,12 +1,8 @@
-@if (!bareChrome()) {
-  <app-site-header />
-}
+<app-site-header />
 <main id="main">
   <router-outlet />
 </main>
-@if (!bareChrome()) {
-  <app-consent-banner />
-  @if (chatEnabled) {
-    <app-chat-widget ngSkipHydration />
-  }
+<app-consent-banner />
+@if (chatEnabled) {
+  <app-chat-widget ngSkipHydration />
 }

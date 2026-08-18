@@ -11,7 +11,6 @@ describe('routes', () => {
     expect(byPath['about']?.title).toContain('About');
     expect(byPath['news']?.title).toContain('News');
     expect(byPath['login']?.title).toContain('login');
-    expect(byPath['gis-signin']?.title).toContain('login');
     expect(byPath['account']?.title).toContain('Account');
     expect(byPath['privacy']?.title).toContain('Privacy');
     expect(byPath['terms']?.title).toContain('Terms');
