@@ -20,7 +20,12 @@ test.describe('chat widget', () => {
     await fab.click();
     const panel = page.locator('#interchouette-chat-panel');
     await expect(panel).toHaveClass(/chat-panel--open/);
-    await expect(page.getByRole('dialog', { name: /Chat with/i })).toBeVisible();
+    const message = page.locator('#interchouette-chat-panel textarea[name="message"]');
+    await expect(message, 'message field focused after open animation').toBeFocused({
+      timeout: 2000,
+    });
+    await page.locator('.chat-panel__title').click();
+    await expect(page.getByRole('dialog', { name: /Chat with|Connecting/i })).toBeVisible();
     const starterChips = page.locator('.chat-panel__chips .chat-chip');
     if (await starterChips.first().isVisible()) {
       const desktop = (page.viewportSize()?.width ?? 0) >= 1280;

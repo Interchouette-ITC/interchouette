@@ -972,16 +972,23 @@
 }
 
 .chat-panel__booking-open {
-  display: inline-block;
-  border: 0;
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  border: 1px solid #fff;
   border-radius: 999px;
-  padding: 0.5rem 0.95rem;
+  padding: 0.48rem 0.8rem;
   background: linear-gradient(135deg, var(--chat-brand) 0%, var(--chat-brand-lift) 100%);
   color: #fff;
   font: inherit;
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   cursor: pointer;
   text-decoration: none;
+  box-shadow: 0 0 0 1px rgba(39, 8, 78, 0.12);
+}
+
+.chat-panel__booking-open:hover {
+  filter: brightness(1.06);
 }
 
 .chat-panel__footer {
@@ -1002,9 +1009,29 @@
 
 .chat-panel__chips {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  flex-wrap: nowrap;
+  gap: 0.32rem;
   margin-bottom: 0.65rem;
+}
+
+.chat-panel__chips .chat-chip {
+  flex: 0 1 auto;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.64rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+@media (min-width: 1280px) {
+  .chat-panel__chips {
+    gap: 0.4rem;
+  }
+
+  .chat-panel__chips .chat-chip {
+    font-size: 0.68rem;
+    padding: 0.44rem 0.62rem;
+    line-height: 1.25;
+  }
 }
 
 .chat-welcome__chips {
@@ -1048,6 +1075,9 @@
 }
 
 .chat-panel__email input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
   height: var(--chat-compose-h);
   border-radius: 999px;
   padding: 0 1.05rem;
@@ -1101,6 +1131,7 @@
   font-weight: 600;
   cursor: pointer;
   flex-shrink: 0;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   justify-content: center;

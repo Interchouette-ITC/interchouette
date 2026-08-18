@@ -58,7 +58,7 @@ export class ChatWidget implements OnDestroy {
   /** Message field focused: grow the textarea over the fineprint. */
   protected readonly composing = signal(false);
   protected readonly wideChat = signal(isWideChat());
-  protected readonly starterChips = computed(() => {
+  protected readonly quickChips = computed(() => {
     const c = this.copy.chat;
     const greg = this.chat.hero() === 'greg';
     if (!this.wideChat()) {
@@ -68,7 +68,7 @@ export class ChatWidget implements OnDestroy {
   });
   /** Always a string: never leave compose bindings as undefined. */
   protected draft = '';
-  protected showEmail = false;
+  protected readonly showEmail = signal(false);
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
   protected readonly bookingScheduleUrl = BOOKING_SCHEDULE_URL;
 
@@ -94,7 +94,9 @@ export class ChatWidget implements OnDestroy {
     effect(() => {
       if (!this.chat.open()) {
         this.expanded.set(false);
-        this.composing.set(false);
+        if (!this.draft.trim()) {
+          this.composing.set(false);
+        }
       }
     });
     effect(() => {
@@ -121,12 +123,42 @@ export class ChatWidget implements OnDestroy {
 
   protected onFab(): void {
     this.dismissBubbleAndBounce();
+    const opening = !this.chat.open();
     this.chat.toggle();
+    if (opening) {
+      this.focusMessageAfterOpen();
+    }
   }
 
   protected onNudgeClick(): void {
     this.dismissBubbleAndBounce();
     void this.chat.openPanel();
+    this.focusMessageAfterOpen();
+  }
+
+  protected onPanelTransitionEnd(event: TransitionEvent): void {
+    if (!this.chat.open() || event.propertyName !== 'transform') {
+      return;
+    }
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    this.focusMessage();
+  }
+
+  private focusMessageAfterOpen(): void {
+    window.setTimeout(() => {
+      if (this.chat.open()) {
+        this.focusMessage();
+      }
+    }, 450);
+  }
+
+  private focusMessage(): void {
+    const field = document.querySelector('#interchouette-chat-panel textarea[name="message"]');
+    if (field instanceof HTMLTextAreaElement) {
+      field.focus();
+    }
   }
 
   protected onClose(): void {
@@ -170,7 +202,7 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected onForgetChat(): void {
-    this.showEmail = false;
+    this.showEmail.set(false);
     this.canSend.set(false);
     this.draft = '';
     void this.chat.forgetChat();
@@ -182,7 +214,7 @@ export class ChatWidget implements OnDestroy {
 
   protected onComposeBlur(event: FocusEvent): void {
     const next = event.relatedTarget as Node | null;
-    const form = event.currentTarget as HTMLElement | null;
+    const form = (event.currentTarget as HTMLElement | null)?.closest('.chat-panel__compose');
     if (next && form?.contains(next)) {
       return;
     }
@@ -252,15 +284,16 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected toggleEmail(): void {
-    this.showEmail = !this.showEmail;
-    if (this.showEmail) {
+    const next = !this.showEmail();
+    this.showEmail.set(next);
+    if (next) {
       this.scheduleEmailSeed();
     }
   }
 
   protected onChip(text: string): void {
     if (text === this.copy.chat.chipLeaveEmail) {
-      this.showEmail = true;
+      this.showEmail.set(true);
       this.scheduleEmailSeed();
       return;
     }

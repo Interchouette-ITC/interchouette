@@ -69,6 +69,7 @@
       [attr.aria-modal]="chat.open() ? 'true' : null"
       [attr.aria-label]="title()"
       [attr.inert]="chat.open() ? null : ''"
+      (transitionend)="onPanelTransitionEnd($event)"
     >
       <div class="chat-panel__mesh" aria-hidden="true"></div>
       <div class="chat-panel__shine" aria-hidden="true"></div>
@@ -327,9 +328,9 @@
             </a>
           </div>
         }
-        @if (chat.open() && chat.messages().length === 0 && !chat.error() && !chat.connecting()) {
+        @if (chat.open() && chat.messages().length === 0 && !chat.error()) {
           <div class="chat-panel__chips">
-            @for (chip of starterChips(); track chip) {
+            @for (chip of quickChips(); track chip) {
               <button
                 type="button"
                 class="chat-chip"
@@ -342,7 +343,7 @@
             }
           </div>
         }
-        @if (showEmail) {
+        @if (showEmail()) {
           <form class="chat-panel__email" (submit)="onEmailSubmit($event)">
             <input
               #emailField
@@ -358,6 +359,7 @@
             <button
               type="submit"
               class="chat-panel__email-save"
+              (mousedown)="$event.preventDefault()"
               [attr.title]="copy.chat.saveEmail"
               [attr.aria-label]="copy.chat.saveEmail"
             >
@@ -370,14 +372,13 @@
           toolname="send_site_chat_message"
           tooldescription="Send a visitor message in the Interchouette site chat panel (Greg live or ITCy away)."
           (submit)="onSubmit($event)"
-          (focusin)="onComposeFocus()"
-          (focusout)="onComposeBlur($event)"
         >
           <button
             type="button"
             class="chat-panel__email-toggle"
+            (mousedown)="$event.preventDefault()"
             (click)="toggleEmail()"
-            [attr.aria-pressed]="showEmail"
+            [attr.aria-pressed]="showEmail()"
             [attr.title]="copy.chat.leaveEmailTitle"
             [attr.aria-label]="copy.chat.leaveEmailAria"
           >
@@ -394,7 +395,8 @@
               maxlength="2000"
               [attr.aria-label]="copy.chat.message"
               toolparamdescription="Visitor chat message to send to Greg or ITCy"
-              [disabled]="!chat.wsReady() || !!chat.error()"
+              (focus)="onComposeFocus()"
+              (blur)="onComposeBlur($event)"
               (input)="onDraftInput($event)"
               (keydown)="onComposeKeydown($event)"
             ></textarea>
@@ -402,6 +404,7 @@
           <button
             type="submit"
             class="chat-panel__send"
+            (mousedown)="$event.preventDefault()"
             [disabled]="!canSend() || !chat.wsReady() || !!chat.error()"
             [attr.title]="copy.chat.send"
             [attr.aria-label]="copy.chat.send"
