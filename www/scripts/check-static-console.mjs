@@ -17,6 +17,7 @@ const routes = [
   '/terms',
   '/news',
   '/account',
+  '/gis-signin',
   '/?lang=nl',
   '/?lang=fr',
 ];

@@ -3,7 +3,19 @@ import { Router } from '@angular/router';
 
 import { CustomerSession } from './customer-session';
 import { GIS_CLIENT_ID } from './gis.constants';
-import { initGisOneTap, openGisSignIn } from './gis-signin';
+import {
+  GIS_NONCE_KEY,
+  decodeGisState,
+  gisAuthorizeUrl,
+  hashParams,
+  isAllowedReturnHref,
+  jwtNonce,
+  parseGisReturnHash,
+  usesLocalGisPicker,
+  withGisReturnHash,
+} from './gis-oauth';
+import { initGisOneTap, openGisSignIn, profileFromGisJwt } from './gis-signin';
+import { SITE_ORIGIN } from './seo.constants';
 
 @Injectable({ providedIn: 'root' })
 export class GisOneTapService {
@@ -17,16 +29,84 @@ export class GisOneTapService {
   }
 
   preload(): void {
-    if (!this.configured()) {
+    this.consumeReturnHash();
+    if (!this.configured() || typeof location === 'undefined') {
       return;
     }
-    void this.ensureReady();
+    if (usesLocalGisPicker(location.hostname)) {
+      void this.ensureReady();
+    }
   }
 
   openSignIn(): void {
-    if (!this.configured()) {
+    if (!this.configured() || typeof location === 'undefined') {
       return;
     }
+    if (usesLocalGisPicker(location.hostname)) {
+      this.openLocalPicker();
+      return;
+    }
+    const nonce = crypto.randomUUID();
+    sessionStorage.setItem(GIS_NONCE_KEY, nonce);
+    location.assign(gisAuthorizeUrl(GIS_CLIENT_ID, location.href, nonce));
+  }
+
+  /** Apex .net landing after Google. Send locale TLDs back; stay on .net for .net. */
+  completeOauthCallback(): void {
+    if (typeof location === 'undefined') {
+      return;
+    }
+    const query = new URLSearchParams(
+      location.search.startsWith('?') ? location.search.slice(1) : location.search,
+    );
+    const fragment = hashParams(location.hash);
+    if (!fragment.get('id_token') && !query.get('error') && !fragment.get('error')) {
+      return;
+    }
+    const state = decodeGisState(fragment.get('state') ?? query.get('state'));
+    if (query.get('error') || fragment.get('error')) {
+      this.leaveCallback(state?.returnHref);
+      return;
+    }
+    const idToken = fragment.get('id_token');
+    const profile = idToken ? profileFromGisJwt(idToken) : null;
+    if (!idToken || !profile || !state || jwtNonce(idToken) !== state.nonce) {
+      this.leaveCallback(state?.returnHref);
+      return;
+    }
+    const returnUrl = new URL(state.returnHref);
+    if (returnUrl.origin === SITE_ORIGIN) {
+      this.session.signIn(profile);
+      history.replaceState({}, '', '/account');
+      void this.router.navigateByUrl('/account');
+      return;
+    }
+    location.replace(withGisReturnHash(state.returnHref, profile, state.nonce));
+  }
+
+  private leaveCallback(returnHref: string | undefined): void {
+    if (returnHref && isAllowedReturnHref(returnHref)) {
+      location.replace(returnHref);
+      return;
+    }
+    void this.router.navigateByUrl('/');
+  }
+
+  private consumeReturnHash(): void {
+    if (typeof location === 'undefined' || typeof sessionStorage === 'undefined') {
+      return;
+    }
+    const profile = parseGisReturnHash(location.hash, sessionStorage.getItem(GIS_NONCE_KEY));
+    if (!profile) {
+      return;
+    }
+    sessionStorage.removeItem(GIS_NONCE_KEY);
+    history.replaceState({}, '', `${location.pathname}${location.search}`);
+    this.session.signIn(profile);
+    void this.router.navigateByUrl('/account');
+  }
+
+  private openLocalPicker(): void {
     if (this.ready) {
       openGisSignIn();
       return;
