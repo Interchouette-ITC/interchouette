@@ -51,20 +51,14 @@
         <span>{{ session.firstName() }}</span>
       </a>
     } @else {
-      @if (gisBounceHref; as bounceHref) {
-        <a class="site-header__login" [href]="bounceHref" [attr.title]="copy.titleLogin">{{
-          copy.headerLogin
-        }}</a>
-      } @else {
-        <button
-          type="button"
-          class="site-header__login"
-          (click)="onClientLogin()"
-          [attr.title]="copy.titleLogin"
-        >
-          {{ copy.headerLogin }}
-        </button>
-      }
+      <button
+        type="button"
+        class="site-header__login"
+        (click)="onClientLogin()"
+        [attr.title]="copy.titleLogin"
+      >
+        {{ copy.headerLogin }}
+      </button>
     }
     <details class="site-header__lang">
       <summary [attr.aria-label]="copy.headerLang" [attr.title]="copy.headerLang">

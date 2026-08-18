@@ -3,7 +3,6 @@ import { RouterLink } from '@angular/router';
 
 import { CustomerSession } from '../../core/customer-session';
 import { GisOneTapService } from '../../core/gis-onetap.service';
-import { gisSignInHref } from '../../core/gis-origin';
 import { LocaleService } from '../../core/locale.service';
 import { SiteFooter } from '../../shared/site-footer/site-footer';
 
@@ -17,10 +16,6 @@ import { SiteFooter } from '../../shared/site-footer/site-footer';
 export class AccountPage {
   protected readonly copy = inject(LocaleService).copy;
   protected readonly session = inject(CustomerSession);
-  protected readonly gisBounceHref = gisSignInHref(
-    typeof location === 'undefined' ? 'interchouette.net' : location.hostname,
-    '/account',
-  );
   private readonly gis = inject(GisOneTapService);
 
   protected onSignIn(): void {
