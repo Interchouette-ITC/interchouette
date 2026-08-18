@@ -936,6 +936,7 @@
   font: inherit;
   font-size: 0.72rem;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .chat-bubble__booking:hover {
@@ -951,6 +952,7 @@
 }
 
 .chat-panel__booking-open {
+  display: inline-block;
   border: 0;
   border-radius: 999px;
   padding: 0.5rem 0.95rem;
@@ -959,58 +961,7 @@
   font: inherit;
   font-size: 0.74rem;
   cursor: pointer;
-}
-
-.chat-panel__booking {
-  margin-bottom: 0.65rem;
-  border: 1px solid rgba(39, 8, 78, 0.12);
-  border-radius: 1rem;
-  overflow: hidden;
-  background: #fff;
-  box-shadow: 0 12px 28px rgba(39, 8, 78, 0.12);
-}
-
-.chat-panel__booking-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.55rem 0.75rem;
-  border-bottom: 1px solid rgba(39, 8, 78, 0.08);
-  background: rgba(244, 240, 250, 0.92);
-}
-
-.chat-panel__booking-head h3 {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--chat-ink);
-}
-
-.chat-panel__booking-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.85rem;
-  height: 1.85rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--chat-muted);
-  cursor: pointer;
-}
-
-.chat-panel__booking-close svg {
-  width: 1rem;
-  height: 1rem;
-}
-
-.chat-panel__booking-frame {
-  display: block;
-  width: 100%;
-  height: min(28rem, 52vh);
-  border: 0;
-  background: #fff;
+  text-decoration: none;
 }
 
 .chat-panel__footer {

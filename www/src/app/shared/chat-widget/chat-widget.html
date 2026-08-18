@@ -256,14 +256,15 @@
                 }
               </p>
               @if ((msg.role === 'itcy' || msg.role === 'greg') && messageOffersBooking(msg.text)) {
-                <button
-                  type="button"
+                <a
                   class="chat-bubble__booking"
-                  (click)="openBooking()"
+                  [href]="bookingScheduleUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   [attr.title]="copy.chat.bookingPickSlot"
                 >
                   {{ copy.chat.bookingPickSlot }}
-                </button>
+                </a>
               }
             </div>
           </article>
@@ -305,41 +306,25 @@
       <footer class="chat-panel__footer">
         @if (bookingEnabled()) {
           <div class="chat-panel__booking-bar">
-            <button type="button" class="chat-panel__booking-open" (click)="openBooking()">
-              {{ copy.chat.bookingOpen }}
+            <button
+              type="button"
+              class="chat-chip"
+              (click)="onBookMeeting()"
+              [disabled]="!chat.wsReady()"
+              [attr.title]="copy.chat.chipBook"
+            >
+              <span>{{ copy.chat.chipBook }}</span>
             </button>
+            <a
+              class="chat-panel__booking-open"
+              [href]="bookingScheduleUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              [attr.title]="copy.chat.bookingOpen"
+            >
+              {{ copy.chat.bookingOpen }}
+            </a>
           </div>
-        }
-        @if (bookingOpen() && bookingEnabled()) {
-          <section class="chat-panel__booking" [attr.aria-label]="copy.chat.bookingTitle">
-            <div class="chat-panel__booking-head">
-              <h3>{{ copy.chat.bookingTitle }}</h3>
-              <button
-                type="button"
-                class="chat-panel__booking-close"
-                (click)="closeBooking()"
-                [attr.aria-label]="copy.chat.bookingClose"
-                [attr.title]="copy.chat.bookingClose"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    d="M7 7l10 10M17 7 7 17"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                  />
-                </svg>
-              </button>
-            </div>
-            <iframe
-              class="chat-panel__booking-frame"
-              [src]="bookingScheduleUrl"
-              [title]="copy.chat.bookingTitle"
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-            ></iframe>
-          </section>
         }
         @if (chat.open() && chat.messages().length === 0 && !chat.error() && !chat.connecting()) {
           <div class="chat-panel__chips">
