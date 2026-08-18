@@ -16,7 +16,6 @@ const required = [
   'terms/index.html',
   'news/index.html',
   'account/index.html',
-  'gis-signin/index.html',
   '_redirects',
   'sitemap.xml',
   'llms.txt',
@@ -39,7 +38,6 @@ const htmlPages = [
   'terms/index.html',
   'news/index.html',
   'account/index.html',
-  'gis-signin/index.html',
 ];
 
 async function mustExist(rel) {

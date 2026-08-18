@@ -53,17 +53,6 @@ export const routes: Routes = [
     },
   },
   {
-    path: 'gis-signin',
-    loadComponent: () => import('./pages/gis-signin/gis-signin').then((m) => m.GisSigninPage),
-    title: 'Client login - Interchouette',
-    data: {
-      description: 'Google sign-in callback for Interchouette.',
-      titleKey: 'titleLogin',
-      descriptionKey: 'descLogin',
-      robots: 'noindex, follow',
-    },
-  },
-  {
     path: 'CV',
     loadComponent: () => import('./pages/cv/cv').then((m) => m.CvPage),
     title: 'Gregory Roussac - CV',
