@@ -222,10 +222,6 @@ test.describe('responsive rendering', () => {
       })
       .toBeCloseTo(1, 2);
 
-    await expect(
-      icons.locator('a[href="https://calendar.app.google/tw9hhtJkmcssZQCY7"]'),
-    ).toBeVisible();
-
     const avatar = page.locator('.avatar img');
     const box = await avatar.boundingBox();
     expect(box).not.toBeNull();

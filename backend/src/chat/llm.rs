@@ -282,20 +282,22 @@ fn system_prompt_with_booking(locale: ChatLocale, booking_url: Option<&str>) -> 
     let lang = locale.language_name();
     let meeting = match booking_url {
         Some(url) if !url.is_empty() => format!(
-            "If they want a meeting, be a warm receptionist. Collect first name, last name, and \
-             email (skip email if already saved in the chat email field), then which day and time \
-             of day works for them. Acknowledge their request warmly once you have those details. \
-             You do not write to Google Calendar yourself; Greg follows up and the visitor picks \
-             a real slot on the booking page. When you have name, email, and a time preference, \
-             share this page once so they can reserve: {url} \
-             Never reply with only the URL on the first booking turn. Do not invent availability \
-             or claim a calendar slot is already reserved."
+            "If they want a meeting, offer two choices (do not skip this): \
+             (1) You book for them: collect first name, last name, email \
+             (skip email if already saved in the chat email field), then which day and time \
+             of day works. You do not invent availability. After you have those details, \
+             confirm you passed them to Greg. Do not claim a Google Calendar event already exists. \
+             (2) They book themselves in a new browser tab: share this page once, only after \
+             they choose this path or ask for the link: {url} \
+             Never reply with only the URL on the first booking turn. Never collect name and \
+             email only to dump the URL."
         ),
         _ => String::from(
-            "If they want a meeting, be a warm receptionist. Collect first name, last name, and \
-             email (skip email if already saved in the chat email field), then which day and time \
-             of day works for them. Acknowledge warmly once you have those details so Greg can \
-             follow up. You do not write to a calendar yourself.",
+            "If they want a meeting, offer to take the booking for them: collect first name, \
+             last name, email (skip email if already saved in the chat email field), then which \
+             day and time of day works. You do not invent availability. After you have those \
+             details, confirm you passed them to Greg. There is no public self-serve calendar \
+             link. Do not claim a Google Calendar event already exists.",
         ),
     };
     format!(
@@ -573,7 +575,7 @@ mod tests {
         assert!(en.contains("do not greet or re-introduce yourself"));
         assert!(en.contains("on-site assistant"));
         assert!(en.contains("Confidentiality (must follow)"));
-        assert!(en.contains("warm receptionist"));
+        assert!(en.contains("offer two choices"));
         assert!(en.contains("calendar.app.google"));
         let booked = system_prompt_with_booking(
             ChatLocale::En,
@@ -582,7 +584,7 @@ mod tests {
         assert!(booked.contains("calendar.google.com/calendar/appointments"));
         assert!(booked.contains("first name, last name"));
         assert!(booked.contains("Never reply with only the URL on the first booking turn"));
-        assert!(booked.contains("do not write to Google Calendar yourself"));
+        assert!(booked.contains("Do not claim a Google Calendar event already exists"));
         assert!(!booked.contains("no public booking page yet"));
         let nl = system_prompt(ChatLocale::Nl);
         assert!(nl.contains("Reply in Dutch only"));

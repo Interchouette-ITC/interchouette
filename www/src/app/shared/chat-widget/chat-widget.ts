@@ -59,8 +59,6 @@ export class ChatWidget implements OnDestroy {
   protected showEmail = false;
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
   protected readonly bookingScheduleUrl = BOOKING_SCHEDULE_URL;
-  /** Google Calendar booking iframe inside the chat panel. */
-  protected readonly bookingOpen = signal(false);
 
   private nudgeTimer: ReturnType<typeof setInterval> | null = null;
   private bounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -112,7 +110,6 @@ export class ChatWidget implements OnDestroy {
 
   protected onClose(): void {
     this.expanded.set(false);
-    this.bookingOpen.set(false);
     this.chat.closePanel();
   }
 
@@ -216,9 +213,6 @@ export class ChatWidget implements OnDestroy {
       return;
     }
     this.chat.send(text);
-    if (text === this.copy.chat.chipBook && this.bookingEnabled()) {
-      this.bookingOpen.set(true);
-    }
     queueMicrotask(() => this.scrollToBottom());
   }
 
@@ -226,14 +220,8 @@ export class ChatWidget implements OnDestroy {
     return this.bookingScheduleUrl.trim().length > 0;
   }
 
-  protected openBooking(): void {
-    if (this.bookingEnabled()) {
-      this.bookingOpen.set(true);
-    }
-  }
-
-  protected closeBooking(): void {
-    this.bookingOpen.set(false);
+  protected onBookMeeting(): void {
+    this.onChip(this.copy.chat.chipBook);
   }
 
   protected messageOffersBooking(text: string): boolean {
@@ -264,11 +252,10 @@ export class ChatWidget implements OnDestroy {
 
   protected quickChips(): string[] {
     const c = this.copy.chat;
-    const book = c.chipBook;
     if (this.chat.hero() === 'greg') {
-      return [c.chipHiGreg, c.chipRust, book];
+      return [c.chipHiGreg, c.chipRust];
     }
-    return [c.chipWhat, c.chipWho, book];
+    return [c.chipWhat, c.chipWho];
   }
 
   protected title(): string {
