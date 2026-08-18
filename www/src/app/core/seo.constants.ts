@@ -11,6 +11,13 @@ export const LOCALE_ORIGINS: Record<SiteLocale, string> = {
   fr: 'https://interchouette.fr',
 };
 
+/** Public hostname TLD shown in the header brand. */
+export const LOCALE_TLDS: Record<SiteLocale, 'net' | 'nl' | 'fr'> = {
+  en: 'net',
+  nl: 'nl',
+  fr: 'fr',
+};
+
 /** Default social preview image. */
 export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/img/avatar.webp`;
 

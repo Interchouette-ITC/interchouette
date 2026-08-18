@@ -27,6 +27,11 @@ describe('i18n catalogs', () => {
     expect(COPY.nl.about.title).toMatch(/Over/);
     expect(COPY.fr.privacy.gisHeading).toMatch(/Google/);
     expect(COPY.nl.consent.jokes.length).toBe(COPY.en.consent.jokes.length);
+    expect(COPY.nl.headerHomeTitle).toContain('.nl');
+    expect(COPY.fr.headerHomeTitle).toContain('.fr');
+    expect(COPY.fr.footerPrivacy).toBe('Vie privée');
+    expect(COPY.fr.footerTerms).toBe('CGU');
+    expect(COPY.nl.footerTerms).toBe('AV');
     expect(COPY.fr.chat.nudgeHooks.length).toBe(COPY.en.chat.nudgeHooks.length);
   });
 

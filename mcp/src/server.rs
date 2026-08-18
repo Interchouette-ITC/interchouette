@@ -322,6 +322,7 @@ fn build_cors(cors_origin: &str) -> CorsLayer {
     use axum::http::{HeaderValue, Method};
     let mut origins = vec![
         HeaderValue::from_static("https://interchouette.net"),
+        HeaderValue::from_static("https://www.interchouette.net"),
         HeaderValue::from_static("https://interchouette.nl"),
         HeaderValue::from_static("https://www.interchouette.nl"),
         HeaderValue::from_static("https://interchouette.fr"),
@@ -443,6 +444,49 @@ mod tests {
         let bytes = response.into_body().collect().await.unwrap().to_bytes();
         let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
         assert_eq!(body["ok"], true);
+    }
+
+    #[tokio::test]
+    async fn cors_allows_locale_tld_origins() {
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let app = build_app(
+            &db,
+            "https://interchouette.net",
+            DEFAULT_ALLOWED_HOSTS
+                .iter()
+                .map(|h| (*h).to_string())
+                .collect(),
+        )
+        .unwrap();
+
+        for origin in [
+            "https://interchouette.fr",
+            "https://www.interchouette.nl",
+            "https://www.interchouette.net",
+        ] {
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .method("OPTIONS")
+                        .uri("/health")
+                        .header("origin", origin)
+                        .header("access-control-request-method", "POST")
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
+            let allow = response
+                .headers()
+                .get("access-control-allow-origin")
+                .unwrap_or_else(|| panic!("missing ACAO for {origin}"))
+                .to_str()
+                .unwrap();
+            assert_eq!(allow, origin);
+        }
     }
 
     #[tokio::test]

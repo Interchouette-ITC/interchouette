@@ -8,16 +8,17 @@ import type { SiteCopy } from './en';
 
 export const FR: SiteCopy = {
   headerBrand: 'Interchouette',
-  headerHomeTitle: 'Accueil - interchouette.net',
+  headerHomeTitle: 'Accueil - interchouette.fr',
   headerNews: 'Actualités',
   headerSlack: 'Rejoindre Slack',
   headerLogin: 'Connexion client',
+  headerLang: 'Langue',
   headerMarquee:
     "★ Internet, c'est chouette ★ Rust · Wasm · Freelance ★ Interchouette - ITC ★ Gregory Roussac ★",
   footerHome: 'Accueil',
   footerAbout: 'À propos',
-  footerPrivacy: 'Confidentialité',
-  footerTerms: 'Conditions',
+  footerPrivacy: 'Vie privée',
+  footerTerms: 'CGU',
   homePromise: 'Développement pour les équipes produit.',
   homeSubtitle: 'Développeur freelance Rust - Wasm',
   newsTitle: 'Actualités',

@@ -157,3 +157,87 @@
   object-fit: cover;
   background: rgba(255, 255, 255, 0.2);
 }
+
+.site-header__lang {
+  position: relative;
+  margin-left: 0.7rem;
+}
+
+.site-header__lang > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.5rem;
+  cursor: pointer;
+  list-style: none;
+  color: #fff;
+}
+
+.site-header__lang > summary::-webkit-details-marker {
+  display: none;
+}
+
+.site-header__lang-menu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  z-index: 2;
+  min-width: 10.5rem;
+  margin: 0;
+  padding: 0.3rem 0;
+  list-style: none;
+  background: #27084e;
+  border-radius: 0.4rem;
+  box-shadow:
+    0 1px 0 rgba(255, 228, 236, 0.18) inset,
+    0 10px 24px rgba(22, 4, 48, 0.45);
+}
+
+.site-header__nav .site-header__lang-menu a,
+.site-header__nav .site-header__lang-menu .is-current {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 0;
+  padding: 0.38rem 0.75rem;
+  color: #fff;
+  font-size: 0.78rem;
+  line-height: 1.2;
+  text-decoration: none;
+  text-shadow: none;
+}
+
+.site-header__nav .site-header__lang-menu a:hover {
+  color: #ffd24a;
+  background: rgba(255, 210, 74, 0.12);
+}
+
+.site-header__nav .site-header__lang-menu .is-current {
+  color: #ffd24a;
+}
+
+.site-header__flag {
+  display: inline-block;
+  width: 1.15rem;
+  height: 0.8rem;
+  flex-shrink: 0;
+  border-radius: 0.12rem;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.28);
+  background-size: cover;
+}
+
+.site-header__flag[data-locale='en'] {
+  background:
+    linear-gradient(#c8102e 0 0) center / 100% 22% no-repeat,
+    linear-gradient(#c8102e 0 0) center / 22% 100% no-repeat,
+    linear-gradient(#fff 0 0) center / 100% 38% no-repeat,
+    linear-gradient(#fff 0 0) center / 38% 100% no-repeat,
+    #012169;
+}
+
+.site-header__flag[data-locale='nl'] {
+  background: linear-gradient(to bottom, #ae1c28 33.33%, #fff 33.33%, #fff 66.66%, #21468b 66.66%);
+}
+
+.site-header__flag[data-locale='fr'] {
+  background: linear-gradient(to right, #002395 33.33%, #fff 33.33%, #fff 66.66%, #ed2939 66.66%);
+}

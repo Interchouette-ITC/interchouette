@@ -4,14 +4,14 @@
     routerLink="/"
     routerLinkActive="is-current"
     [routerLinkActiveOptions]="{ exact: true }"
-    aria-label="interchouette.net"
+    [attr.aria-label]="brandHost"
     [attr.title]="copy.headerHomeTitle"
   >
     <span class="site-header__inter">inter</span>chouette<span
       class="site-header__dot"
       aria-hidden="true"
     ></span
-    ><span class="site-header__tld">net</span>
+    ><span class="site-header__tld">{{ tld }}</span>
   </a>
   <div class="site-header__marquee-slot" aria-hidden="true">
     @if (marqueeLive()) {
@@ -59,5 +59,39 @@
         {{ copy.headerLogin }}
       </button>
     }
+    <details class="site-header__lang">
+      <summary [attr.aria-label]="copy.headerLang" [attr.title]="copy.headerLang">
+        <span
+          class="site-header__flag"
+          [attr.data-locale]="currentLocale"
+          aria-hidden="true"
+        ></span>
+      </summary>
+      <ul class="site-header__lang-menu">
+        @for (opt of langs; track opt.locale) {
+          <li>
+            @if (opt.locale === currentLocale) {
+              <span class="is-current">
+                <span
+                  class="site-header__flag"
+                  [attr.data-locale]="opt.locale"
+                  aria-hidden="true"
+                ></span>
+                {{ opt.label }}
+              </span>
+            } @else {
+              <a [href]="localeHref(opt.locale)">
+                <span
+                  class="site-header__flag"
+                  [attr.data-locale]="opt.locale"
+                  aria-hidden="true"
+                ></span>
+                {{ opt.label }}
+              </a>
+            }
+          </li>
+        }
+      </ul>
+    </details>
   </nav>
 </header>

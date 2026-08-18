@@ -1,13 +1,14 @@
 /** Chat API base URL (chat backend; not the Interchouette MCP). */
-export function chatApiBase(): string {
-  if (typeof window === 'undefined') {
-    return 'http://127.0.0.1:8080';
-  }
-  const host = window.location.hostname;
+export function chatApiBase(hostname?: string): string {
+  const host = hostname ?? (typeof window === 'undefined' ? undefined : window.location.hostname);
   // Same hostname as the page so Chromium does not treat localhost vs 127.0.0.1 as cross-site.
   if (host === 'localhost' || host === '127.0.0.1') {
     return `http://${host}:8080`;
   }
+  if (!host) {
+    return 'http://127.0.0.1:8080';
+  }
+  // Locale TLDs (.nl / .fr) are the same Angular dist. Chat stays on .net.
   return 'https://chat.interchouette.net';
 }
 
