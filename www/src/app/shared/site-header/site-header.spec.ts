@@ -24,6 +24,7 @@ describe('SiteHeader', () => {
     expect(el.querySelector('a[routerlink="/news"]')?.textContent?.trim()).toBe(COPY.en.headerNews);
     expect(login?.getAttribute('title')).toBe(COPY.en.titleLogin);
     expect(login?.textContent?.trim()).toBe(COPY.en.headerLogin);
+    expect(el.querySelector('a.site-header__slack')?.textContent?.trim()).toBe(COPY.en.headerSlack);
     expect(el.querySelector('.site-header__lang summary')?.getAttribute('aria-label')).toBe(
       COPY.en.headerLang,
     );

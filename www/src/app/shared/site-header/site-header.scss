@@ -139,6 +139,13 @@
   text-decoration: none;
 }
 
+.site-header__nav a.site-header__slack,
+.site-header__nav a.site-header__slack:link,
+.site-header__nav a.site-header__slack:visited,
+.site-header__nav a.site-header__slack:hover {
+  color: #ffd24a;
+}
+
 .site-header__nav a.is-current {
   color: #fff;
   text-decoration: none;
