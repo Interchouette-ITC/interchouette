@@ -18,6 +18,8 @@ export const FR_CHAT = {
   placeholder: 'Posez votre question…',
   send: 'Envoyer le message',
   fineprint: 'Privé · Chiffré en transit',
+  forget: 'Oublier ce chat',
+  forgetAria: 'Oublier ce chat et effacer la transcription locale',
   powered: 'Propulsé par Rust, Node et ITC',
   chipLeaveEmail: 'Laisser mon e-mail',
   chipHiGreg: 'Salut Greg',

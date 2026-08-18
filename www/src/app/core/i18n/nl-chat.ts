@@ -18,6 +18,8 @@ export const NL_CHAT = {
   placeholder: 'Vraag maar raak…',
   send: 'Bericht versturen',
   fineprint: 'Privé · Versleuteld tijdens verzending',
+  forget: 'Deze chat vergeten',
+  forgetAria: 'Deze chat vergeten en de lokale transcriptie wissen',
   powered: 'Aangedreven door Rust, Node en ITC',
   chipLeaveEmail: 'Mijn e-mail achterlaten',
   chipHiGreg: 'Hoi Greg',

@@ -18,6 +18,8 @@ export const EN_CHAT = {
   placeholder: 'Ask anything…',
   send: 'Send message',
   fineprint: 'Private · Encrypted in transit',
+  forget: 'Forget this chat',
+  forgetAria: 'Forget this chat and clear the local transcript',
   powered: 'Powered by Rust, Node & ITC',
   chipLeaveEmail: 'Leave my email',
   chipHiGreg: 'Hi Greg',

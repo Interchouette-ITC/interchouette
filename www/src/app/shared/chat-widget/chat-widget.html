@@ -417,6 +417,15 @@
         </form>
         <p class="chat-panel__fineprint">
           <a routerLink="/privacy" class="chat-panel__fineprint-link">{{ copy.chat.fineprint }}</a>
+          <button
+            type="button"
+            class="chat-panel__fineprint-link chat-panel__fineprint-forget"
+            (click)="onForgetChat()"
+            [attr.aria-label]="copy.chat.forgetAria"
+            [attr.title]="copy.chat.forget"
+          >
+            {{ copy.chat.forget }}
+          </button>
           <span class="chat-panel__fineprint-powered">{{ copy.chat.powered }}</span>
         </p>
       </footer>

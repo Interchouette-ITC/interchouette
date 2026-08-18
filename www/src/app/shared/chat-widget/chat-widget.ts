@@ -148,6 +148,14 @@ export class ChatWidget implements OnDestroy {
     void this.chat.connect({ silent: false });
   }
 
+  protected onForgetChat(): void {
+    this.showEmail = false;
+    this.bookingOpen.set(false);
+    this.canSend.set(false);
+    this.draft = '';
+    void this.chat.forgetChat();
+  }
+
   protected onDraftInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     this.canSend.set(value.trim().length > 0);

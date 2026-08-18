@@ -1,6 +1,6 @@
 export const EN_PRIVACY = {
   title: 'Privacy Policy',
-  updated: 'Last updated: 17 August 2026',
+  updated: 'Last updated: 18 August 2026',
   intro:
     'This Privacy Policy describes how Interchouette - ITC ("we", "us", or "our"), operated by Gregory Roussac, collects, uses, and protects information when you use our websites, applications, and related services (the "Services"), including integrations with third-party platforms such as LinkedIn.',
   collectHeading: '1. Data we collect',
@@ -27,13 +27,13 @@ export const EN_PRIVACY = {
   cookiesGa:
     'Google Analytics 4 (measurement id on this site) may set cookies / identifiers to understand aggregated traffic. It loads only after you Accept non-essential cookies in the consent banner. If you Decline, we do not load that analytics tag for your browser.',
   cookiesChat:
-    'Chat storage in your browser (localStorage / sessionStorage) keeps a short chat resume token, recent messages (about seven days), and any email you chose to save in the chat form so it can reappear when you open that form again.',
+    'Chat storage in this browser keeps a short resume token, the last messages (about seven days), and any email you saved in the chat form. That cache is encrypted with a key bound to this site origin so a casual look at localStorage does not show the text. It is not end-to-end encryption. Forget this chat in the panel wipes the local cache.',
   cookiesConsent: 'Consent choice itself is stored locally so we remember Accept or Decline.',
   cookiesCustomer:
     'Customer login, when used, stores the Google profile fields above in localStorage under a site key. Clearing site data removes that session.',
   chatHeading: '3. Visitor chat, Slack, and optional email',
   chatP:
-    'When chat is available, messages may be relayed to Gregory Roussac over Slack when he is online. When he is away, answers may be generated from public Interchouette notes (including via Interchouette MCP) and may use OpenRouter for language-model replies. If you leave an email in chat, we use it only so Greg can follow up; it is also kept in your browser storage as above until you clear site data.',
+    'When chat is available, messages may be relayed to Gregory Roussac over Slack when he is online. When he is away, answers may be generated from public Interchouette notes (including via Interchouette MCP) and may use OpenRouter for language-model replies. If you leave an email in chat, we use it only so Greg can follow up; it is also kept in your browser storage as above until you use Forget this chat or clear site data.',
   gisHeading: '4. Customer login (Google Sign-In)',
   gisP1:
     'The site may show a Customer login button that uses Google Identity Services in this browser. When a Google client id is configured, Google shows a popup; we then store your name, email, profile picture, and Google subject identifier in this browser only. We do not send the Google token to Interchouette servers. This login does not open a private backoffice, customer portal, or Interchouette account.',
@@ -72,7 +72,7 @@ export const EN_PRIVACY = {
   retentionLead:
     'We retain personal data only as long as necessary for the purposes described in this policy, unless a longer period is required by law. In particular:',
   retentionChat:
-    'Browser chat transcript cache is intended to expire after about seven days (or sooner if you clear site data);',
+    'Browser chat cache is intended to expire after about seven days, or sooner if you use Forget this chat or clear site data;',
   retentionSlack:
     'Slack chat threads and optional follow-up email are kept as long as needed to respond and operate the Services, then deleted or minimized when no longer needed;',
   retentionGis:
