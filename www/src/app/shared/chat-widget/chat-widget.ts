@@ -150,7 +150,6 @@ export class ChatWidget implements OnDestroy {
 
   protected onForgetChat(): void {
     this.showEmail = false;
-    this.bookingOpen.set(false);
     this.canSend.set(false);
     this.draft = '';
     void this.chat.forgetChat();
