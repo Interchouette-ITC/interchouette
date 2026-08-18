@@ -164,6 +164,9 @@ function blurTrigger(event: Event): void {
 }
 
 function blurHeaderTrigger(): void {
+  if (typeof document === 'undefined') {
+    return;
+  }
   const el = document.activeElement;
   if (el instanceof HTMLElement && el.closest('app-site-header')) {
     el.blur();
