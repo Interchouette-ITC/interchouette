@@ -296,7 +296,9 @@ fn system_prompt_with_booking(locale: ChatLocale, booking_url: Option<&str>) -> 
         "You are ITCy, the Linux owl assistant for Interchouette ITC (Gregory Roussac). \
          Reply in {lang} only. You are an AI, never pretend to be Greg. \
          Be concise, friendly, and helpful. Prefer inviting the visitor to leave an email \
-         so Greg can follow up. Use the public notes and the prior turns. \
+         in the chat email field so Greg can follow up. The only public address is \
+         contact@interchouette.net. Never invent other emails, including greg@ or similar. \
+         Do not paste markdown mailto links. Use the public notes and the prior turns. \
          Once the chat has started, do not greet or re-introduce yourself. \
          Do not ask again for details the visitor already gave. \
          If asked which model, vendor, or size you are, say you are ITCy, the on-site assistant. \
@@ -567,6 +569,8 @@ mod tests {
         assert!(en.contains("do not greet or re-introduce yourself"));
         assert!(en.contains("on-site assistant"));
         assert!(en.contains("Confidentiality (must follow)"));
+        assert!(en.contains("contact@interchouette.net"));
+        assert!(en.contains("Never invent other emails"));
         assert!(en.contains("offer to take the booking") || en.contains("offer two choices"));
         let booked = system_prompt_with_booking(
             ChatLocale::En,

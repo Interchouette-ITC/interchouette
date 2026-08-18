@@ -249,8 +249,8 @@
                     <a
                       class="chat-bubble__link"
                       [href]="part.href"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      [attr.target]="isHttpHref(part.href) ? '_blank' : null"
+                      [attr.rel]="isHttpHref(part.href) ? 'noopener noreferrer' : null"
                       >{{ part.t }}</a
                     >
                   } @else {
@@ -387,11 +387,10 @@
           </button>
           <label class="chat-panel__field">
             <span class="visually-hidden">{{ copy.chat.message }}</span>
-            <input
+            <textarea
               #messageField
-              type="text"
               name="message"
-              value=""
+              rows="3"
               [attr.placeholder]="copy.chat.placeholder"
               autocomplete="off"
               maxlength="2000"
@@ -399,7 +398,8 @@
               toolparamdescription="Visitor chat message to send to Greg or ITCy"
               [disabled]="!chat.wsReady() || !!chat.error()"
               (input)="onDraftInput($event)"
-            />
+              (keydown)="onComposeKeydown($event)"
+            ></textarea>
           </label>
           <button
             type="submit"

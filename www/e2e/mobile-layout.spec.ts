@@ -258,7 +258,7 @@ test.describe('mobile layout at 360x664', () => {
     await fab.click();
     await expect(page.locator('#interchouette-chat-panel')).toHaveClass(/chat-panel--open/);
 
-    const input = page.locator('.chat-panel__compose input[name="message"]');
+    const input = page.locator('.chat-panel__compose textarea[name="message"]');
     const fineprint = page.locator('.chat-panel__fineprint');
     await expect(input).toBeEnabled({ timeout: 15_000 });
     await expect(fineprint).toBeVisible();
@@ -267,9 +267,10 @@ test.describe('mobile layout at 360x664', () => {
     await input.click();
     await expect(fineprint).toBeHidden();
     const focusedHeight = await input.evaluate((el) => el.getBoundingClientRect().height);
-    expect(focusedHeight, 'message field should grow into footer space').toBeGreaterThan(
-      idleHeight + 8,
-    );
+    expect(
+      Math.abs(focusedHeight - idleHeight),
+      'message field stays a fixed textarea',
+    ).toBeLessThanOrEqual(2);
 
     await page.locator('.chat-panel__title').click();
     await expect(fineprint).toBeVisible();

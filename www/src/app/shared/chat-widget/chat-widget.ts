@@ -13,7 +13,7 @@ import {
 
 import { ChatRole, ChatService } from '../../core/chat.service';
 import { BOOKING_SCHEDULE_URL, SLACK_JOIN_URL } from '../../core/chat.constants';
-import { ChatLinkPart, splitHttpLinks } from '../../core/chat.links';
+import { ChatLinkPart, isHttpHref as hrefIsHttp, splitHttpLinks } from '../../core/chat.links';
 import { fillCopy } from '../../core/i18n/catalog';
 import { LocaleService } from '../../core/locale.service';
 import { RouterLink } from '@angular/router';
@@ -49,7 +49,7 @@ export class ChatWidget implements OnDestroy {
   protected readonly expanded = signal(false);
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
   private readonly emailField = viewChild<ElementRef<HTMLInputElement>>('emailField');
-  private readonly messageField = viewChild<ElementRef<HTMLInputElement>>('messageField');
+  private readonly messageField = viewChild<ElementRef<HTMLTextAreaElement>>('messageField');
 
   protected readonly canSend = signal(false);
   /** Brief “Copied” state for the ticket button. */
@@ -169,6 +169,14 @@ export class ChatWidget implements OnDestroy {
       return;
     }
     this.composing.set(false);
+  }
+
+  protected onComposeKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.shiftKey) {
+      return;
+    }
+    event.preventDefault();
+    this.onSubmit(event);
   }
 
   protected onDraftInput(event: Event): void {
@@ -429,6 +437,10 @@ export class ChatWidget implements OnDestroy {
 
   protected linkParts(text: string): ChatLinkPart[] {
     return splitHttpLinks(text);
+  }
+
+  protected isHttpHref(href: string | null): boolean {
+    return hrefIsHttp(href);
   }
 
   protected whoLabel(role: ChatRole): string {

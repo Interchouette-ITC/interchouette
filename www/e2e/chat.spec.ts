@@ -29,16 +29,54 @@ test.describe('chat widget', () => {
       'send_site_chat_message',
     );
 
+    const clearance = await page.evaluate(() => {
+      const headerEl = document.querySelector('app-site-header');
+      const panelEl = document.querySelector('#interchouette-chat-panel');
+      if (!headerEl || !panelEl) {
+        return null;
+      }
+      const h = headerEl.getBoundingClientRect();
+      const p = panelEl.getBoundingClientRect();
+      return {
+        headerBottom: h.bottom,
+        panelTop: p.top,
+        panelBottom: p.bottom,
+        vh: window.innerHeight,
+      };
+    });
+    expect(clearance).not.toBeNull();
+    expect(
+      clearance!.panelTop,
+      'desktop chat must sit below the site header',
+    ).toBeGreaterThanOrEqual(clearance!.headerBottom - 1);
+    const bandMid = (clearance!.headerBottom + clearance!.vh) / 2;
+    const panelMid = (clearance!.panelTop + clearance!.panelBottom) / 2;
+    if (clearance!.vh <= 860) {
+      expect(
+        Math.abs(panelMid - bandMid),
+        'short desktop chat should sit in the band below the header',
+      ).toBeLessThanOrEqual(48);
+    }
+
+    await page.locator('.chat-panel__email-toggle').click();
+    await expect(page.locator('form.chat-panel__email')).toBeVisible();
     const input = page.getByRole('textbox', { name: 'Message' });
     await expect(input).toBeEnabled({ timeout: 15_000 });
+    await input.click();
+    await expect(page.locator('form.chat-panel__email')).toBeVisible();
+    const composeH = await input.evaluate((el) => el.getBoundingClientRect().height);
+    expect(composeH, 'message field is a multi-line textarea').toBeGreaterThan(60);
+
     await input.fill('What is Interchouette?');
     await page.getByRole('button', { name: 'Send message' }).click();
     await expect(page.getByText('What is Interchouette?')).toBeVisible();
 
     if (away) {
-      await expect(page.locator('.chat-bubble[data-role="itcy"]').first()).toBeVisible({
-        timeout: 25_000,
-      });
+      const itcy = page.locator('.chat-bubble[data-role="itcy"]').first();
+      await expect(itcy).toBeVisible({ timeout: 25_000 });
+      await expect(itcy).not.toContainText('](mailto:');
+      const select = await itcy.evaluate((el) => getComputedStyle(el).userSelect);
+      expect(select === 'text' || select === 'auto').toBeTruthy();
     }
   });
 });
