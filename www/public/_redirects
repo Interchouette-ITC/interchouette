@@ -10,6 +10,7 @@
 /privacy  /privacy/index.html  200
 /news     /news/index.html     200
 /account  /account/index.html  200
+/gis-signin  /gis-signin/index.html  200
 /CV       /CV/index.html       200
 
 # CV canonical without trailing slash
