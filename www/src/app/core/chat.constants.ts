@@ -31,7 +31,7 @@ function envFlag(raw: string | undefined, fallback: boolean): boolean {
 }
 
 /** From repo-root `.env` (`CHAT_WIDGET_ENABLED`). Restart `ng serve` after changes. */
-export const CHAT_WIDGET_ENABLED = envFlag(import.meta.env.CHAT_WIDGET_ENABLED, true);
+export const CHAT_WIDGET_ENABLED = envFlag(import.meta.env?.CHAT_WIDGET_ENABLED, true);
 
 export const CHAT_STORAGE_KEY = 'ic.chat.v1';
 
