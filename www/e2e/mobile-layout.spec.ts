@@ -52,16 +52,16 @@ test.describe('mobile layout at 360x664', () => {
   test('header hamburger keeps the brand clear and locale visible', async ({ page }) => {
     await page.goto('/');
     const header = page.locator('app-site-header');
-    const menu = header.locator('.site-header__menu > summary');
+    const menu = header.locator('.site-header__menu-btn');
     await expect(menu).toBeVisible();
-    await expect(header.locator('.site-header__lang summary')).toHaveText('EN');
+    await expect(header.locator('.site-header__lang-btn')).toHaveText('EN');
     await expect(header.getByRole('link', { name: 'News' })).toBeHidden();
 
     const layout = await page.evaluate(() => {
       const brand = document.querySelector('.site-header__brand');
       const tld = document.querySelector('.site-header__tld');
-      const burger = document.querySelector('.site-header__menu > summary');
-      const lang = document.querySelector('.site-header__lang > summary');
+      const burger = document.querySelector('.site-header__menu-btn');
+      const lang = document.querySelector('.site-header__lang-btn');
       if (!brand || !tld || !burger || !lang) {
         return null;
       }
@@ -92,6 +92,7 @@ test.describe('mobile layout at 360x664', () => {
 
     await menu.click();
     await expect(header.getByRole('link', { name: 'News' })).toBeVisible();
+    await expect(menu).toHaveCSS('color', 'rgb(255, 210, 74)');
     await expect(header.locator('a.site-header__slack')).toBeVisible();
     await expect(header.getByRole('button', { name: 'Client login' })).toBeVisible();
   });
@@ -204,18 +205,27 @@ test.describe('mobile layout at 360x664', () => {
       const panelEl = document.querySelector('#interchouette-chat-panel');
       const code = document.querySelector('.chat-panel__ticket-code');
       const row = document.querySelector('.chat-panel__ticket');
-      if (!panelEl || !code || !row) {
+      const titleEl = document.querySelector('.chat-panel__title');
+      const close = document.querySelector('.chat-panel__close');
+      if (!panelEl || !code || !row || !titleEl) {
         return null;
       }
       const p = panelEl.getBoundingClientRect();
       const c = code.getBoundingClientRect();
       const r = row.getBoundingClientRect();
+      const title = titleEl.getBoundingClientRect();
+      const closeBox = close?.getBoundingClientRect();
+      const overlap = (x: DOMRect, y: DOMRect) =>
+        x.left < y.right && x.right > y.left && x.top < y.bottom && x.bottom > y.top;
       return {
         panelRight: p.right,
         codeRight: c.right,
         rowRight: r.right,
         codeOverflow: code.scrollWidth - code.clientWidth,
         text: (code.textContent ?? '').trim(),
+        titleMid: title.top + title.height / 2,
+        ticketMid: r.top + r.height / 2,
+        overClose: closeBox ? overlap(r, closeBox) : false,
       };
     });
 
@@ -228,6 +238,69 @@ test.describe('mobile layout at 360x664', () => {
     expect(box!.rowRight, 'ticket row hangs past the panel').toBeLessThanOrEqual(
       box!.panelRight - 1,
     );
+    expect(
+      Math.abs(box!.titleMid - box!.ticketMid),
+      'ticket should sit on the title row, not an extra hero line',
+    ).toBeLessThanOrEqual(8);
+    expect(box!.overClose, 'ticket overlaps the close button').toBe(false);
+    await expect(page.locator('.chat-panel__ticket-copy')).toBeHidden();
+  });
+
+  test('compose grows into the footer while the message field is focused', async ({ page }) => {
+    await page.goto('/');
+    const consent = page.getByRole('dialog', { name: 'Cookie consent' });
+    if (await consent.isVisible()) {
+      await page.getByRole('button', { name: 'Decline' }).click();
+    }
+
+    const fab = page.locator('app-chat-widget').getByRole('button', { name: /Open chat/i });
+    await expect(fab).toBeVisible({ timeout: 15_000 });
+    await fab.click();
+    await expect(page.locator('#interchouette-chat-panel')).toHaveClass(/chat-panel--open/);
+
+    const input = page.locator('.chat-panel__compose input[name="message"]');
+    const fineprint = page.locator('.chat-panel__fineprint');
+    await expect(input).toBeEnabled({ timeout: 15_000 });
+    await expect(fineprint).toBeVisible();
+
+    const idleHeight = await input.evaluate((el) => el.getBoundingClientRect().height);
+    await input.click();
+    await expect(fineprint).toBeHidden();
+    const focusedHeight = await input.evaluate((el) => el.getBoundingClientRect().height);
+    expect(focusedHeight, 'message field should grow into footer space').toBeGreaterThan(
+      idleHeight + 8,
+    );
+
+    await page.locator('.chat-panel__title').click();
+    await expect(fineprint).toBeVisible();
+    const blurredHeight = await input.evaluate((el) => el.getBoundingClientRect().height);
+    expect(Math.abs(blurredHeight - idleHeight)).toBeLessThanOrEqual(2);
+  });
+
+  test('hamburger and locale popovers close each other', async ({ page }) => {
+    await page.goto('/');
+    const header = page.locator('app-site-header');
+    const menuBtn = header.locator('.site-header__menu-btn');
+    const langBtn = header.locator('.site-header__lang-btn');
+    const chip = header.locator('.site-header__lang-code');
+
+    await menuBtn.click();
+    await expect(header.getByRole('link', { name: 'News' })).toBeVisible();
+    await expect(menuBtn).toHaveCSS('color', 'rgb(255, 210, 74)');
+    await langBtn.click();
+    await expect(header.getByRole('link', { name: 'Nederlands' })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'News' })).toBeHidden();
+    await expect(chip).toHaveCSS('color', 'rgb(255, 210, 74)');
+    await expect(menuBtn).not.toHaveCSS('color', 'rgb(255, 210, 74)');
+
+    await menuBtn.click();
+    await expect(header.getByRole('link', { name: 'News' })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Nederlands' })).toBeHidden();
+    await expect(chip).not.toHaveCSS('color', 'rgb(255, 210, 74)');
+
+    await langBtn.click();
+    await langBtn.click();
+    await expect(chip).not.toHaveCSS('color', 'rgb(255, 210, 74)');
   });
 });
 

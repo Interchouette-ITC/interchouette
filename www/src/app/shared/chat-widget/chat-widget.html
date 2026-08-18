@@ -133,23 +133,19 @@
             </button>
           </div>
 
-          <h2 class="chat-panel__title">{{ title() }}</h2>
-
-          <div class="chat-panel__meta">
-            <p class="chat-panel__status">
-              <span class="chat-panel__live-dot" [attr.data-mode]="chat.mode()"></span>
-              <span class="chat-panel__status-text">{{ subtitle() }}</span>
-            </p>
+          <div class="chat-panel__heading">
+            <h2 class="chat-panel__title">{{ title() }}</h2>
             @if (chat.shortCode()) {
-              <div class="chat-panel__ticket">
+              <button
+                type="button"
+                class="chat-panel__ticket"
+                [class.is-copied]="ticketCopied()"
+                (click)="onCopyTicket($event)"
+                [attr.aria-label]="ticketCopyAria()"
+                [attr.title]="ticketCopyTitle()"
+              >
                 <code class="chat-panel__ticket-code">{{ ticketDisplay() }}</code>
-                <button
-                  type="button"
-                  class="chat-panel__ticket-copy"
-                  (click)="onCopyTicket($event)"
-                  [attr.aria-label]="ticketCopyAria()"
-                  [attr.title]="ticketCopyTitle()"
-                >
+                <span class="chat-panel__ticket-copy" aria-hidden="true">
                   @if (ticketCopied()) {
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <path
@@ -165,9 +161,16 @@
                       />
                     </svg>
                   }
-                </button>
-              </div>
+                </span>
+              </button>
             }
+          </div>
+
+          <div class="chat-panel__meta">
+            <p class="chat-panel__status">
+              <span class="chat-panel__live-dot" [attr.data-mode]="chat.mode()"></span>
+              <span class="chat-panel__status-text">{{ subtitle() }}</span>
+            </p>
           </div>
         </div>
       </header>
@@ -303,7 +306,7 @@
         }
       </div>
 
-      <footer class="chat-panel__footer">
+      <footer class="chat-panel__footer" [class.chat-panel__footer--composing]="composing()">
         @if (bookingEnabled()) {
           <div class="chat-panel__booking-bar">
             <button
@@ -369,6 +372,8 @@
           toolname="send_site_chat_message"
           tooldescription="Send a visitor message in the Interchouette site chat panel (Greg live or ITCy away)."
           (submit)="onSubmit($event)"
+          (focusin)="onComposeFocus()"
+          (focusout)="onComposeBlur($event)"
         >
           <button
             type="button"

@@ -567,8 +567,7 @@ mod tests {
         assert!(en.contains("do not greet or re-introduce yourself"));
         assert!(en.contains("on-site assistant"));
         assert!(en.contains("Confidentiality (must follow)"));
-        assert!(en.contains("offer two choices"));
-        assert!(en.contains("calendar.app.google"));
+        assert!(en.contains("offer to take the booking") || en.contains("offer two choices"));
         let booked = system_prompt_with_booking(
             ChatLocale::En,
             Some("https://calendar.google.com/calendar/appointments/schedules/example"),
@@ -577,7 +576,14 @@ mod tests {
         assert!(booked.contains("first name, last name"));
         assert!(booked.contains("Never reply with only the URL on the first booking turn"));
         assert!(booked.contains("Do not claim a Google Calendar event already exists"));
+        assert!(booked.contains("offer two choices"));
         assert!(!booked.contains("no public booking page yet"));
+        let app = system_prompt_with_booking(
+            ChatLocale::En,
+            Some("https://calendar.app.google/tw9hhtJkmcssZQCY7"),
+        );
+        assert!(app.contains("calendar.app.google"));
+        assert!(app.contains("offer two choices"));
         let nl = system_prompt(ChatLocale::Nl);
         assert!(nl.contains("Reply in Dutch only"));
     }

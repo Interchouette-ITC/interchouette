@@ -21,8 +21,15 @@
     }
   </div>
   <nav class="site-header__nav" [attr.aria-label]="copy.headerBrand">
-    <details class="site-header__menu" #menu>
-      <summary [attr.aria-label]="copy.headerMenu" [attr.title]="copy.headerMenu">
+    <div class="site-header__menu" [class.is-open]="menuOpen()">
+      <button
+        type="button"
+        class="site-header__menu-btn"
+        [attr.aria-expanded]="menuOpen()"
+        [attr.aria-label]="copy.headerMenu"
+        [attr.title]="copy.headerMenu"
+        (click)="toggleMenu($event)"
+      >
         <svg class="site-header__burger" viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M4 7h16M4 12h16M4 17h16"
@@ -32,7 +39,7 @@
             stroke-linecap="round"
           />
         </svg>
-      </summary>
+      </button>
       <div class="site-header__menu-panel" (click)="onMenuNavigate($event)">
         <a routerLink="/news" routerLinkActive="is-current" [attr.title]="copy.titleNews">{{
           copy.headerNews
@@ -74,11 +81,18 @@
           </button>
         }
       </div>
-    </details>
-    <details class="site-header__lang">
-      <summary [attr.aria-label]="copy.headerLang" [attr.title]="copy.headerLang">
+    </div>
+    <div class="site-header__lang" [class.is-open]="langOpen()">
+      <button
+        type="button"
+        class="site-header__lang-btn"
+        [attr.aria-expanded]="langOpen()"
+        [attr.aria-label]="copy.headerLang"
+        [attr.title]="copy.headerLang"
+        (click)="toggleLang($event)"
+      >
         <span class="site-header__lang-code">{{ currentCode }}</span>
-      </summary>
+      </button>
       <ul class="site-header__lang-menu">
         @for (opt of langs; track opt.locale) {
           <li>
@@ -90,6 +104,6 @@
           </li>
         }
       </ul>
-    </details>
+    </div>
   </nav>
 </header>

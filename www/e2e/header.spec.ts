@@ -11,10 +11,17 @@ test.describe('site header and locale', () => {
     await expect(slack).toBeVisible();
     await expect(slack).toHaveCSS('color', 'rgb(255, 210, 74)');
     await expect(header.getByRole('button', { name: 'Client login' })).toBeVisible();
-    await expect(header.locator('.site-header__lang summary')).toBeVisible();
-    await expect(header.locator('.site-header__lang summary')).toHaveText('EN');
+    await expect(header.locator('.site-header__lang-btn')).toBeVisible();
+    await expect(header.locator('.site-header__lang-btn')).toHaveText('EN');
     await expect(page.getByRole('heading', { name: 'Gregory Roussac' })).toBeVisible();
     await expect(page.getByText('Development for product teams.')).toBeVisible();
+    await header.locator('.site-header__lang-btn').click();
+    await expect(header.getByRole('link', { name: 'Nederlands' })).toBeVisible();
+    if (await header.locator('.site-header__menu-btn').isVisible()) {
+      await expect(header.getByRole('link', { name: 'News' })).toBeHidden();
+    } else {
+      await expect(header.getByRole('link', { name: 'News' })).toBeVisible();
+    }
 
     await page.goto('/news');
     await expect(page.getByRole('heading', { name: 'News' })).toBeVisible();
@@ -24,7 +31,7 @@ test.describe('site header and locale', () => {
   test('header language dropdown switches locale on localhost', async ({ page }) => {
     await page.goto('/');
     const header = page.locator('app-site-header');
-    await header.locator('.site-header__lang summary').click();
+    await header.locator('.site-header__lang-btn').click();
     await header.getByRole('link', { name: 'Nederlands' }).click();
     await expect(page).toHaveURL(/\?lang=nl/);
     await expect(page.locator('html')).toHaveAttribute('lang', 'nl');
@@ -77,13 +84,13 @@ test.describe('site header and locale', () => {
 });
 
 async function revealHeaderLinks(header: Locator): Promise<void> {
-  const details = header.locator('details.site-header__menu');
   const firstLink = header.locator('.site-header__menu-panel a').first();
-  await expect(details).toBeAttached();
-  await expect(async () => {
-    await details.evaluate((el) => {
-      (el as HTMLDetailsElement).open = true;
-    });
-    await expect(firstLink).toBeVisible();
-  }).toPass();
+  const menuBtn = header.locator('.site-header__menu-btn');
+  if (await firstLink.isVisible()) {
+    return;
+  }
+  if (await menuBtn.isVisible()) {
+    await menuBtn.click();
+  }
+  await expect(firstLink).toBeVisible();
 }

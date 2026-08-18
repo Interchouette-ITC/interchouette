@@ -54,6 +54,8 @@ export class ChatWidget implements OnDestroy {
   protected readonly canSend = signal(false);
   /** Brief “Copied” state for the ticket button. */
   protected readonly ticketCopied = signal(false);
+  /** Message field focused: grow compose and hide chat footers. */
+  protected readonly composing = signal(false);
   /** Always a string: never leave compose bindings as undefined. */
   protected draft = '';
   protected showEmail = false;
@@ -75,6 +77,7 @@ export class ChatWidget implements OnDestroy {
     effect(() => {
       if (!this.chat.open()) {
         this.expanded.set(false);
+        this.composing.set(false);
       }
     });
     effect(() => {
@@ -150,10 +153,22 @@ export class ChatWidget implements OnDestroy {
 
   protected onForgetChat(): void {
     this.showEmail = false;
-    this.bookingOpen.set(false);
     this.canSend.set(false);
     this.draft = '';
     void this.chat.forgetChat();
+  }
+
+  protected onComposeFocus(): void {
+    this.composing.set(true);
+  }
+
+  protected onComposeBlur(event: FocusEvent): void {
+    const next = event.relatedTarget as Node | null;
+    const form = event.currentTarget as HTMLElement | null;
+    if (next && form?.contains(next)) {
+      return;
+    }
+    this.composing.set(false);
   }
 
   protected onDraftInput(event: Event): void {
