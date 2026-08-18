@@ -21,6 +21,9 @@ describe('SiteHeader', () => {
     expect(el.querySelector('.site-header__brand')?.getAttribute('aria-label')).toBe(
       'interchouette.net',
     );
+    expect(el.querySelector('.site-header__menu summary')?.getAttribute('aria-label')).toBe(
+      COPY.en.headerMenu,
+    );
     expect(el.querySelector('a[routerlink="/news"]')?.textContent?.trim()).toBe(COPY.en.headerNews);
     expect(login?.getAttribute('title')).toBe(COPY.en.titleLogin);
     expect(login?.textContent?.trim()).toBe(COPY.en.headerLogin);

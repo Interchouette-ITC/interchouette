@@ -21,45 +21,60 @@
     }
   </div>
   <nav class="site-header__nav" [attr.aria-label]="copy.headerBrand">
-    <a routerLink="/news" routerLinkActive="is-current" [attr.title]="copy.titleNews">{{
-      copy.headerNews
-    }}</a>
-    <a
-      class="site-header__slack"
-      [href]="slackJoinUrl"
-      target="_blank"
-      rel="noopener noreferrer"
-      [attr.title]="copy.titleSlack"
-      [attr.aria-label]="copy.titleSlack"
-      >{{ copy.headerSlack }}</a
-    >
-    @if (session.profile(); as profile) {
-      <a
-        class="site-header__account"
-        routerLink="/account"
-        routerLinkActive="is-current"
-        [attr.title]="copy.titleAccount"
-      >
-        <img
-          class="site-header__avatar"
-          [src]="profile.picture"
-          width="28"
-          height="28"
-          alt=""
-          decoding="async"
-        />
-        <span>{{ session.firstName() }}</span>
-      </a>
-    } @else {
-      <button
-        type="button"
-        class="site-header__login"
-        (click)="onClientLogin()"
-        [attr.title]="copy.titleLogin"
-      >
-        {{ copy.headerLogin }}
-      </button>
-    }
+    <details class="site-header__menu" #menu>
+      <summary [attr.aria-label]="copy.headerMenu" [attr.title]="copy.headerMenu">
+        <svg class="site-header__burger" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M4 7h16M4 12h16M4 17h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </summary>
+      <div class="site-header__menu-panel" (click)="onMenuNavigate($event)">
+        <a routerLink="/news" routerLinkActive="is-current" [attr.title]="copy.titleNews">{{
+          copy.headerNews
+        }}</a>
+        <a
+          class="site-header__slack"
+          [href]="slackJoinUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          [attr.title]="copy.titleSlack"
+          [attr.aria-label]="copy.titleSlack"
+          >{{ copy.headerSlack }}</a
+        >
+        @if (session.profile(); as profile) {
+          <a
+            class="site-header__account"
+            routerLink="/account"
+            routerLinkActive="is-current"
+            [attr.title]="copy.titleAccount"
+          >
+            <img
+              class="site-header__avatar"
+              [src]="profile.picture"
+              width="28"
+              height="28"
+              alt=""
+              decoding="async"
+            />
+            <span>{{ session.firstName() }}</span>
+          </a>
+        } @else {
+          <button
+            type="button"
+            class="site-header__login"
+            (click)="onClientLogin()"
+            [attr.title]="copy.titleLogin"
+          >
+            {{ copy.headerLogin }}
+          </button>
+        }
+      </div>
+    </details>
     <details class="site-header__lang">
       <summary [attr.aria-label]="copy.headerLang" [attr.title]="copy.headerLang">
         <span class="site-header__lang-code">{{ currentCode }}</span>

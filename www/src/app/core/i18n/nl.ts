@@ -13,6 +13,7 @@ export const NL: SiteCopy = {
   headerSlack: 'Slack joinen',
   headerLogin: 'Klantlogin',
   headerLang: 'Taal',
+  headerMenu: 'Menu',
   headerMarquee:
     "★ Internet, c'est chouette ★ Rust · Wasm · Freelance ★ Interchouette - ITC ★ Gregory Roussac ★",
   footerHome: 'Home',

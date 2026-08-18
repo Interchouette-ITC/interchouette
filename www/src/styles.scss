@@ -68,6 +68,14 @@ html {
   padding: 0;
   width: 100%;
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a:active,
+button:active,
+summary:active,
+[role='button']:active {
+  filter: brightness(0.92);
 }
 
 body {
@@ -139,10 +147,10 @@ main#main {
   app-home-page > app-site-footer .site-footer {
     pointer-events: auto;
     text-align: center;
-    background: #ffffff;
+    background: #eeeaf2;
     color: #160430;
     border-top: 1px solid rgba(22, 4, 32, 0.12);
-    box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -8px 24px rgba(22, 4, 48, 0.14);
   }
 
   main#main:has(> app-home-page) {
