@@ -10,10 +10,12 @@
   --chat-ok: #2fd39a;
   --chat-warn: #f5b942;
   --chat-glass: rgba(255, 255, 255, 0.78);
-  --chat-fab-size: 5rem;
+  --chat-fab-size: 7.25rem;
+  --chat-fab-face: calc(6.15rem - 5px);
   --chat-fab-right: 3.5rem;
   --chat-fab-bottom: 3rem;
-  --chat-fab-radius: 1.65rem;
+  --chat-fab-radius: 2.2rem;
+  --chat-fab-face-radius: calc(1.65rem - 2px);
   font-family: 'Montserrat', sans-serif;
   font-weight: 700;
   display: contents;
@@ -136,6 +138,7 @@
   z-index: 50;
   width: var(--chat-fab-size);
   height: var(--chat-fab-size);
+  padding: 0;
   border: 0;
   border-radius: var(--chat-fab-radius);
   color: #fff;
@@ -200,34 +203,30 @@
 }
 
 .chat-fab__face {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
+  position: relative;
+  z-index: 1;
+  width: var(--chat-fab-face);
+  height: var(--chat-fab-face);
+  border-radius: var(--chat-fab-face-radius);
+  overflow: hidden;
 }
 
 .chat-fab__owl {
-  width: 2.9rem;
-  height: auto;
+  width: 100%;
+  height: 100%;
   display: block;
-  border-radius: 0.55rem;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.28));
-}
-
-.chat-fab__owl--itcy {
-  width: 2.75rem;
-  height: 2.75rem;
   object-fit: cover;
-  border-radius: 0.7rem;
+  object-position: center;
+  border-radius: inherit;
 }
 
 .chat-fab__badge {
   position: absolute;
-  top: 0.42rem;
-  right: 0.42rem;
-  width: 0.72rem;
-  height: 0.72rem;
+  z-index: 2;
+  top: -0.52rem;
+  right: -0.12rem;
+  width: 0.88rem;
+  height: 0.88rem;
   border-radius: 999px;
   border: 2px solid #27084e;
   background: #cfcfcf;
@@ -445,30 +444,26 @@
 .chat-panel__avatar {
   width: 3.25rem;
   height: 3.25rem;
+  padding: 0;
+  border: 0;
   border-radius: 1.05rem;
   overflow: hidden;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06));
-  border: 1px solid rgba(255, 255, 255, 0.34);
-  box-shadow:
-    0 14px 28px rgba(0, 0, 0, 0.28),
-    0 0 0 4px rgba(255, 255, 255, 0.08);
+  display: block;
+  background: transparent;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
 }
 
 .chat-panel__avatar img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  background: rgba(255, 255, 255, 0.12);
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  border-radius: inherit;
+  background: transparent;
   -webkit-user-drag: none;
   user-select: none;
   pointer-events: none;
-}
-
-.chat-panel__avatar img.chat-panel__avatar-img--itcy {
-  object-fit: cover;
-  background: #ece8f2;
 }
 
 .chat-panel__orbit {
@@ -658,12 +653,6 @@
 }
 
 .chat-welcome__mark img {
-  width: 86%;
-  height: auto;
-  object-fit: contain;
-}
-
-.chat-welcome__mark img.chat-welcome__mark-img--itcy {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -708,6 +697,12 @@
 .chat-bubble__link:hover,
 .chat-bubble__link:focus-visible {
   text-decoration-color: rgba(39, 8, 78, 0.7);
+}
+
+.chat-row:not(.chat-row--intro) .chat-bubble .chat-bubble__link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration-color: currentColor;
 }
 
 .chat-welcome__chips {
@@ -830,11 +825,6 @@
 .chat-row__avatar img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  background: #fff;
-}
-
-.chat-row__avatar img.chat-row__avatar-img--itcy {
   object-fit: cover;
   background: #ece8f2;
 }
@@ -948,6 +938,101 @@
   font-size: 0.75rem;
   padding: 0.55rem 0.95rem;
   cursor: pointer;
+}
+
+.chat-bubble__booking {
+  display: inline-flex;
+  margin-top: 0.55rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  background: var(--chat-brand);
+  color: #fff;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.chat-bubble__booking:hover {
+  background: var(--chat-brand-lift);
+}
+
+.chat-panel__booking-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.85rem;
+  margin-bottom: 0.65rem;
+}
+
+.chat-panel__booking-open {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.5rem 0.95rem;
+  background: linear-gradient(135deg, var(--chat-brand) 0%, var(--chat-brand-lift) 100%);
+  color: #fff;
+  font: inherit;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.chat-panel__booking-link {
+  color: var(--chat-brand);
+  font-size: 0.72rem;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.chat-panel__booking {
+  margin-bottom: 0.65rem;
+  border: 1px solid rgba(39, 8, 78, 0.12);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(39, 8, 78, 0.12);
+}
+
+.chat-panel__booking-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid rgba(39, 8, 78, 0.08);
+  background: rgba(244, 240, 250, 0.92);
+}
+
+.chat-panel__booking-head h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--chat-ink);
+}
+
+.chat-panel__booking-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--chat-muted);
+  cursor: pointer;
+}
+
+.chat-panel__booking-close svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.chat-panel__booking-frame {
+  display: block;
+  width: 100%;
+  height: min(28rem, 52vh);
+  border: 0;
+  background: #fff;
 }
 
 .chat-panel__footer {
@@ -1282,19 +1367,24 @@
   }
 }
 
-/* Mobile only — ignored on desktop. Do not edit for desktop spacing. */
-@media (max-width: 480px) {
+/* Mobile + tablet FAB — above footer; hide nudge so the owl is never clipped. */
+@media (max-width: 1279px) {
   :host {
-    --chat-fab-size: 3.65rem;
+    --chat-fab-size: 5.85rem;
+    --chat-fab-face: calc(4.95rem - 4px);
     --chat-fab-right: 1.35rem;
-    --chat-fab-bottom: 1.5rem;
-    --chat-fab-radius: 1.25rem;
+    --chat-fab-bottom: calc(var(--site-footer-mobile-h, 3.1rem) + 1rem);
+    --chat-fab-radius: 1.7rem;
+    --chat-fab-face-radius: calc(1.25rem - 2px);
   }
 
-  .chat-fab__owl {
-    width: 2.05rem;
+  .chat-nudge {
+    display: none;
   }
+}
 
+/* Small phones — centered chat panel. */
+@media (max-width: 480px) {
   .chat-panel {
     right: max(0.65rem, env(safe-area-inset-right));
     left: max(0.65rem, env(safe-area-inset-left));

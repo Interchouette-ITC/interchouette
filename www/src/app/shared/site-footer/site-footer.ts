@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+
+import { LocaleService } from '../../core/locale.service';
 
 @Component({
   selector: 'app-site-footer',
@@ -14,4 +16,5 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 export class SiteFooter {
   /** Calendar year for copyright line. */
   readonly currentYear = new Date().getFullYear();
+  protected readonly copy = inject(LocaleService).copy;
 }

@@ -1,0 +1,16 @@
+<article class="inner-page">
+  <a class="back" routerLink="/">&larr; Interchouette</a>
+  <h1>{{ copy.accountTitle }}</h1>
+  @if (session.profile(); as profile) {
+    <p>{{ profile.name }}</p>
+    <p>{{ copy.accountStub }}</p>
+  } @else {
+    <p>{{ copy.accountStub }}</p>
+    <p>
+      <button type="button" class="account-signin" (click)="onSignIn()">
+        {{ copy.accountSignIn }}
+      </button>
+    </p>
+  }
+</article>
+<app-site-footer />

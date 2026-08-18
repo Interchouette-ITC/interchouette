@@ -28,5 +28,9 @@ describe('SeoService', () => {
       `${SITE_ORIGIN}/terms`,
     );
     expect(meta.getTag('property="og:url"')?.content).toBe(`${SITE_ORIGIN}/terms`);
+    const nl = document.head.querySelector('link[rel="alternate"][hreflang="nl"]');
+    const xDefault = document.head.querySelector('link[rel="alternate"][hreflang="x-default"]');
+    expect(nl?.getAttribute('href')).toBe('https://interchouette.nl/terms');
+    expect(xDefault?.getAttribute('href')).toBe(`${SITE_ORIGIN}/terms`);
   });
 });

@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { SITE_ORIGIN } from './seo.constants';
 
 /** Public pages agents may open (Angular paths, no leading slash except home). */
-export const WEBMCP_PAGE_PATHS = ['', 'CV', 'about', 'privacy', 'terms'] as const;
+export const WEBMCP_PAGE_PATHS = ['', 'CV', 'about', 'privacy', 'terms', 'news'] as const;
 export type WebMcpPagePath = (typeof WEBMCP_PAGE_PATHS)[number];
 
 const EMPTY_INPUT_SCHEMA = {
@@ -18,8 +18,8 @@ const OPEN_PAGE_INPUT_SCHEMA = {
   properties: {
     path: {
       type: 'string' as const,
-      description: 'Angular route path: empty string for home, or CV, about, privacy, terms.',
-      enum: ['', 'CV', 'about', 'privacy', 'terms'] as const,
+      description: 'Angular route path: empty string for home, or CV, about, privacy, terms, news.',
+      enum: ['', 'CV', 'about', 'privacy', 'terms', 'news'] as const,
     },
   },
   required: ['path'] as const,
@@ -41,6 +41,7 @@ export function siteOverviewText(): string {
     `CV: ${SITE_ORIGIN}/CV`,
     `CV PDF: ${SITE_ORIGIN}/CV/Gregory_Roussac.pdf`,
     `About: ${SITE_ORIGIN}/about`,
+    `News: ${SITE_ORIGIN}/news`,
     `Privacy: ${SITE_ORIGIN}/privacy`,
     `Terms: ${SITE_ORIGIN}/terms`,
     'Contact email: contact@interchouette.net',
@@ -113,7 +114,7 @@ export function createOpenPageWebMcpTools() {
     {
       name: 'open_public_page',
       description:
-        'Navigates this browser tab to a public Interchouette page. Use path "" for home, or CV, about, privacy, terms.',
+        'Navigates this browser tab to a public Interchouette page. Use path "" for home, or CV, about, privacy, terms, news.',
       inputSchema: OPEN_PAGE_INPUT_SCHEMA,
       execute: ({ path }: { path: string }) => {
         if (!isWebMcpPagePath(path)) {

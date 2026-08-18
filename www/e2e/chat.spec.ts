@@ -15,7 +15,7 @@ test.describe('chat widget', () => {
     if (await consent.isVisible().catch(() => false)) {
       await page.getByRole('button', { name: 'Decline' }).click();
     }
-    const fab = page.getByRole('button', { name: /Open chat/i });
+    const fab = page.locator('app-chat-widget').getByRole('button', { name: /Open chat/i });
     await expect(fab).toBeVisible({ timeout: 15_000 });
     await fab.click();
     const panel = page.locator('#interchouette-chat-panel');

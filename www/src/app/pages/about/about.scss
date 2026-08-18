@@ -7,9 +7,10 @@
 }
 
 :host {
-  display: block;
   font-family: 'Montserrat', sans-serif;
   font-weight: 400;
+  padding-top: 2.15rem;
+  box-sizing: border-box;
 }
 
 @media screen and (min-width: 1280px) {

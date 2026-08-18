@@ -105,6 +105,97 @@ impl SlackRelay {
         self.post_raw(channel, thread_ts, text).await
     }
 
+    #[must_use]
+    pub fn greg_user_id(&self) -> Option<&str> {
+        self.inner.as_ref().map(|inner| inner.greg_user_id.as_str())
+    }
+
+    /// Parent line of a Slack thread (session header with `[ticket]`).
+    pub async fn thread_parent_text(
+        &self,
+        channel: &str,
+        thread_ts: &str,
+    ) -> anyhow::Result<String> {
+        let Some(inner) = &self.inner else {
+            anyhow::bail!("slack relay not configured");
+        };
+        let url = format!(
+            "https://slack.com/api/conversations.replies?channel={channel}&ts={thread_ts}&limit=1"
+        );
+        let resp = inner
+            .client
+            .get(url)
+            .bearer_auth(&inner.token)
+            .send()
+            .await?;
+        let body: serde_json::Value = resp.json().await?;
+        if body["ok"] != true {
+            anyhow::bail!(
+                "conversations.replies: {}",
+                body["error"].as_str().unwrap_or("unknown")
+            );
+        }
+        body["messages"][0]["text"]
+            .as_str()
+            .map(str::to_string)
+            .ok_or_else(|| anyhow::anyhow!("conversations.replies missing parent text"))
+    }
+
+    /// Greg replies in a session thread. Skips the parent header and bot lines.
+    pub async fn greg_thread_replies(
+        &self,
+        channel: &str,
+        thread_ts: &str,
+    ) -> anyhow::Result<Vec<(String, String)>> {
+        let Some(inner) = &self.inner else {
+            anyhow::bail!("slack relay not configured");
+        };
+        let url = format!(
+            "https://slack.com/api/conversations.replies?channel={channel}&ts={thread_ts}&limit=200"
+        );
+        let resp = inner
+            .client
+            .get(url)
+            .bearer_auth(&inner.token)
+            .send()
+            .await?;
+        let body: serde_json::Value = resp.json().await?;
+        if body["ok"] != true {
+            anyhow::bail!(
+                "conversations.replies: {}",
+                body["error"].as_str().unwrap_or("unknown")
+            );
+        }
+        let greg = inner.greg_user_id.as_str();
+        let mut out = Vec::new();
+        let Some(messages) = body["messages"].as_array() else {
+            return Ok(out);
+        };
+        for msg in messages {
+            let Some(ts) = msg["ts"].as_str() else {
+                continue;
+            };
+            if ts == thread_ts {
+                continue;
+            }
+            if msg.get("bot_id").is_some() {
+                continue;
+            }
+            if msg["user"].as_str() != Some(greg) {
+                continue;
+            }
+            let Some(text) = msg["text"]
+                .as_str()
+                .map(str::trim)
+                .filter(|t| !t.is_empty())
+            else {
+                continue;
+            };
+            out.push((ts.to_string(), text.to_string()));
+        }
+        Ok(out)
+    }
+
     /// Convenience: open DM and post a top-level tagged line (resume / probes).
     pub async fn post_session_line(
         &self,

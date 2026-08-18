@@ -2,9 +2,71 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <script>
+      (() => {
+        const params = new URLSearchParams(location.search);
+        const q = params.get('lang');
+        let locale = 'en';
+        if (q === 'nl' || q === 'fr' || q === 'en') {
+          locale = q;
+        } else if (/\.nl$/i.test(location.hostname)) {
+          locale = 'nl';
+        } else if (/\.fr$/i.test(location.hostname)) {
+          locale = 'fr';
+        }
+        const html = document.documentElement;
+        html.lang = locale;
+        html.setAttribute('data-locale', locale);
+        if (locale !== 'en') {
+          window.setTimeout(() => html.classList.add('app-ready'), 4000);
+        }
+      })();
+    </script>
     <title>Gregory Roussac - Rust / Wasm Freelance Developer - Interchouette - ITC</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer-when-downgrade" />
+    <style>
+      /* Home mobile/tablet layout: must load with HTML (not lazy chunks). */
+      @media screen and (max-width: 1279px) {
+        app-home-page {
+          display: grid;
+          grid-template-rows: 1fr auto 1fr;
+          width: 100%;
+          min-height: 100svh;
+          min-height: 100dvh;
+          box-sizing: border-box;
+          padding-top: calc(var(--site-header-height, 2.85rem) + var(--home-logo-clear, 5rem));
+          padding-bottom: calc(
+            var(--site-footer-mobile-h, 3.1rem) + env(safe-area-inset-bottom, 0px)
+          );
+        }
+        app-home-page > .card {
+          grid-row: 2;
+          align-self: center;
+          margin: 0;
+        }
+        app-home-page > app-site-footer {
+          position: fixed;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 40;
+          width: 100%;
+          margin: 0;
+          padding: 0;
+          grid-row: 3;
+          align-self: end;
+        }
+        app-home-page > app-site-footer .site-footer {
+          text-align: center;
+          background: #ffffff;
+          color: #160430;
+          border-top: 1px solid rgba(22, 4, 32, 0.12);
+          box-shadow: 0 -4px 14px rgba(0, 0, 0, 0.1);
+        }
+      }
+    </style>
     <meta
       name="description"
       content="Gregory Roussac, Rust and Wasm freelance developer (Interchouette ITC). Contact, CV, and links."
@@ -119,5 +181,13 @@
   </head>
   <body>
     <app-root></app-root>
+    <script>
+      (() => {
+        if (document.documentElement.getAttribute('data-locale') === 'en') {
+          return;
+        }
+        document.querySelector('app-root')?.replaceChildren();
+      })();
+    </script>
   </body>
 </html>

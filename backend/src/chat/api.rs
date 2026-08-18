@@ -15,7 +15,7 @@ use crate::chat::hub::{ChatEvent, Hub};
 use crate::chat::llm::AwayBrain;
 use crate::chat::locale::ChatLocale;
 use crate::chat::presence::{PresenceMode, PresenceSource};
-use crate::chat::sessions::{Session, SessionRegistry};
+use crate::chat::sessions::{ChatLine, Session, SessionRegistry};
 use crate::chat::slack::SlackRelay;
 
 /// Shared chat runtime.
@@ -41,11 +41,56 @@ impl ChatState {
         }
     }
 
-    /// Start Slack Socket Mode so Greg DM replies reach live browsers,
-    /// plus a presence poller so open chats flip live/away with Slack.
+    /// Slack inbound: Socket Mode on prod, HTTP thread read on local.
     pub fn spawn_background_tasks(&self) {
         crate::chat::socket::spawn_inbound(self.clone());
         spawn_presence_watcher(self.clone());
+    }
+
+    /// Append to the session transcript and fan out over WebSocket when connected.
+    pub async fn push_message(&self, session_id: &str, role: &str, text: &str) -> String {
+        let id = Uuid::new_v4().to_string();
+        self.try_push_message(session_id, &id, role, text).await;
+        id
+    }
+
+    /// Insert a chat line with a stable id (Slack `ts`). No-op when already stored.
+    pub async fn try_push_message(
+        &self,
+        session_id: &str,
+        id: &str,
+        role: &str,
+        text: &str,
+    ) -> bool {
+        let trimmed = text.trim().to_string();
+        if trimmed.is_empty() {
+            return false;
+        }
+        let inserted = self
+            .sessions
+            .push_line(
+                session_id,
+                ChatLine {
+                    id: id.to_string(),
+                    role: role.to_string(),
+                    text: trimmed.clone(),
+                },
+            )
+            .await;
+        if !inserted {
+            return false;
+        }
+        self.hub
+            .publish(
+                session_id,
+                ChatEvent::Message {
+                    id: id.to_string(),
+                    role: role.to_string(),
+                    text: trimmed,
+                },
+            )
+            .await;
+        true
     }
 }
 
@@ -173,13 +218,31 @@ async fn handle_socket(socket: WebSocket, session_id: String, state: ChatState) 
         ))
         .await;
 
+    for line in state.sessions.lines(&session_id).await {
+        let _ = send_line(&mut sender, &line).await;
+    }
+
+    let send_state = state.clone();
+    let send_session_id = session_id.clone();
     let mut send_task = tokio::spawn(async move {
-        while let Ok(event) = rx.recv().await {
-            let Ok(text) = serde_json::to_string(&event) else {
-                continue;
-            };
-            if sender.send(Message::Text(text.into())).await.is_err() {
-                break;
+        loop {
+            match rx.recv().await {
+                Ok(event) => {
+                    if send_chat_event(&mut sender, &event).await.is_err() {
+                        break;
+                    }
+                }
+                Err(tokio::sync::broadcast::error::RecvError::Lagged(skipped)) => {
+                    tracing::warn!(
+                        session = %send_session_id,
+                        skipped,
+                        "WS broadcast lagged; replaying session transcript"
+                    );
+                    for line in send_state.sessions.lines(&send_session_id).await {
+                        let _ = send_line(&mut sender, &line).await;
+                    }
+                }
+                Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
             }
         }
     });
@@ -211,6 +274,29 @@ fn presence_event(mode: PresenceMode) -> ChatEvent {
         mode: mode.as_str().into(),
         label: mode.label().into(),
     }
+}
+
+async fn send_chat_event(
+    sender: &mut futures_util::stream::SplitSink<WebSocket, Message>,
+    event: &ChatEvent,
+) -> Result<(), axum::Error> {
+    let text = serde_json::to_string(event).unwrap_or_default();
+    sender.send(Message::Text(text.into())).await
+}
+
+async fn send_line(
+    sender: &mut futures_util::stream::SplitSink<WebSocket, Message>,
+    line: &ChatLine,
+) -> Result<(), axum::Error> {
+    send_chat_event(
+        sender,
+        &ChatEvent::Message {
+            id: line.id.clone(),
+            role: line.role.clone(),
+            text: line.text.clone(),
+        },
+    )
+    .await
 }
 
 /// Re-read Slack presence, update the session when it flipped, push WS when asked.
@@ -304,17 +390,7 @@ async fn handle_client_msg(state: &ChatState, session_id: &str, msg: ClientWsMes
 }
 
 async fn publish_role(state: &ChatState, session_id: &str, role: &str, text: &str) {
-    state
-        .hub
-        .publish(
-            session_id,
-            ChatEvent::Message {
-                id: Uuid::new_v4().to_string(),
-                role: role.into(),
-                text: text.into(),
-            },
-        )
-        .await;
+    state.push_message(session_id, role, text).await;
 }
 
 async fn ensure_session_thread(state: &ChatState, session: &Session) -> Option<(String, String)> {
@@ -380,7 +456,16 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
             },
         )
         .await;
-    let reply = state.away.reply(text, session.locale).await;
+    let lines = state.sessions.lines(session_id).await;
+    let email = state
+        .sessions
+        .get(session_id)
+        .await
+        .and_then(|s| s.visitor_email);
+    let reply = state
+        .away
+        .reply(text, session.locale, &lines, email.as_deref())
+        .await;
     state
         .hub
         .publish(
@@ -392,11 +477,6 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
         )
         .await;
     publish_role(state, session_id, "itcy", &reply).await;
-    let email = state
-        .sessions
-        .get(session_id)
-        .await
-        .and_then(|s| s.visitor_email);
     let mirror = email.map_or_else(
         || format!("ITCy: {reply}"),
         |e| format!("ITCy: {reply}\n(visitor email: {e})"),
@@ -443,7 +523,7 @@ mod tests {
         let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
         assert_eq!(body["mode"], "away");
         assert!(body["session_id"].as_str().unwrap().len() > 10);
-        assert!(body["short_code"].as_str().unwrap().starts_with("IC-"));
+        assert_eq!(body["short_code"].as_str().unwrap().len(), 8);
     }
 
     #[tokio::test]
@@ -496,7 +576,7 @@ mod tests {
             .await;
         let mut rx = state.hub.subscribe(&session.id).await;
         let tagged = format!("[{}] hello from Greg", session.short_code);
-        assert!(crate::chat::forward_greg_reply(&state, &tagged, None).await);
+        assert!(crate::chat::forward_greg_reply(&state, &tagged, None, None).await);
         let event = rx.recv().await.expect("hub event");
         match event {
             ChatEvent::Message { role, text, .. } => {
@@ -520,7 +600,8 @@ mod tests {
             .await;
         let mut rx = state.hub.subscribe(&session.id).await;
         assert!(
-            crate::chat::forward_greg_reply(&state, "hello from thread", Some("171.999")).await
+            crate::chat::forward_greg_reply(&state, "hello from thread", Some("171.999"), None)
+                .await
         );
         let event = rx.recv().await.expect("hub event");
         match event {

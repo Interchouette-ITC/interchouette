@@ -18,7 +18,7 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular/build:application",
+          "builder": "@ngx-env/builder:application",
           "options": {
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
@@ -32,12 +32,20 @@
             ],
             "server": "src/main.server.ts",
             "outputMode": "static",
+            "ngxEnv": {
+              "root": "..",
+              "prefix": "^(CHAT_WIDGET_ENABLED|GIS_CLIENT_ID)$"
+            },
             "security": {
               "allowedHosts": [
                 "localhost",
                 "127.0.0.1",
                 "interchouette.net",
-                "www.interchouette.net"
+                "www.interchouette.net",
+                "interchouette.nl",
+                "www.interchouette.nl",
+                "interchouette.fr",
+                "www.interchouette.fr"
               ]
             },
             "ssr": {
@@ -69,11 +77,18 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular/build:dev-server",
+          "builder": "@ngx-env/builder:dev-server",
           "options": {
             "liveReload": true,
             "hmr": true,
-            "allowedHosts": ["localhost", "127.0.0.1"]
+            "allowedHosts": [
+              "localhost",
+              "127.0.0.1",
+              "interchouette.nl",
+              "www.interchouette.nl",
+              "interchouette.fr",
+              "www.interchouette.fr"
+            ]
           },
           "configurations": {
             "production": {
@@ -86,7 +101,7 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@ngx-env/builder:unit-test"
         }
       }
     }

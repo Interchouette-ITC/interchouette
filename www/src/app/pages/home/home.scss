@@ -1,20 +1,23 @@
 :host {
-  display: block;
   font-family: 'Montserrat', sans-serif;
   width: 100%;
   margin: 0;
-  /* Desktop: light greys as before. Mobile overrides below for WCAG AA. */
-  --home-title: #808080;
-  --home-muted: #a9a9a9;
+  /* Darker greys on white card for WCAG AA at every breakpoint. */
+  --home-title: #595959;
+  --home-muted: #666666;
+  --home-header-h: var(--site-header-height, 2.85rem);
+  --home-logo-hang: calc(2.65rem + 20px);
+  --home-logo-clear: calc(var(--home-logo-hang) + 6px);
 }
 
-/* Desktop: room for fixed footer + vertical center of the card. */
+/* Mobile/tablet layout is in global styles.scss + index.html critical CSS. */
+/* Desktop: room for fixed header, hanging logo, fixed footer, vertical center of the card. */
 @media screen and (min-width: 1280px) {
   :host {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: calc(100dvh - var(--home-header-h));
+    padding-top: calc(var(--home-header-h) + var(--home-logo-clear));
     padding-bottom: 2.75rem;
     box-sizing: border-box;
   }
@@ -25,11 +28,101 @@
   }
 }
 
-/* Lighthouse mobile / narrow viewports: darker muted text on white. */
+.card {
+  position: relative;
+  overflow: visible;
+  z-index: 20;
+}
+
+.card-logo-dock {
+  position: absolute;
+  z-index: 6;
+  left: 0.45rem;
+  top: calc(-1 * var(--home-logo-hang));
+}
+
+.card-logo-btn {
+  display: block;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.card-logo {
+  width: 11.5rem;
+  height: auto;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  background: transparent;
+}
+
+.card-logo-nudge {
+  position: absolute;
+  left: calc(100% + 0.45rem);
+  top: 58%;
+  z-index: 7;
+  width: max-content;
+  max-width: min(15.5rem, calc(100vw - 2rem));
+  margin: 0;
+  padding: 0.65rem 0.95rem 0.75rem;
+  border: 1px solid rgba(255, 182, 210, 0.85);
+  border-radius: 1.15rem;
+  cursor: pointer;
+  color: #1a0f24;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+  text-align: left;
+  background: linear-gradient(160deg, #ffe4f0 0%, #fff7fb 48%, #ffffff 100%);
+  box-shadow: 0 12px 28px rgba(39, 8, 78, 0.18);
+}
+
+.card-logo-nudge:hover {
+  filter: brightness(0.98);
+}
+
+.card-logo-nudge__text {
+  display: block;
+  white-space: normal;
+}
+
+.card-logo-nudge__arrow {
+  position: absolute;
+  left: -0.52rem;
+  top: 58%;
+  width: 0.85rem;
+  height: 0.85rem;
+  background: linear-gradient(135deg, #fff7fb 30%, #ffffff 100%);
+  border-left: 1px solid rgba(255, 182, 210, 0.85);
+  border-bottom: 1px solid rgba(255, 182, 210, 0.85);
+  transform: translateY(-50%) rotate(45deg);
+  box-shadow: -2px 2px 6px rgba(39, 8, 78, 0.08);
+  pointer-events: none;
+}
+
 @media (max-width: 727px) {
-  :host {
-    --home-title: #595959;
-    --home-muted: #666666;
+  .card-logo-nudge {
+    left: 0;
+    top: calc(100% + 0.45rem);
+    max-width: min(16rem, calc(100vw - 2.5rem));
+  }
+
+  .card-logo-nudge__arrow {
+    left: 1.35rem;
+    top: -0.52rem;
+    border-left: 0;
+    border-bottom: 0;
+    border-right: 1px solid rgba(255, 182, 210, 0.85);
+    border-top: 1px solid rgba(255, 182, 210, 0.85);
+    transform: rotate(45deg);
   }
 }
 
@@ -40,12 +133,39 @@
   margin-inline-end: 0.28em;
 }
 
+/* Shared purple bar: vertical middle for every breakpoint */
+.location {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+  background-color: #27084e;
+  margin-left: 7%;
+  margin-right: 7%;
+  border-radius: 8px;
+  box-sizing: border-box;
+  padding: 0.7em 1.15em;
+  cursor: pointer;
+}
+
+.location,
+.location * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.location img {
+  -webkit-user-drag: none;
+}
+
 .location > a {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  line-height: 1;
+  min-height: 1.15rem;
+  line-height: 1.15;
   text-decoration: none;
   color: white;
 }
@@ -54,7 +174,9 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 0.85em;
+  justify-content: center;
+  gap: 0.65em;
+  max-width: 100%;
 }
 
 .location__label {
@@ -112,30 +234,13 @@
   box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
 }
 
-/* Shared purple bar: vertical middle for every breakpoint */
-.location {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: white;
-  background-color: #27084e;
-  margin-left: 7%;
-  margin-right: 7%;
-  border-radius: 8px;
-  box-sizing: border-box;
-  padding: 0.7em 1.15em;
-  cursor: pointer;
-}
-
 /*---------- Responsive Grid ---------------*/
 
-/* Mobile portrait — keep close to the known-good mobile look */
-@media (min-width: 100px) and (max-width: 727px) and (orientation: portrait) {
+/* Mobile portrait: keep close to the known-good mobile look */
+@media (min-width: 320px) and (max-width: 727px) and (orientation: portrait) {
   :host {
     width: 100%;
     margin: 0;
-    overflow-x: hidden;
   }
 
   hr {
@@ -148,7 +253,7 @@
   .card {
     margin-left: 5%;
     margin-right: 5%;
-    padding: 0 1.35rem 1.5rem;
+    padding: 1.75rem 1.35rem 1.25rem;
     box-sizing: border-box;
     background-color: white;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
@@ -163,7 +268,8 @@
 
   .avatar img {
     border: 15px solid white;
-    margin-bottom: -20% !important;
+    margin-top: 0.35rem;
+    margin-bottom: -14% !important;
     border-radius: 50%;
     width: 33%;
     height: auto;
@@ -176,9 +282,19 @@
     font-size: clamp(1.7rem, 7.2vw, 2.35em);
     line-height: 1.15;
     color: var(--home-title);
-    margin-top: 16%;
-    margin-bottom: 0.45em;
+    margin-top: 12%;
+    margin-bottom: 0.35em;
     text-transform: capitalize;
+  }
+
+  .promise {
+    text-align: center;
+    font-size: clamp(0.88rem, 3.4vw, 1rem);
+    line-height: 1.4;
+    font-weight: 700;
+    color: var(--home-muted);
+    margin: 0 0 0.65em;
+    padding-inline: 0.35rem;
   }
 
   .subtitle {
@@ -193,26 +309,44 @@
   p.icons {
     font-size: 16px;
     text-align: center;
-    margin: 1.25rem 0 0.35rem;
+    margin: 1.15rem 0 0.5rem;
     color: var(--home-muted);
+  }
+
+  .icons .fa-lg {
+    margin-bottom: 12px;
   }
 
   .location {
     font-size: 0.95em;
     min-height: 2.9rem;
-    padding: 0.85em 1.25em;
+    padding: 0.75em 0.9em;
     margin-left: 0;
     margin-right: 0;
     margin-bottom: 0.15rem;
   }
+
+  .location__cluster {
+    gap: 0.5em;
+  }
+
+  .location__point {
+    position: static;
+    right: auto;
+    top: auto;
+    margin: 0;
+    transform: none;
+    width: 1.1em;
+    height: auto;
+    flex-shrink: 0;
+  }
 }
 
-/* Mobile landscape — keep close to existing */
-@media (min-width: 100px) and (max-width: 727px) and (orientation: landscape) {
+/* Mobile landscape: keep close to existing */
+@media (min-width: 320px) and (max-width: 727px) and (orientation: landscape) {
   :host {
     width: 100%;
     margin: 0;
-    overflow-x: hidden;
   }
 
   hr {
@@ -225,7 +359,7 @@
   .card {
     margin-left: 9%;
     margin-right: 0;
-    padding: 0 1.1rem 1.1rem;
+    padding: 1.35rem 1.1rem 1.1rem;
     box-sizing: border-box;
     background-color: white;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
@@ -254,8 +388,18 @@
     line-height: 1.15;
     color: var(--home-title);
     margin-top: 16%;
-    margin-bottom: 0.35em;
+    margin-bottom: 0.3em;
     text-transform: capitalize;
+  }
+
+  .promise {
+    text-align: center;
+    font-size: clamp(1rem, 2.8vw, 1.2em);
+    line-height: 1.35;
+    font-weight: 700;
+    color: var(--home-muted);
+    margin: 0 0 0.55em;
+    padding-inline: 0.35rem;
   }
 
   .subtitle {
@@ -285,13 +429,12 @@
 
 /*
  * Tablet → small laptop (728–1499).
- * Do not use the desktop 35% card here — that reads as a tiny mobile strip.
+ * Do not use the desktop 35% card here: that reads as a tiny mobile strip.
  */
 @media screen and (min-width: 728px) and (max-width: 1499px) {
   :host {
     width: 100%;
     margin: 0;
-    overflow-x: hidden;
   }
 
   hr {
@@ -329,8 +472,17 @@
     font-size: clamp(2rem, 3.2vw, 2.55em);
     color: var(--home-title);
     margin-top: 14%;
-    margin-bottom: 0.35em;
+    margin-bottom: 0.3em;
     text-transform: capitalize;
+  }
+
+  .promise {
+    text-align: center;
+    font-size: clamp(1rem, 1.6vw, 1.15em);
+    font-weight: 700;
+    color: var(--home-muted);
+    margin: 0 0 0.55em;
+    padding-inline: 0.75rem;
   }
 
   .subtitle {
@@ -394,8 +546,16 @@
     font-size: 2.8em;
     color: var(--home-title);
     margin-top: 15%;
-    margin-bottom: auto;
+    margin-bottom: 0.2em;
     text-transform: capitalize;
+  }
+
+  .promise {
+    text-align: center;
+    font-size: 1.15em;
+    font-weight: 700;
+    color: var(--home-muted);
+    margin: 0 8% 0.55em;
   }
 
   hr {
@@ -428,6 +588,39 @@
 }
 
 /*---------- Responsive Grid Ends ---------------*/
+
+@media (max-width: 727px) {
+  :host {
+    --home-logo-hang: calc(1.85rem + 10px);
+  }
+
+  .card-logo {
+    width: 8rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .card-logo {
+    width: 7rem;
+    left: 0.35rem;
+  }
+}
+
+@media (min-width: 320px) and (max-width: 400px) and (orientation: portrait) {
+  .card {
+    padding-top: 2.4rem;
+    padding-bottom: 1.2rem;
+  }
+
+  .avatar img {
+    margin-top: 0.85rem;
+    margin-bottom: -12% !important;
+  }
+
+  .name {
+    margin-top: 10%;
+  }
+}
 
 /*---------- ICONS ---------------*/
 
@@ -492,6 +685,20 @@
 
 .avatar {
   text-align: center;
+  position: relative;
+  z-index: 3;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.avatar img {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+}
+
+h1.name {
+  font-weight: 700;
 }
 
 .avatar--chat {

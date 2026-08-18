@@ -4,14 +4,7 @@ import { RouterLink } from '@angular/router';
 
 import { AnalyticsService } from '../../core/analytics.service';
 import { ConsentService } from '../../core/consent.service';
-
-const COOKIE_BANNER_JOKES = [
-  'We baked non-essential cookies. Want a bite for analytics?',
-  'Cookie jar open: optional crumbs only (no judgment if you pass).',
-  'These cookies are digital. Zero calories. Still need a yes.',
-  'Accept for analytics cookies, or decline and keep the diet.',
-  'Milk and cookies at night? Same energy: optional, comforting, and your call.',
-] as const;
+import { LocaleService } from '../../core/locale.service';
 
 @Component({
   selector: 'app-consent-banner',
@@ -27,11 +20,9 @@ export class ConsentBanner {
   private readonly platformId = inject(PLATFORM_ID);
   protected readonly consent = inject(ConsentService);
   private readonly analytics = inject(AnalyticsService);
+  protected readonly copy = inject(LocaleService).copy;
 
-  protected readonly joke = signal(
-    COOKIE_BANNER_JOKES[Math.floor(Math.random() * COOKIE_BANNER_JOKES.length)] ??
-      COOKIE_BANNER_JOKES[0],
-  );
+  protected readonly joke = signal(this.pickJoke());
 
   protected readonly visible = signal(false);
 
@@ -52,5 +43,10 @@ export class ConsentBanner {
   protected reject(): void {
     this.consent.reject();
     this.visible.set(false);
+  }
+
+  private pickJoke(): string {
+    const jokes = this.copy.consent.jokes;
+    return jokes[Math.floor(Math.random() * jokes.length)] ?? jokes[0] ?? '';
   }
 }

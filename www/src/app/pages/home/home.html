@@ -1,8 +1,39 @@
 <div class="card animated fadeIn">
+  <div #logoDock class="card-logo-dock">
+    @if (logoHintVisible()) {
+      <button
+        type="button"
+        class="card-logo-nudge"
+        (click)="dismissLogoHint($event)"
+        [attr.aria-label]="logoHintCopy()"
+      >
+        <span class="card-logo-nudge__text">{{ logoHintCopy() }}</span>
+        <span class="card-logo-nudge__arrow" aria-hidden="true"></span>
+      </button>
+    }
+    <button
+      type="button"
+      class="card-logo-btn"
+      (click)="onCardLogoClick($event)"
+      [attr.aria-label]="copy.home.cardLogoLabel"
+      [attr.aria-expanded]="logoHintVisible()"
+    >
+      <img
+        class="card-logo"
+        src="/img/logo.png"
+        width="253"
+        height="141"
+        alt=""
+        draggable="false"
+        decoding="async"
+      />
+    </button>
+  </div>
   <div class="avatar">
     <img
       class="center animated rollIn"
       src="/img/avatar-244.webp"
+      draggable="false"
       srcset="
         /img/avatar-1x.webp  200w,
         /img/avatar-244.webp 244w,
@@ -10,9 +41,9 @@
         /img/avatar-2x.webp  379w
       "
       sizes="(max-width: 727px) 30vw, (max-width: 1499px) 22vw, 200px"
-      alt="Gregory Roussac, Interchouette ITC"
+      [attr.alt]="copy.home.altAvatar"
       width="379"
-      height="353"
+      height="412"
       decoding="async"
       fetchpriority="high"
       [class.avatar--chat]="chat.ready()"
@@ -26,8 +57,9 @@
     />
   </div>
   <hr />
-  <div class="name">Gregory Roussac</div>
-  <p class="subtitle">Rust - Wasm Freelance Developer</p>
+  <h1 class="name">Gregory Roussac</h1>
+  <p class="promise">{{ copy.homePromise }}</p>
+  <p class="subtitle">{{ copy.homeSubtitle }}</p>
   <p class="location" [attr.title]="contactTitle()" (click)="onContactClick($event)">
     <a
       id="contact"
@@ -45,10 +77,16 @@
             width="28"
             height="23"
             alt=""
+            draggable="false"
             decoding="async"
             aria-hidden="true"
           />
-          <i class="fa fa-comments" aria-hidden="true" data-chat title="Chat with the team"></i>
+          <i
+            class="fa fa-comments"
+            aria-hidden="true"
+            data-chat
+            [attr.title]="copy.home.chatIcon"
+          ></i>
         }
         @if (!chatEnabled) {
           <i class="fa fa-envelope-o" aria-hidden="true" data-mail [attr.title]="email"></i>
@@ -61,11 +99,7 @@
     </a>
   </p>
   <p class="icons animated pulse">
-    <a
-      routerLink="/CV"
-      title="Open CV of Gregory Roussac (PDF)"
-      aria-label="Open CV of Gregory Roussac (PDF)"
-    >
+    <a routerLink="/CV" [attr.title]="copy.home.cv" [attr.aria-label]="copy.home.cv">
       <span class="fa-stack fa-lg" aria-hidden="true">
         <i class="fa fa-circle-thin fa-stack-2x"></i>
         <i class="fa fa-file-pdf-o fa-stack-1x"></i>
@@ -75,8 +109,8 @@
       href="https://github.com/Interchouette-ITC"
       target="_blank"
       rel="noopener noreferrer"
-      title="GitHub organization Interchouette ITC (opens in a new tab)"
-      aria-label="GitHub organization Interchouette ITC (opens in a new tab)"
+      [attr.title]="copy.home.github"
+      [attr.aria-label]="copy.home.github"
     >
       <span class="fa-stack fa-lg" aria-hidden="true">
         <i class="fa fa-circle-thin fa-stack-2x"></i>
@@ -87,8 +121,8 @@
       href="https://www.linkedin.com/in/gregoryroussac/"
       target="_blank"
       rel="noopener noreferrer"
-      title="LinkedIn profile of Gregory Roussac (opens in a new tab)"
-      aria-label="LinkedIn profile of Gregory Roussac (opens in a new tab)"
+      [attr.title]="copy.home.linkedin"
+      [attr.aria-label]="copy.home.linkedin"
     >
       <span class="fa-stack fa-lg" aria-hidden="true">
         <i class="fa fa-circle-thin fa-stack-2x"></i>
@@ -100,8 +134,8 @@
       [href]="whatsappHref"
       target="_blank"
       rel="noopener noreferrer"
-      title="WhatsApp Interchouette (opens in a new tab)"
-      aria-label="WhatsApp Interchouette (opens in a new tab)"
+      [attr.title]="copy.home.whatsapp"
+      [attr.aria-label]="copy.home.whatsapp"
     >
       <span class="fa-stack fa-lg" aria-hidden="true">
         <i class="fa fa-circle-thin fa-stack-2x"></i>
@@ -112,8 +146,8 @@
       href="https://signal.me/#u/interchouette.42"
       target="_blank"
       rel="noopener noreferrer"
-      title="Signal username interchouette.42 (opens in a new tab)"
-      aria-label="Signal username interchouette.42 (opens in a new tab)"
+      [attr.title]="copy.home.signal"
+      [attr.aria-label]="copy.home.signal"
     >
       <span class="fa-stack fa-lg" aria-hidden="true">
         <i class="fa fa-circle-thin fa-stack-2x"></i>
@@ -134,8 +168,8 @@
       href="https://join.slack.com/t/interchouette/shared_invite/zt-2urug9dmr-PYzageTbj8bxD5c3n39QuA"
       target="_blank"
       rel="noopener noreferrer"
-      title="Slack workspace Interchouette (opens in a new tab)"
-      aria-label="Slack workspace Interchouette (opens in a new tab)"
+      [attr.title]="copy.home.slack"
+      [attr.aria-label]="copy.home.slack"
     >
       <span class="fa-stack fa-lg" aria-hidden="true">
         <i class="fa fa-circle-thin fa-stack-2x"></i>
@@ -146,8 +180,8 @@
       href="https://twitter.com/interchouette"
       target="_blank"
       rel="noopener noreferrer"
-      title="X (Twitter) Interchouette (opens in a new tab)"
-      aria-label="X (Twitter) Interchouette (opens in a new tab)"
+      [attr.title]="copy.home.twitter"
+      [attr.aria-label]="copy.home.twitter"
     >
       <span class="fa-stack fa-lg" aria-hidden="true">
         <i class="fa fa-circle-thin fa-stack-2x"></i>
@@ -158,8 +192,8 @@
       href="https://www.amazon.fr/hz/wishlist/ls/3OZTQ604Q7N29?ref_=wl_share"
       target="_blank"
       rel="noopener noreferrer"
-      title="Amazon wishlist of Gregory Roussac (opens in a new tab)"
-      aria-label="Amazon wishlist of Gregory Roussac (opens in a new tab)"
+      [attr.title]="copy.home.amazon"
+      [attr.aria-label]="copy.home.amazon"
     >
       <span class="fa-stack fa-lg" aria-hidden="true">
         <i class="fa fa-circle-thin fa-stack-2x"></i>

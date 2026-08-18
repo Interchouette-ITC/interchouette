@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test.describe('URL parity', () => {
   test('home shows Gregory card', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('Gregory Roussac')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gregory Roussac' })).toBeVisible();
     await expect(page.getByText('Rust - Wasm Freelance Developer')).toBeVisible();
   });
 

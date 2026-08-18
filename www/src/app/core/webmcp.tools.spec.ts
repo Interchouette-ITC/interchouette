@@ -12,6 +12,7 @@ describe('webmcp.tools helpers', () => {
     expect(isWebMcpPagePath('')).toBe(true);
     expect(isWebMcpPagePath('CV')).toBe(true);
     expect(isWebMcpPagePath('about')).toBe(true);
+    expect(isWebMcpPagePath('news')).toBe(true);
     expect(isWebMcpPagePath('admin')).toBe(false);
   });
 

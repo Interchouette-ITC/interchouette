@@ -1,5 +1,3 @@
-import { CHAT_WIDGET_ENABLED as CHAT_WIDGET_ENABLED_ENV } from './chat-widget.enabled';
-
 /** Chat API base URL (chat backend; not the Interchouette MCP). */
 export function chatApiBase(): string {
   if (typeof window === 'undefined') {
@@ -18,12 +16,22 @@ export function chatWsUrl(sessionId: string): string {
   return `${base}/v1/sessions/${sessionId}/ws`;
 }
 
-/**
- * Feature gate for the embeddable chat widget.
- * Set `CHAT_WIDGET_ENABLED=false` in the repo `.env` (or the shell), then restart
- * `npm start` / re-run `npm run build` from `www/`. Synced by `scripts/sync-chat-env.mjs`.
- */
-export const CHAT_WIDGET_ENABLED = CHAT_WIDGET_ENABLED_ENV;
+function envFlag(raw: string | undefined, fallback: boolean): boolean {
+  if (raw === undefined || raw.trim() === '') {
+    return fallback;
+  }
+  const value = raw.trim().toLowerCase();
+  if (['0', 'false', 'off', 'no'].includes(value)) {
+    return false;
+  }
+  if (['1', 'true', 'on', 'yes'].includes(value)) {
+    return true;
+  }
+  return fallback;
+}
+
+/** From repo-root `.env` (`CHAT_WIDGET_ENABLED`). Restart `ng serve` after changes. */
+export const CHAT_WIDGET_ENABLED = envFlag(import.meta.env?.CHAT_WIDGET_ENABLED, true);
 
 export const CHAT_STORAGE_KEY = 'ic.chat.v1';
 
@@ -38,6 +46,9 @@ export const CONTACT_EMAIL = 'contact@interchouette.net';
 /** Public Slack invite (home / about / chat intro). */
 export const SLACK_JOIN_URL =
   'https://join.slack.com/t/interchouette/shared_invite/zt-2urug9dmr-PYzageTbj8bxD5c3n39QuA';
+
+/** Public Google appointment page shown in chat. */
+export const BOOKING_SCHEDULE_URL = 'https://calendar.app.google/tw9hhtJkmcssZQCY7';
 
 /** Non-essential cookie / analytics consent choice. */
 export const CONSENT_STORAGE_KEY = 'ic.consent.v1';

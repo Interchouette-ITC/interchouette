@@ -10,11 +10,19 @@ use uuid::Uuid;
 use crate::chat::locale::ChatLocale;
 use crate::chat::presence::PresenceMode;
 
+/// One chat line retained for WebSocket replay.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ChatLine {
+    pub id: String,
+    pub role: String,
+    pub text: String,
+}
+
 /// One active visitor session.
 #[derive(Debug, Clone)]
 pub struct Session {
     pub id: String,
-    /// Opaque resume / ticket code (`IC-A3F9K2M7`). Shown in the visitor header.
+    /// Opaque ticket code (`A3F9K2M7`). Shown in the visitor header.
     pub short_code: String,
     pub mode: PresenceMode,
     pub locale: ChatLocale,
@@ -24,6 +32,8 @@ pub struct Session {
     pub slack_channel: Option<String>,
     /// Parent message `ts` for the session thread.
     pub slack_thread_ts: Option<String>,
+    /// In-memory transcript (replay after reconnect; not persisted across restarts).
+    pub lines: Vec<ChatLine>,
 }
 
 /// Registry of live sessions keyed by id, resume code, and Slack thread ts.
@@ -48,6 +58,7 @@ impl SessionRegistry {
             created_at: now_secs(),
             slack_channel: None,
             slack_thread_ts: None,
+            lines: Vec::new(),
         };
         self.sessions
             .write()
@@ -62,9 +73,9 @@ impl SessionRegistry {
         self.sessions.read().await.get(id).cloned()
     }
 
-    /// Get by resume code (`IC-…` or legacy `S-…`).
+    /// Get by ticket code (8 alnum; a leftover `IC-` prefix is ignored).
     pub async fn get_by_code(&self, code: &str) -> Option<Session> {
-        let code = code.trim().to_ascii_uppercase();
+        let code = normalize_lookup_code(code);
         let id = self.codes.read().await.get(&code)?.clone();
         self.get(&id).await
     }
@@ -73,6 +84,47 @@ impl SessionRegistry {
     pub async fn get_by_thread(&self, thread_ts: &str) -> Option<Session> {
         let id = self.threads.read().await.get(thread_ts)?.clone();
         self.get(&id).await
+    }
+
+    /// Append one line to the session transcript. Returns `false` when the id is already stored.
+    pub async fn push_line(&self, id: &str, line: ChatLine) -> bool {
+        let mut map = self.sessions.write().await;
+        let ok = match map.get_mut(id) {
+            Some(s) if s.lines.iter().any(|existing| existing.id == line.id) => false,
+            Some(s) => {
+                s.lines.push(line);
+                true
+            }
+            None => false,
+        };
+        drop(map);
+        ok
+    }
+
+    /// Sessions that already have a Slack thread (for reply polling).
+    pub async fn slack_threads(&self) -> Vec<(String, String, String)> {
+        self.sessions
+            .read()
+            .await
+            .values()
+            .filter_map(|s| {
+                Some((
+                    s.id.clone(),
+                    s.slack_channel.clone()?,
+                    s.slack_thread_ts.clone()?,
+                ))
+            })
+            .collect()
+    }
+
+    /// Copy transcript lines for replay on WebSocket connect.
+    pub async fn lines(&self, id: &str) -> Vec<ChatLine> {
+        self.sessions
+            .read()
+            .await
+            .get(id)
+            .map(|s| s.lines.clone())
+            .unwrap_or_default()
     }
 
     /// Bind Slack DM channel + thread parent ts.
@@ -120,16 +172,21 @@ impl SessionRegistry {
     }
 }
 
-/// `IC-` + 8 unambiguous alphanumerics (no 0/O/1/I).
+/// 8 unambiguous alphanumerics (no 0/O/1/I).
 fn new_resume_code() -> String {
     const ALPHABET: &[u8] = b"23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
     let uuid = Uuid::new_v4();
-    let mut out = String::from("IC-");
+    let mut out = String::new();
     for byte in uuid.as_bytes().iter().take(8) {
-        let idx = usize::from(byte % 32);
+        let idx = usize::from(*byte % 32);
         out.push(char::from(ALPHABET[idx]));
     }
     out
+}
+
+fn normalize_lookup_code(raw: &str) -> String {
+    let upper = raw.trim().to_ascii_uppercase();
+    upper.strip_prefix("IC-").unwrap_or(&upper).to_string()
 }
 
 fn now_secs() -> i64 {
@@ -150,12 +207,27 @@ mod tests {
         let reg = SessionRegistry::default();
         let s = reg.create(PresenceMode::Away, ChatLocale::En).await;
         assert_eq!(s.locale, ChatLocale::En);
-        assert!(s.short_code.starts_with("IC-"));
-        assert_eq!(s.short_code.len(), 11);
+        assert_eq!(s.short_code.len(), 8);
+        assert!(!s.short_code.contains('-'));
         assert_eq!(reg.get(&s.id).await.unwrap().short_code, s.short_code);
         assert_eq!(reg.get_by_code(&s.short_code).await.unwrap().id, s.id);
+        assert_eq!(
+            reg.get_by_code(&format!("IC-{}", s.short_code))
+                .await
+                .unwrap()
+                .id,
+            s.id
+        );
         reg.set_slack_thread(&s.id, "D123".into(), "171.001".into())
             .await;
         assert_eq!(reg.get_by_thread("171.001").await.unwrap().id, s.id);
+        let line = ChatLine {
+            id: "slack.ts".into(),
+            role: "greg".into(),
+            text: "one".into(),
+        };
+        assert!(reg.push_line(&s.id, line.clone()).await);
+        assert!(!reg.push_line(&s.id, line).await);
+        assert_eq!(reg.slack_threads().await.len(), 1);
     }
 }

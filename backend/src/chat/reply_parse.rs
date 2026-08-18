@@ -1,19 +1,36 @@
-//! Parse Greg's tagged Slack DM replies into session resume codes.
+//! Parse Greg's tagged Slack DM replies into session ticket codes.
 
-/// Extract resume code and reply body from a Slack message.
+/// Extract ticket code and `env=` label from a session thread header line.
+///
+/// Example: `[S4BF9G2B] mode=live env=local` → `(S4BF9G2B, local)`.
+#[must_use]
+pub fn parse_session_header(text: &str) -> Option<(String, String)> {
+    let trimmed = text.trim();
+    let start = trimmed.find('[')?;
+    let rest = &trimmed[start + 1..];
+    let end = rest.find(']')?;
+    let code = normalize_ticket_code(&rest[..end])?;
+    let after = rest[end + 1..].trim();
+    let env = after
+        .split_whitespace()
+        .find_map(|part| part.strip_prefix("env="))
+        .unwrap_or("")
+        .to_string();
+    Some((code, env))
+}
+
+/// Extract ticket code and reply body from a Slack message.
 ///
 /// Accepted shapes:
-/// - `[IC-A3F9K2M7] hello`
-/// - `[S-1A2B] hello` (legacy)
-/// - `[IC-A3F9K2M7] REPLY: hello`
+/// - `[S4BF9G2B] hello`
+/// - `[S4BF9G2B] REPLY: hello`
 #[must_use]
 pub fn parse_session_reply(text: &str) -> Option<(String, String)> {
     let trimmed = text.trim();
     let start = trimmed.find('[')?;
     let rest = &trimmed[start + 1..];
     let end = rest.find(']')?;
-    let code_raw = &rest[..end];
-    let code = normalize_resume_code(code_raw)?;
+    let code = normalize_ticket_code(&rest[..end])?;
     let after = rest[end + 1..].trim();
     let after = strip_kind_prefix(after);
     if after.is_empty() {
@@ -22,35 +39,14 @@ pub fn parse_session_reply(text: &str) -> Option<(String, String)> {
     Some((code, after.to_string()))
 }
 
-fn normalize_resume_code(raw: &str) -> Option<String> {
+fn normalize_ticket_code(raw: &str) -> Option<String> {
     let upper = raw.trim().to_ascii_uppercase();
-    if let Some(code) = normalize_ic(&upper) {
-        return Some(code);
-    }
-    normalize_legacy_s(&upper)
-}
-
-fn normalize_ic(upper: &str) -> Option<String> {
-    let bytes = upper.as_bytes();
-    // IC- + 8 Crockford-ish alnum
-    if bytes.len() != 11 || &bytes[..3] != b"IC-" {
+    let bare = upper.strip_prefix("IC-").unwrap_or(&upper);
+    let bytes = bare.as_bytes();
+    if bytes.len() != 8 || !bytes.iter().all(u8::is_ascii_alphanumeric) {
         return None;
     }
-    if !bytes[3..].iter().all(u8::is_ascii_alphanumeric) {
-        return None;
-    }
-    Some(upper.to_string())
-}
-
-fn normalize_legacy_s(upper: &str) -> Option<String> {
-    let bytes = upper.as_bytes();
-    if bytes.len() != 6 || bytes[0] != b'S' || bytes[1] != b'-' {
-        return None;
-    }
-    if !bytes[2..].iter().all(u8::is_ascii_hexdigit) {
-        return None;
-    }
-    Some(upper.to_string())
+    Some(bare.to_string())
 }
 
 fn strip_kind_prefix(text: &str) -> &str {
@@ -71,31 +67,37 @@ mod tests {
     use super::*;
 
     #[test]
-    fn parses_ic_reply() {
-        let (code, body) = parse_session_reply("[IC-a3f9k2m7] Thanks for reaching out").unwrap();
-        assert_eq!(code, "IC-A3F9K2M7");
+    fn parses_ticket_reply() {
+        let (code, body) = parse_session_reply("[s4bf9g2b] Thanks for reaching out").unwrap();
+        assert_eq!(code, "S4BF9G2B");
         assert_eq!(body, "Thanks for reaching out");
     }
 
     #[test]
-    fn parses_legacy_s() {
-        let (code, body) = parse_session_reply("[S-00ab] Thanks").unwrap();
-        assert_eq!(code, "S-00AB");
+    fn strips_leftover_ic_prefix() {
+        let (code, body) = parse_session_reply("[IC-s4bf9g2b] Thanks").unwrap();
+        assert_eq!(code, "S4BF9G2B");
         assert_eq!(body, "Thanks");
     }
 
     #[test]
     fn parses_reply_prefix() {
-        let (code, body) = parse_session_reply("  [IC-1F2E9A0B] REPLY: yes  ").unwrap();
-        assert_eq!(code, "IC-1F2E9A0B");
+        let (code, body) = parse_session_reply("  [S4BF9G2B] REPLY: yes  ").unwrap();
+        assert_eq!(code, "S4BF9G2B");
         assert_eq!(body, "yes");
+    }
+
+    #[test]
+    fn parses_session_header() {
+        let (code, env) = parse_session_header("[s4bf9g2b] mode=live env=local").expect("header");
+        assert_eq!(code, "S4BF9G2B");
+        assert_eq!(env, "local");
     }
 
     #[test]
     fn rejects_untagged() {
         assert!(parse_session_reply("hello without tag").is_none());
-        assert!(parse_session_reply("[S-ZZZZ] bad hex").is_none());
-        assert!(parse_session_reply("[IC-SHORT] x").is_none());
-        assert!(parse_session_reply("[IC-1F2E9A0B]").is_none());
+        assert!(parse_session_reply("[SHORT] x").is_none());
+        assert!(parse_session_reply("[S4BF9G2B]").is_none());
     }
 }

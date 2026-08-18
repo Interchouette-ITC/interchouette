@@ -12,55 +12,15 @@ import {
 } from '@angular/core';
 
 import { ChatRole, ChatService } from '../../core/chat.service';
-import { SLACK_JOIN_URL } from '../../core/chat.constants';
-import { siteLocale } from '../../core/site-locale';
+import { BOOKING_SCHEDULE_URL, SLACK_JOIN_URL } from '../../core/chat.constants';
+import { ChatLinkPart, splitHttpLinks } from '../../core/chat.links';
+import { fillCopy } from '../../core/i18n/catalog';
+import { LocaleService } from '../../core/locale.service';
 import { RouterLink } from '@angular/router';
 
 const NUDGE_EVERY_MS = 60 * 1000;
 const NUDGE_BOUNCE_MS = 1100;
 const FAB_ENTER_MS = 1100;
-
-const NUDGE_HOOKS = [
-  "Don't be a stranger",
-  'The owl noticed you',
-  'Psst… over here',
-  'Rust never sleeps',
-  'Say hi before the coffee cools',
-  'Your cursor looks lonely',
-  'Plot twist: you can talk to us',
-  'This bubble has feelings',
-  'Free high-fives available',
-  'We brought snacks (metaphorically)',
-  'No ticket required',
-  'The FAQ is jealous of chat',
-  'Hot take welcome',
-  'Silence is overrated',
-  'One click, zero awkwardness',
-  'Greg / ITCy miss you already',
-  'Scrolling is optional; chatting is fun',
-  'Permission to be curious granted',
-  'Even Wasm needs a hello',
-  'Come say boop',
-  'Got cookies? We only nibble the optional ones',
-  'This chat is gluten-free. The cookie banner is not.',
-  'Accept cookies elsewhere; accept jokes here',
-  '404: cookie crumb not found (send a hello instead)',
-  'Our cookies are non-essential. Our humour is mandatory',
-  'Chef’s special: consent with a side of puns',
-  'Milk and cookies at night? Chat first, crumbs later',
-] as const;
-const RESUME_NUDGE_HOOKS = [
-  'Your previous chat is still warm',
-  'Welcome back, thread unfinished',
-  'We saved your last conversation',
-  'Plot twist: the chat remembers you',
-  'Pick up where you left off',
-  'Same owl, same ticket, new hello',
-  'That chat from earlier? Still here',
-  'No amnesia in this widget',
-  'Your transcript survived the reload',
-  'Continue the saga in one click',
-] as const;
 
 @Component({
   selector: 'app-chat-widget',
@@ -74,6 +34,7 @@ const RESUME_NUDGE_HOOKS = [
 })
 export class ChatWidget implements OnDestroy {
   protected readonly chat = inject(ChatService);
+  protected readonly copy = inject(LocaleService).copy;
   private readonly injector = inject(Injector);
   protected readonly mounted = signal(false);
   /** Soft invite bubble next to the chat button. */
@@ -97,6 +58,9 @@ export class ChatWidget implements OnDestroy {
   protected draft = '';
   protected showEmail = false;
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
+  protected readonly bookingScheduleUrl = BOOKING_SCHEDULE_URL;
+  /** Google Calendar booking iframe inside the chat panel. */
+  protected readonly bookingOpen = signal(false);
 
   private nudgeTimer: ReturnType<typeof setInterval> | null = null;
   private bounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -148,6 +112,7 @@ export class ChatWidget implements OnDestroy {
 
   protected onClose(): void {
     this.expanded.set(false);
+    this.bookingOpen.set(false);
     this.chat.closePanel();
   }
 
@@ -210,6 +175,16 @@ export class ChatWidget implements OnDestroy {
 
   protected onEmailSubmit(event: Event): void {
     event.preventDefault();
+    this.saveEmailField();
+  }
+
+  protected onEmailKeydown(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.saveEmailField();
+  }
+
+  private saveEmailField(): void {
     const input = this.emailField()?.nativeElement;
     if (!input) {
       return;
@@ -232,7 +207,7 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected onChip(text: string): void {
-    if (text === 'Leave my email') {
+    if (text === this.copy.chat.chipLeaveEmail) {
       this.showEmail = true;
       this.scheduleEmailSeed();
       return;
@@ -241,7 +216,35 @@ export class ChatWidget implements OnDestroy {
       return;
     }
     this.chat.send(text);
+    if (text === this.copy.chat.chipBook && this.bookingEnabled()) {
+      this.bookingOpen.set(true);
+    }
     queueMicrotask(() => this.scrollToBottom());
+  }
+
+  protected bookingEnabled(): boolean {
+    return this.bookingScheduleUrl.trim().length > 0;
+  }
+
+  protected openBooking(): void {
+    if (this.bookingEnabled()) {
+      this.bookingOpen.set(true);
+    }
+  }
+
+  protected closeBooking(): void {
+    this.bookingOpen.set(false);
+  }
+
+  protected messageOffersBooking(text: string): boolean {
+    if (!this.bookingEnabled()) {
+      return false;
+    }
+    const url = this.bookingScheduleUrl.trim();
+    if (url && text.includes(url)) {
+      return true;
+    }
+    return /calendar\.(app\.)?google|calendar\.google\.com\/calendar\/appointments/i.test(text);
   }
 
   private scheduleEmailSeed(): void {
@@ -260,159 +263,184 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected quickChips(): string[] {
-    const book = bookingChip();
+    const c = this.copy.chat;
+    const book = c.chipBook;
     if (this.chat.hero() === 'greg') {
-      return ['Hi Greg', 'Rust / Wasm project?', book];
+      return [c.chipHiGreg, c.chipRust, book];
     }
-    return ['What is Interchouette?', 'Who is Greg?', book];
+    return [c.chipWhat, c.chipWho, book];
   }
 
   protected title(): string {
+    const c = this.copy.chat;
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Chat with Greg';
+        return c.titleGreg;
       case 'itcy':
-        return 'Chat with ITCy';
+        return c.titleItcy;
       default:
-        return 'Connecting…';
+        return c.titleConnecting;
     }
   }
 
   private buildNudgeCopy(): string {
+    const c = this.copy.chat;
     if (this.chat.priorConversation()) {
-      const hook =
-        RESUME_NUDGE_HOOKS[Math.floor(Math.random() * RESUME_NUDGE_HOOKS.length)] ??
-        RESUME_NUDGE_HOOKS[0];
-      return `${hook}. Open chat to continue.`;
+      const hooks = c.resumeNudgeHooks;
+      const hook = hooks[Math.floor(Math.random() * hooks.length)] ?? hooks[0];
+      return `${hook}. ${c.resumeOpen}`;
     }
-    const hook = NUDGE_HOOKS[Math.floor(Math.random() * NUDGE_HOOKS.length)] ?? NUDGE_HOOKS[0];
+    const hooks = c.nudgeHooks;
+    const hook = hooks[Math.floor(Math.random() * hooks.length)] ?? hooks[0];
     const who =
       this.chat.hero() === 'greg'
-        ? 'Chat with Greg!'
+        ? c.chatGregBang
         : this.chat.hero() === 'itcy'
-          ? 'Chat with ITCy!'
-          : 'Chat with Greg / ITCy!';
+          ? c.chatItcyBang
+          : c.chatBothBang;
     return `${hook}! ${who}`;
   }
 
   protected fabAriaLabel(): string {
+    const c = this.copy.chat;
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Open chat with Greg';
+        return c.fabGreg;
       case 'itcy':
-        return 'Open chat with ITCy';
+        return c.fabItcy;
       default:
-        return 'Open chat with Greg or ITCy';
+        return c.fabBoth;
     }
   }
 
   protected ticketDisplay(): string {
-    return this.chat.shortCode().trim().replace(/^IC-/i, '');
+    return this.chat.shortCode().trim();
+  }
+
+  protected ticketCopyAria(): string {
+    const c = this.copy.chat;
+    return this.ticketCopied()
+      ? c.ticketCopiedAria
+      : fillCopy(c.copyTicketAria, { ticket: this.ticketDisplay() });
+  }
+
+  protected ticketCopyTitle(): string {
+    return this.ticketCopied() ? this.copy.chat.copied : this.copy.chat.copyTicket;
+  }
+
+  protected expandAria(): string {
+    return this.expanded() ? this.copy.chat.exitFull : this.copy.chat.expand;
+  }
+
+  protected expandTitle(): string {
+    return this.expanded() ? this.copy.chat.exitFullTitle : this.copy.chat.expand;
   }
 
   protected subtitle(): string {
+    const c = this.copy.chat;
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Usually replies within minutes';
+        return c.subGreg;
       case 'itcy':
-        return 'Greg is away · ITCy can help now';
+        return c.subItcy;
       default:
-        return 'Opening a private line…';
+        return c.subConnecting;
     }
   }
 
   protected emptyKicker(): string {
+    const c = this.copy.chat;
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Live with Greg';
+        return c.kickerGreg;
       case 'itcy':
-        return 'AI on duty';
+        return c.kickerItcy;
       default:
-        return 'Establishing link';
+        return c.kickerConnecting;
     }
   }
 
   protected emptyTitle(): string {
+    const c = this.copy.chat;
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Ask me anything';
       case 'itcy':
-        return 'Ask me anything';
+        return c.emptyTitle;
       default:
-        return 'One moment';
+        return c.emptyTitleWait;
     }
   }
 
   protected emptyHint(): string {
+    const c = this.copy.chat;
     switch (this.chat.hero()) {
       case 'greg':
-        return 'Your message reaches Greg live. Ask about Rust, Wasm, or a collaboration.';
+        return c.emptyHintGreg;
       case 'itcy':
-        return 'ITCy, powered by Interchouette MCP. Leave a note anytime.';
+        return c.emptyHintItcy;
       default:
-        return 'Opening a private Interchouette line…';
+        return c.emptyHintWait;
     }
   }
 
   protected introRole(): ChatRole {
-    return this.chat.hero() === 'greg' ? 'greg' : 'itcy';
+    return 'itcy';
   }
 
   protected introLead(): string {
-    if (this.chat.hero() === 'greg') {
-      return 'Welcome to Interchouette’s service desk. Greg is live here.';
-    }
-    return "Welcome to Interchouette's service desk. Hi, I'm ITCy, an AI chatbot powered by Rust, Node, and ITC.";
+    return this.chat.hero() === 'greg'
+      ? this.copy.chat.introLeadGreg
+      : this.copy.chat.introLeadItcy;
   }
 
   protected introCan(): string {
-    if (this.chat.hero() === 'greg') {
-      return 'Ask about Rust, Wasm, collaborations, or Interchouette ITC.';
-    }
-    return 'I can help with ITC questions, project calendars, mail, events, and more.';
+    return this.chat.hero() === 'greg' ? this.copy.chat.introCanGreg : this.copy.chat.introCanItcy;
   }
 
   protected introSlackBefore(): string {
-    if (this.chat.hero() === 'greg') {
-      return 'Prefer Slack? ';
-    }
-    return 'Interested in Slack? You can join ';
+    return this.chat.hero() === 'greg'
+      ? this.copy.chat.slackBeforeGreg
+      : this.copy.chat.slackBeforeItcy;
   }
 
   protected introSlackLinkLabel(): string {
-    return this.chat.hero() === 'greg' ? 'Join here' : 'here';
+    return this.chat.hero() === 'greg'
+      ? this.copy.chat.slackLinkGreg
+      : this.copy.chat.slackLinkItcy;
   }
 
   protected introSlackAfter(): string {
-    return '.';
+    return this.copy.chat.slackAfter;
+  }
+
+  protected agentMiniSrc(role: ChatRole): string {
+    return role === 'greg' ? '/img/3099551.jpeg' : '/img/itcy-mascot-1x.webp';
+  }
+
+  protected linkParts(text: string): ChatLinkPart[] {
+    return splitHttpLinks(text);
   }
 
   protected whoLabel(role: ChatRole): string {
+    const c = this.copy.chat;
     switch (role) {
       case 'greg':
-        return 'Gregory Roussac';
+        return c.whoGreg;
       case 'itcy':
-        return 'ITCy';
+        return c.whoItcy;
       case 'system':
-        return 'System';
+        return c.whoSystem;
       default:
-        return 'You';
+        return c.whoYou;
     }
   }
 
-  /** Small face for the floating chat button. */
-  protected fabFaceSrc(): string {
-    return this.chat.hero() === 'itcy' ? '/img/itcy-mascot-1x.webp' : '/img/avatar-1x.webp';
+  protected typingWho(): string {
+    return this.chat.hero() === 'greg' ? this.copy.chat.whoTypingGreg : this.copy.chat.whoItcy;
   }
 
-  /** Header / welcome mark in the open panel. */
-  protected panelFaceSrc(): string {
-    return this.chat.hero() === 'itcy' ? '/img/itcy-mascot-2x.webp' : '/img/avatar-2x.webp';
-  }
-
-  /** Message row avatar for Greg or ITCy. */
-  protected rowFaceSrc(role: ChatRole): string {
-    return role === 'itcy' ? '/img/itcy-mascot-1x.webp' : '/img/avatar-1x.webp';
+  protected typingAria(): string {
+    return this.chat.hero() === 'greg' ? this.copy.chat.typingGreg : this.copy.chat.typingItcy;
   }
 
   private tryStartNudge(): void {
@@ -506,16 +534,5 @@ export class ChatWidget implements OnDestroy {
     if (el) {
       el.scrollTop = el.scrollHeight;
     }
-  }
-}
-
-function bookingChip(): string {
-  switch (siteLocale()) {
-    case 'nl':
-      return 'Afspraak maken';
-    case 'fr':
-      return 'Prendre rendez-vous';
-    default:
-      return 'Book a meeting';
   }
 }
