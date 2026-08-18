@@ -24,7 +24,7 @@ export const FR: SiteCopy = {
   newsEmpty: "Pas encore d'articles.",
   loginTitle: 'Connexion client',
   loginGoogle: 'Se connecter avec Google',
-  loginNotConfigured: "La connexion client n'est pas encore configurée.",
+  loginFakeClose: 'Fermer',
   accountTitle: 'Compte',
   accountStub: "L'espace client est en préparation.",
   accountSignIn: 'Connexion client',

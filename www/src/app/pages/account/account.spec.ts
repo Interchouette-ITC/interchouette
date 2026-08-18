@@ -12,14 +12,14 @@ describe('AccountPage', () => {
     }).compileComponents();
   });
 
-  it('renders the stub and a login link when signed out', () => {
+  it('renders the stub and a sign-in button when signed out', () => {
     const fixture = TestBed.createComponent(AccountPage);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
 
     expect(el.querySelector('h1')?.textContent?.trim()).toBe(COPY.en.accountTitle);
     expect(el.textContent).toContain(COPY.en.accountStub);
-    expect(el.querySelector('a[routerlink="/login"]')?.textContent?.trim()).toBe(
+    expect(el.querySelector('button.account-signin')?.textContent?.trim()).toBe(
       COPY.en.accountSignIn,
     );
   });

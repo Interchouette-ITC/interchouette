@@ -50,9 +50,14 @@
         <span>{{ session.firstName() }}</span>
       </a>
     } @else {
-      <a routerLink="/login" routerLinkActive="is-current" [attr.title]="copy.titleLogin">{{
-        copy.headerLogin
-      }}</a>
+      <button
+        type="button"
+        class="site-header__login"
+        (click)="onClientLogin()"
+        [attr.title]="copy.titleLogin"
+      >
+        {{ copy.headerLogin }}
+      </button>
     }
   </nav>
 </header>

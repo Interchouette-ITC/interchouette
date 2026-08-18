@@ -456,7 +456,16 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
             },
         )
         .await;
-    let reply = state.away.reply(text, session.locale).await;
+    let lines = state.sessions.lines(session_id).await;
+    let email = state
+        .sessions
+        .get(session_id)
+        .await
+        .and_then(|s| s.visitor_email);
+    let reply = state
+        .away
+        .reply(text, session.locale, &lines, email.as_deref())
+        .await;
     state
         .hub
         .publish(
@@ -468,11 +477,6 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
         )
         .await;
     publish_role(state, session_id, "itcy", &reply).await;
-    let email = state
-        .sessions
-        .get(session_id)
-        .await
-        .and_then(|s| s.visitor_email);
     let mirror = email.map_or_else(
         || format!("ITCy: {reply}"),
         |e| format!("ITCy: {reply}\n(visitor email: {e})"),

@@ -6,18 +6,13 @@ test.describe('site header and locale', () => {
     const header = page.locator('app-site-header');
     await expect(header.getByRole('link', { name: 'interchouette.net' })).toBeVisible();
     await expect(header.getByRole('link', { name: 'News' })).toBeVisible();
-    await expect(header.getByRole('link', { name: 'Client login' })).toBeVisible();
+    await expect(header.getByRole('button', { name: 'Client login' })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Gregory Roussac' })).toBeVisible();
     await expect(page.getByText('Development for product teams.')).toBeVisible();
 
     await page.goto('/news');
     await expect(page.getByRole('heading', { name: 'News' })).toBeVisible();
     await expect(page.getByText('No posts yet.')).toBeVisible();
-
-    await page.goto('/login');
-    await expect(page.getByRole('heading', { name: 'Client login' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign in with Google' })).toBeDisabled();
-    await expect(page.getByText('Client login is not configured yet.')).toBeVisible();
   });
 
   test('localhost lang query switches header and home copy', async ({ page }) => {

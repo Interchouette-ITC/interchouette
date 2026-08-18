@@ -8,6 +8,7 @@ import {
 import { RouterOutlet } from '@angular/router';
 
 import { CHAT_WIDGET_ENABLED } from './core/chat.constants';
+import { GisOneTapService } from './core/gis-onetap.service';
 import { ChatWidget } from './shared/chat-widget/chat-widget';
 import { ConsentBanner } from './shared/consent-banner/consent-banner';
 import { SiteHeader } from './shared/site-header/site-header';
@@ -24,8 +25,10 @@ export class App {
 
   constructor() {
     const doc = inject(DOCUMENT);
+    const gis = inject(GisOneTapService);
     afterNextRender(() => {
       doc.documentElement.classList.add('app-ready');
+      gis.preload();
     });
   }
 }

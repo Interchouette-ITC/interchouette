@@ -5,6 +5,7 @@
 
 mod api;
 mod env_label;
+mod guard;
 mod hub;
 mod llm;
 mod locale;

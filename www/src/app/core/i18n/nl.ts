@@ -24,7 +24,7 @@ export const NL: SiteCopy = {
   newsEmpty: 'Nog geen berichten.',
   loginTitle: 'Klantlogin',
   loginGoogle: 'Inloggen met Google',
-  loginNotConfigured: 'Klantlogin is nog niet ingesteld.',
+  loginFakeClose: 'Sluiten',
   accountTitle: 'Account',
   accountStub: 'De klantruimte wordt voorbereid.',
   accountSignIn: 'Klantlogin',

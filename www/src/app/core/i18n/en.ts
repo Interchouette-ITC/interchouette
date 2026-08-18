@@ -24,7 +24,7 @@ export const EN = {
   newsEmpty: 'No posts yet.',
   loginTitle: 'Client login',
   loginGoogle: 'Sign in with Google',
-  loginNotConfigured: 'Client login is not configured yet.',
+  loginFakeClose: 'Close',
   accountTitle: 'Account',
   accountStub: 'Customer space being prepared.',
   accountSignIn: 'Client login',

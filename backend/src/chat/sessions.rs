@@ -89,14 +89,16 @@ impl SessionRegistry {
     /// Append one line to the session transcript. Returns `false` when the id is already stored.
     pub async fn push_line(&self, id: &str, line: ChatLine) -> bool {
         let mut map = self.sessions.write().await;
-        let Some(s) = map.get_mut(id) else {
-            return false;
+        let ok = match map.get_mut(id) {
+            Some(s) if s.lines.iter().any(|existing| existing.id == line.id) => false,
+            Some(s) => {
+                s.lines.push(line);
+                true
+            }
+            None => false,
         };
-        if s.lines.iter().any(|existing| existing.id == line.id) {
-            return false;
-        }
-        s.lines.push(line);
-        true
+        drop(map);
+        ok
     }
 
     /// Sessions that already have a Slack thread (for reply polling).

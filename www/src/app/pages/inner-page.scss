@@ -64,22 +64,26 @@
   text-decoration: underline;
 }
 
-.google-btn {
-  display: inline-block;
-  margin: 0.35rem 0 1rem;
-  padding: 0.55rem 1.1rem;
-  border: 1px solid #27084e;
-  border-radius: 4px;
-  background: #fff;
-  color: #27084e;
-  font-family: inherit;
-  font-weight: 700;
-  font-size: 0.95rem;
+.login-page .login-lead {
+  margin: 0 0 1.25rem;
+  color: #666;
+  font-size: 0.92rem;
 }
 
-.google-btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+.account-signin {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #27084e;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.account-signin:hover,
+.account-signin:focus-visible {
+  color: #3a1868;
 }
 
 @media screen and (max-width: 768px) {

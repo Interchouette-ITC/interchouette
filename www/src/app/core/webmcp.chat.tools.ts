@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 
-import { CHAT_WIDGET_ENABLED } from './chat-widget.enabled';
+import { CHAT_WIDGET_ENABLED } from './chat.constants';
 import { ChatService } from './chat.service';
 
 const EMPTY_INPUT_SCHEMA = {

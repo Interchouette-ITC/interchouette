@@ -12,7 +12,8 @@ import {
 } from '@angular/core';
 
 import { ChatRole, ChatService } from '../../core/chat.service';
-import { SLACK_JOIN_URL } from '../../core/chat.constants';
+import { BOOKING_SCHEDULE_URL, SLACK_JOIN_URL } from '../../core/chat.constants';
+import { ChatLinkPart, splitHttpLinks } from '../../core/chat.links';
 import { fillCopy } from '../../core/i18n/catalog';
 import { LocaleService } from '../../core/locale.service';
 import { RouterLink } from '@angular/router';
@@ -57,6 +58,9 @@ export class ChatWidget implements OnDestroy {
   protected draft = '';
   protected showEmail = false;
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
+  protected readonly bookingScheduleUrl = BOOKING_SCHEDULE_URL;
+  /** Google Calendar booking iframe inside the chat panel. */
+  protected readonly bookingOpen = signal(false);
 
   private nudgeTimer: ReturnType<typeof setInterval> | null = null;
   private bounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -108,6 +112,7 @@ export class ChatWidget implements OnDestroy {
 
   protected onClose(): void {
     this.expanded.set(false);
+    this.bookingOpen.set(false);
     this.chat.closePanel();
   }
 
@@ -170,6 +175,16 @@ export class ChatWidget implements OnDestroy {
 
   protected onEmailSubmit(event: Event): void {
     event.preventDefault();
+    this.saveEmailField();
+  }
+
+  protected onEmailKeydown(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.saveEmailField();
+  }
+
+  private saveEmailField(): void {
     const input = this.emailField()?.nativeElement;
     if (!input) {
       return;
@@ -201,7 +216,35 @@ export class ChatWidget implements OnDestroy {
       return;
     }
     this.chat.send(text);
+    if (text === this.copy.chat.chipBook && this.bookingEnabled()) {
+      this.bookingOpen.set(true);
+    }
     queueMicrotask(() => this.scrollToBottom());
+  }
+
+  protected bookingEnabled(): boolean {
+    return this.bookingScheduleUrl.trim().length > 0;
+  }
+
+  protected openBooking(): void {
+    if (this.bookingEnabled()) {
+      this.bookingOpen.set(true);
+    }
+  }
+
+  protected closeBooking(): void {
+    this.bookingOpen.set(false);
+  }
+
+  protected messageOffersBooking(text: string): boolean {
+    if (!this.bookingEnabled()) {
+      return false;
+    }
+    const url = this.bookingScheduleUrl.trim();
+    if (url && text.includes(url)) {
+      return true;
+    }
+    return /calendar\.(app\.)?google|calendar\.google\.com\/calendar\/appointments/i.test(text);
   }
 
   private scheduleEmailSeed(): void {
@@ -341,7 +384,7 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected introRole(): ChatRole {
-    return this.chat.hero() === 'greg' ? 'greg' : 'itcy';
+    return 'itcy';
   }
 
   protected introLead(): string {
@@ -368,6 +411,14 @@ export class ChatWidget implements OnDestroy {
 
   protected introSlackAfter(): string {
     return this.copy.chat.slackAfter;
+  }
+
+  protected agentMiniSrc(role: ChatRole): string {
+    return role === 'greg' ? '/img/3099551.jpeg' : '/img/itcy-mascot-1x.webp';
+  }
+
+  protected linkParts(text: string): ChatLinkPart[] {
+    return splitHttpLinks(text);
   }
 
   protected whoLabel(role: ChatRole): string {

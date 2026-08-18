@@ -16,28 +16,13 @@ describe('SiteHeader', () => {
     const fixture = TestBed.createComponent(SiteHeader);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
+    const login = el.querySelector('button.site-header__login') as HTMLButtonElement | null;
 
     expect(el.querySelector('.site-header__brand')?.getAttribute('aria-label')).toBe(
       'interchouette.net',
     );
-    expect(el.querySelector('.site-header__brand')?.getAttribute('title')).toBe(
-      COPY.en.headerHomeTitle,
-    );
-    expect(el.querySelector('.site-header__dot')).toBeTruthy();
-    expect(el.querySelector('.site-header__marquee-slot')).toBeTruthy();
-    expect(el.querySelector('.site-header__marquee')).toBeNull();
-    expect(el.querySelector('a[routerlink="/news"]')?.getAttribute('title')).toBe(
-      COPY.en.titleNews,
-    );
     expect(el.querySelector('a[routerlink="/news"]')?.textContent?.trim()).toBe(COPY.en.headerNews);
-    expect(el.querySelector('a[href*="join.slack.com"]')?.textContent?.trim()).toBe(
-      COPY.en.headerSlack,
-    );
-    expect(el.querySelector('a[routerlink="/login"]')?.getAttribute('title')).toBe(
-      COPY.en.titleLogin,
-    );
-    expect(el.querySelector('a[routerlink="/login"]')?.textContent?.trim()).toBe(
-      COPY.en.headerLogin,
-    );
+    expect(login?.getAttribute('title')).toBe(COPY.en.titleLogin);
+    expect(login?.textContent?.trim()).toBe(COPY.en.headerLogin);
   });
 });

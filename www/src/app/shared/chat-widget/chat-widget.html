@@ -232,7 +232,7 @@
             @if (msg.role === 'greg' || msg.role === 'itcy') {
               <div class="chat-row__avatar" aria-hidden="true">
                 <img
-                  src="/img/itcy-mascot-1x.webp"
+                  [src]="agentMiniSrc(msg.role)"
                   width="32"
                   height="32"
                   alt=""
@@ -244,7 +244,31 @@
               @if (msg.role !== 'visitor' && msg.role !== 'system') {
                 <span class="chat-bubble__who">{{ whoLabel(msg.role) }}</span>
               }
-              <p>{{ msg.text }}</p>
+              <p>
+                @for (part of linkParts(msg.text); track $index) {
+                  @if (part.href) {
+                    <a
+                      class="chat-bubble__link"
+                      [href]="part.href"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      >{{ part.t }}</a
+                    >
+                  } @else {
+                    {{ part.t }}
+                  }
+                }
+              </p>
+              @if ((msg.role === 'itcy' || msg.role === 'greg') && messageOffersBooking(msg.text)) {
+                <button
+                  type="button"
+                  class="chat-bubble__booking"
+                  (click)="openBooking()"
+                  [attr.title]="copy.chat.bookingPickSlot"
+                >
+                  {{ copy.chat.bookingPickSlot }}
+                </button>
+              }
             </div>
           </article>
         }
@@ -252,7 +276,13 @@
         @if (chat.typing()) {
           <article class="chat-row" [attr.data-role]="chat.hero() === 'greg' ? 'greg' : 'itcy'">
             <div class="chat-row__avatar" aria-hidden="true">
-              <img src="/img/itcy-mascot-1x.webp" width="32" height="32" alt="" decoding="async" />
+              <img
+                [src]="agentMiniSrc(chat.hero() === 'greg' ? 'greg' : 'itcy')"
+                width="32"
+                height="32"
+                alt=""
+                decoding="async"
+              />
             </div>
             <div
               class="chat-bubble chat-bubble--typing"
@@ -277,6 +307,51 @@
       </div>
 
       <footer class="chat-panel__footer">
+        @if (bookingEnabled()) {
+          <div class="chat-panel__booking-bar">
+            <button type="button" class="chat-panel__booking-open" (click)="openBooking()">
+              {{ copy.chat.bookingOpen }}
+            </button>
+            <a
+              class="chat-panel__booking-link"
+              [href]="bookingScheduleUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              >{{ copy.chat.bookingNewTab }}</a
+            >
+          </div>
+        }
+        @if (bookingOpen() && bookingEnabled()) {
+          <section class="chat-panel__booking" [attr.aria-label]="copy.chat.bookingTitle">
+            <div class="chat-panel__booking-head">
+              <h3>{{ copy.chat.bookingTitle }}</h3>
+              <button
+                type="button"
+                class="chat-panel__booking-close"
+                (click)="closeBooking()"
+                [attr.aria-label]="copy.chat.bookingClose"
+                [attr.title]="copy.chat.bookingClose"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M7 7l10 10M17 7 7 17"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <iframe
+              class="chat-panel__booking-frame"
+              [src]="bookingScheduleUrl"
+              [title]="copy.chat.bookingTitle"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </section>
+        }
         @if (chat.open() && chat.messages().length === 0 && !chat.error() && !chat.connecting()) {
           <div class="chat-panel__chips">
             @for (chip of quickChips(); track chip) {
@@ -303,6 +378,7 @@
               placeholder="you@company.com"
               autocomplete="email"
               [attr.aria-label]="copy.chat.emailAria"
+              (keydown.enter)="onEmailKeydown($event)"
             />
             <button
               type="submit"

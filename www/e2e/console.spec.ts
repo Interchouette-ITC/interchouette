@@ -7,7 +7,6 @@ const routes = [
   '/privacy',
   '/terms',
   '/news',
-  '/login',
   '/account',
   '/?lang=nl',
   '/?lang=fr',

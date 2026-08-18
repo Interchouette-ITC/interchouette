@@ -100,7 +100,8 @@
   gap: 0;
 }
 
-.site-header__nav > a + a::before {
+.site-header__nav > a + a::before,
+.site-header__nav > a + button.site-header__login::before {
   content: '-';
   margin: 0 0.45em;
   color: rgba(255, 255, 255, 0.45);
@@ -110,7 +111,8 @@
 
 .site-header__nav a,
 .site-header__nav a:link,
-.site-header__nav a:visited {
+.site-header__nav a:visited,
+.site-header__nav button.site-header__login {
   display: inline-flex;
   align-items: center;
   min-height: 1.15rem;
@@ -122,7 +124,17 @@
   white-space: nowrap;
 }
 
-.site-header__nav a:hover {
+.site-header__nav button.site-header__login {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.site-header__nav a:hover,
+.site-header__nav button.site-header__login:hover {
   color: #ffd24a;
   text-decoration: none;
 }

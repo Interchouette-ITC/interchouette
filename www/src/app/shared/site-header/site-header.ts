@@ -10,6 +10,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { SLACK_JOIN_URL } from '../../core/chat.constants';
 import { CustomerSession } from '../../core/customer-session';
+import { GisOneTapService } from '../../core/gis-onetap.service';
 import { LocaleService } from '../../core/locale.service';
 
 @Component({
@@ -18,10 +19,14 @@ import { LocaleService } from '../../core/locale.service';
   templateUrl: './site-header.html',
   styleUrl: './site-header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    ngSkipHydration: 'true',
+  },
 })
 export class SiteHeader implements OnInit, OnDestroy {
   protected readonly copy = inject(LocaleService).copy;
   protected readonly session = inject(CustomerSession);
+  private readonly gis = inject(GisOneTapService);
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
   protected readonly marqueeLive = signal(false);
 
@@ -35,5 +40,9 @@ export class SiteHeader implements OnInit, OnDestroy {
     if (this.marqueeTimer) {
       clearTimeout(this.marqueeTimer);
     }
+  }
+
+  protected onClientLogin(): void {
+    this.gis.openSignIn();
   }
 }

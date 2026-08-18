@@ -7,7 +7,9 @@
   } @else {
     <p>{{ copy.accountStub }}</p>
     <p>
-      <a routerLink="/login">{{ copy.accountSignIn }}</a>
+      <button type="button" class="account-signin" (click)="onSignIn()">
+        {{ copy.accountSignIn }}
+      </button>
     </p>
   }
 </article>

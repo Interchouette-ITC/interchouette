@@ -1,18 +1,16 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 
-import { GIS_CLIENT_ID } from '../../core/gis.constants';
-import { LocaleService } from '../../core/locale.service';
-import { SiteFooter } from '../../shared/site-footer/site-footer';
-
+/** Legacy `/login` URL: send visitors to home (Google button lives in the header). */
 @Component({
   selector: 'app-login-page',
-  imports: [RouterLink, SiteFooter],
-  templateUrl: './login.html',
-  styleUrl: '../inner-page.scss',
+  template: '',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginPage {
-  protected readonly copy = inject(LocaleService).copy;
-  protected readonly gisConfigured = GIS_CLIENT_ID.length > 0;
+export class LoginPage implements OnInit {
+  private readonly router = inject(Router);
+
+  ngOnInit(): void {
+    void this.router.navigateByUrl('/');
+  }
 }

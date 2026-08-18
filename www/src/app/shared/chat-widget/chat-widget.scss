@@ -699,6 +699,12 @@
   text-decoration-color: rgba(39, 8, 78, 0.7);
 }
 
+.chat-row:not(.chat-row--intro) .chat-bubble .chat-bubble__link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration-color: currentColor;
+}
+
 .chat-welcome__chips {
   display: flex;
   flex-wrap: wrap;
@@ -932,6 +938,101 @@
   font-size: 0.75rem;
   padding: 0.55rem 0.95rem;
   cursor: pointer;
+}
+
+.chat-bubble__booking {
+  display: inline-flex;
+  margin-top: 0.55rem;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  background: var(--chat-brand);
+  color: #fff;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.chat-bubble__booking:hover {
+  background: var(--chat-brand-lift);
+}
+
+.chat-panel__booking-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.85rem;
+  margin-bottom: 0.65rem;
+}
+
+.chat-panel__booking-open {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.5rem 0.95rem;
+  background: linear-gradient(135deg, var(--chat-brand) 0%, var(--chat-brand-lift) 100%);
+  color: #fff;
+  font: inherit;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.chat-panel__booking-link {
+  color: var(--chat-brand);
+  font-size: 0.72rem;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.chat-panel__booking {
+  margin-bottom: 0.65rem;
+  border: 1px solid rgba(39, 8, 78, 0.12);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(39, 8, 78, 0.12);
+}
+
+.chat-panel__booking-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid rgba(39, 8, 78, 0.08);
+  background: rgba(244, 240, 250, 0.92);
+}
+
+.chat-panel__booking-head h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--chat-ink);
+}
+
+.chat-panel__booking-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--chat-muted);
+  cursor: pointer;
+}
+
+.chat-panel__booking-close svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.chat-panel__booking-frame {
+  display: block;
+  width: 100%;
+  height: min(28rem, 52vh);
+  border: 0;
+  background: #fff;
 }
 
 .chat-panel__footer {
