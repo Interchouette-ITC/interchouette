@@ -11,7 +11,6 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { SLACK_JOIN_URL } from '../../core/chat.constants';
 import { CustomerSession } from '../../core/customer-session';
 import { GisOneTapService } from '../../core/gis-onetap.service';
-import { gisSignInHref } from '../../core/gis-origin';
 import { LOCALE_LINKS, localeSwitchHref } from '../../core/locale-href';
 import { LocaleService } from '../../core/locale.service';
 import { LOCALE_TLDS } from '../../core/seo.constants';
@@ -38,9 +37,6 @@ export class SiteHeader implements OnInit, OnDestroy {
   protected readonly session = inject(CustomerSession);
   private readonly gis = inject(GisOneTapService);
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
-  protected readonly gisBounceHref = gisSignInHref(
-    typeof location === 'undefined' ? 'interchouette.net' : location.hostname,
-  );
   protected readonly marqueeLive = signal(false);
 
   private marqueeTimer: ReturnType<typeof setTimeout> | null = null;

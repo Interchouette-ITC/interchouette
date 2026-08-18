@@ -7,13 +7,9 @@
   } @else {
     <p>{{ copy.accountStub }}</p>
     <p>
-      @if (gisBounceHref; as bounceHref) {
-        <a class="account-signin" [href]="bounceHref">{{ copy.accountSignIn }}</a>
-      } @else {
-        <button type="button" class="account-signin" (click)="onSignIn()">
-          {{ copy.accountSignIn }}
-        </button>
-      }
+      <button type="button" class="account-signin" (click)="onSignIn()">
+        {{ copy.accountSignIn }}
+      </button>
     </p>
   }
 </article>
