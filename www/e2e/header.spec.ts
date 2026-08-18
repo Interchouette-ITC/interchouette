@@ -11,6 +11,7 @@ test.describe('site header and locale', () => {
     await expect(slack).toHaveCSS('color', 'rgb(255, 210, 74)');
     await expect(header.getByRole('button', { name: 'Client login' })).toBeVisible();
     await expect(header.locator('.site-header__lang summary')).toBeVisible();
+    await expect(header.locator('.site-header__lang summary')).toHaveText('EN');
     await expect(page.getByRole('heading', { name: 'Gregory Roussac' })).toBeVisible();
     await expect(page.getByText('Development for product teams.')).toBeVisible();
 
@@ -19,7 +20,7 @@ test.describe('site header and locale', () => {
     await expect(page.getByText('No posts yet.')).toBeVisible();
   });
 
-  test('header flag dropdown switches locale on localhost', async ({ page }) => {
+  test('header language dropdown switches locale on localhost', async ({ page }) => {
     await page.goto('/');
     const header = page.locator('app-site-header');
     await header.locator('.site-header__lang summary').click();

@@ -28,6 +28,9 @@ describe('SiteHeader', () => {
     expect(el.querySelector('.site-header__lang summary')?.getAttribute('aria-label')).toBe(
       COPY.en.headerLang,
     );
+    expect(el.querySelector('.site-header__lang summary')?.textContent?.trim()).toBe('EN');
+    expect(el.querySelector('.site-header__lang-code')?.textContent?.trim()).toBe('EN');
+    expect(el.querySelector('.site-header__flag')).toBeNull();
     expect(el.querySelector('.site-header__lang .is-current')?.textContent).toContain('English');
     expect(el.querySelector('.site-header__lang a')?.textContent).toContain('Nederlands');
   });

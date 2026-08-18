@@ -62,33 +62,15 @@
     }
     <details class="site-header__lang">
       <summary [attr.aria-label]="copy.headerLang" [attr.title]="copy.headerLang">
-        <span
-          class="site-header__flag"
-          [attr.data-locale]="currentLocale"
-          aria-hidden="true"
-        ></span>
+        <span class="site-header__lang-code">{{ currentCode }}</span>
       </summary>
       <ul class="site-header__lang-menu">
         @for (opt of langs; track opt.locale) {
           <li>
             @if (opt.locale === currentLocale) {
-              <span class="is-current">
-                <span
-                  class="site-header__flag"
-                  [attr.data-locale]="opt.locale"
-                  aria-hidden="true"
-                ></span>
-                {{ opt.label }}
-              </span>
+              <span class="is-current">{{ opt.label }}</span>
             } @else {
-              <a [href]="localeHref(opt.locale)">
-                <span
-                  class="site-header__flag"
-                  [attr.data-locale]="opt.locale"
-                  aria-hidden="true"
-                ></span>
-                {{ opt.label }}
-              </a>
+              <a [href]="localeHref(opt.locale)">{{ opt.label }}</a>
             }
           </li>
         }

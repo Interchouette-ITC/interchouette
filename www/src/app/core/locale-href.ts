@@ -1,15 +1,16 @@
 import { LOCALE_ORIGINS } from './seo.constants';
 import type { SiteLocale } from './site-locale';
 
-/** Public locale switcher rows for the header flag menu. */
+/** Public locale switcher rows for the header language menu. */
 export const LOCALE_LINKS: readonly {
   locale: SiteLocale;
   host: string;
   label: string;
+  code: string;
 }[] = [
-  { locale: 'en', host: 'interchouette.net', label: 'English' },
-  { locale: 'nl', host: 'interchouette.nl', label: 'Nederlands' },
-  { locale: 'fr', host: 'interchouette.fr', label: 'Français' },
+  { locale: 'en', host: 'interchouette.net', label: 'English', code: 'EN' },
+  { locale: 'nl', host: 'interchouette.nl', label: 'Nederlands', code: 'NL' },
+  { locale: 'fr', host: 'interchouette.fr', label: 'Français', code: 'FR' },
 ];
 
 export function isLocalDevHost(hostname: string): boolean {
