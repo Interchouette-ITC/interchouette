@@ -2,6 +2,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   ElementRef,
   inject,
@@ -54,8 +55,17 @@ export class ChatWidget implements OnDestroy {
   protected readonly canSend = signal(false);
   /** Brief “Copied” state for the ticket button. */
   protected readonly ticketCopied = signal(false);
-  /** Message field focused: grow compose and hide chat footers. */
+  /** Message field focused: grow the textarea over the fineprint. */
   protected readonly composing = signal(false);
+  protected readonly wideChat = signal(isWideChat());
+  protected readonly starterChips = computed(() => {
+    const c = this.copy.chat;
+    const greg = this.chat.hero() === 'greg';
+    if (!this.wideChat()) {
+      return greg ? [c.chipHiGreg, c.chipRust] : [c.chipWhat, c.chipWho];
+    }
+    return greg ? [c.chipHiGreg, c.chipRust, c.chipWhat] : [c.chipWhat, c.chipWho, c.chipRust];
+  });
   /** Always a string: never leave compose bindings as undefined. */
   protected draft = '';
   protected showEmail = false;
@@ -67,12 +77,19 @@ export class ChatWidget implements OnDestroy {
   private enterTimer: ReturnType<typeof setTimeout> | null = null;
   private ticketCopyTimer: ReturnType<typeof setTimeout> | null = null;
   private bubbleDismissed = false;
+  private wideMql: MediaQueryList | null = null;
 
   constructor() {
     afterNextRender(() => {
       this.mounted.set(true);
       this.enterTimer = setTimeout(() => this.fabEnter.set(false), FAB_ENTER_MS);
       void this.chat.warm().then(() => this.tryStartNudge());
+      if (typeof matchMedia === 'undefined') {
+        return;
+      }
+      this.wideMql = matchMedia('(min-width: 1280px)');
+      this.wideChat.set(this.wideMql.matches);
+      this.wideMql.addEventListener('change', this.onWideChat);
     });
     effect(() => {
       if (!this.chat.open()) {
@@ -98,6 +115,7 @@ export class ChatWidget implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.wideMql?.removeEventListener('change', this.onWideChat);
     this.clearBounceTimers();
   }
 
@@ -168,6 +186,10 @@ export class ChatWidget implements OnDestroy {
     if (next && form?.contains(next)) {
       return;
     }
+    const field = this.messageField()?.nativeElement;
+    if ((field?.value ?? this.draft).trim().length > 0) {
+      return;
+    }
     this.composing.set(false);
   }
 
@@ -181,7 +203,9 @@ export class ChatWidget implements OnDestroy {
 
   protected onDraftInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
+    this.draft = value;
     this.canSend.set(value.trim().length > 0);
+    this.composing.set(true);
   }
 
   protected onSubmit(event: Event): void {
@@ -279,14 +303,6 @@ export class ChatWidget implements OnDestroy {
     if (saved) {
       input.value = saved;
     }
-  }
-
-  protected quickChips(): string[] {
-    const c = this.copy.chat;
-    if (this.chat.hero() === 'greg') {
-      return [c.chipHiGreg, c.chipRust];
-    }
-    return [c.chipWhat, c.chipWho];
   }
 
   protected title(): string {
@@ -557,4 +573,12 @@ export class ChatWidget implements OnDestroy {
       el.scrollTop = el.scrollHeight;
     }
   }
+
+  private readonly onWideChat = (): void => {
+    this.wideChat.set(this.wideMql?.matches ?? isWideChat());
+  };
+}
+
+function isWideChat(): boolean {
+  return typeof matchMedia !== 'undefined' && matchMedia('(min-width: 1280px)').matches;
 }

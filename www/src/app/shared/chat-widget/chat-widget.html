@@ -133,8 +133,13 @@
             </button>
           </div>
 
-          <div class="chat-panel__heading">
-            <h2 class="chat-panel__title">{{ title() }}</h2>
+          <h2 class="chat-panel__title">{{ title() }}</h2>
+
+          <div class="chat-panel__meta">
+            <p class="chat-panel__status">
+              <span class="chat-panel__live-dot" [attr.data-mode]="chat.mode()"></span>
+              <span class="chat-panel__status-text">{{ subtitle() }}</span>
+            </p>
             @if (chat.shortCode()) {
               <button
                 type="button"
@@ -164,13 +169,6 @@
                 </span>
               </button>
             }
-          </div>
-
-          <div class="chat-panel__meta">
-            <p class="chat-panel__status">
-              <span class="chat-panel__live-dot" [attr.data-mode]="chat.mode()"></span>
-              <span class="chat-panel__status-text">{{ subtitle() }}</span>
-            </p>
           </div>
         </div>
       </header>
@@ -331,7 +329,7 @@
         }
         @if (chat.open() && chat.messages().length === 0 && !chat.error() && !chat.connecting()) {
           <div class="chat-panel__chips">
-            @for (chip of quickChips(); track chip) {
+            @for (chip of starterChips(); track chip) {
               <button
                 type="button"
                 class="chat-chip"
@@ -390,7 +388,7 @@
             <textarea
               #messageField
               name="message"
-              rows="3"
+              rows="1"
               [attr.placeholder]="copy.chat.placeholder"
               autocomplete="off"
               maxlength="2000"

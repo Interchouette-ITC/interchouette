@@ -263,19 +263,89 @@ test.describe('mobile layout at 360x664', () => {
     await expect(input).toBeEnabled({ timeout: 15_000 });
     await expect(fineprint).toBeVisible();
 
-    const idleHeight = await input.evaluate((el) => el.getBoundingClientRect().height);
+    const idle = await page.evaluate(() => {
+      const field = document.querySelector('.chat-panel__compose textarea[name="message"]');
+      const send = document.querySelector('.chat-panel__send');
+      const footer = document.querySelector('.chat-panel__footer');
+      if (!field || !send || !footer) {
+        return null;
+      }
+      const f = field.getBoundingClientRect();
+      const s = send.getBoundingClientRect();
+      return {
+        fieldH: f.height,
+        fieldTop: f.top,
+        fieldMid: f.top + f.height / 2,
+        sendMid: s.top + s.height / 2,
+        footerTop: footer.getBoundingClientRect().top,
+        footerBottom: footer.getBoundingClientRect().bottom,
+        panelBottom: document.querySelector('#interchouette-chat-panel')?.getBoundingClientRect()
+          .bottom,
+      };
+    });
+    expect(idle).not.toBeNull();
+    expect(idle!.fieldH, 'idle field is one line').toBeLessThan(52);
+    expect(
+      Math.abs(idle!.fieldMid - idle!.sendMid),
+      'send arrow centered on idle field',
+    ).toBeLessThanOrEqual(3);
+
     await input.click();
     await expect(fineprint).toBeHidden();
-    const focusedHeight = await input.evaluate((el) => el.getBoundingClientRect().height);
+    await expect
+      .poll(async () => input.evaluate((el) => el.getBoundingClientRect().height))
+      .toBeGreaterThan(idle!.fieldH + 8);
+
+    const focused = await page.evaluate(() => {
+      const field = document.querySelector('.chat-panel__compose textarea[name="message"]');
+      const send = document.querySelector('.chat-panel__send');
+      const footer = document.querySelector('.chat-panel__footer');
+      const panel = document.querySelector('#interchouette-chat-panel');
+      if (!field || !send || !footer || !panel) {
+        return null;
+      }
+      const f = field.getBoundingClientRect();
+      const s = send.getBoundingClientRect();
+      return {
+        fieldH: f.height,
+        fieldTop: f.top,
+        fieldBottom: f.bottom,
+        fieldMid: f.top + f.height / 2,
+        sendMid: s.top + s.height / 2,
+        footerTop: footer.getBoundingClientRect().top,
+        footerBottom: footer.getBoundingClientRect().bottom,
+        panelBottom: panel.getBoundingClientRect().bottom,
+      };
+    });
+    expect(focused).not.toBeNull();
+    expect(focused!.fieldH, 'focused field grows into the footer').toBeGreaterThan(
+      idle!.fieldH + 8,
+    );
+    expect(focused!.fieldTop, 'field top stays put').toBeGreaterThanOrEqual(idle!.fieldTop - 2);
+    expect(focused!.fieldTop, 'field top stays put').toBeLessThanOrEqual(idle!.fieldTop + 2);
+    expect(focused!.footerTop, 'chat thread does not jump').toBeGreaterThanOrEqual(
+      idle!.footerTop - 2,
+    );
+    expect(focused!.footerTop, 'chat thread does not jump').toBeLessThanOrEqual(
+      idle!.footerTop + 2,
+    );
     expect(
-      Math.abs(focusedHeight - idleHeight),
-      'message field stays a fixed textarea',
-    ).toBeLessThanOrEqual(2);
+      Math.abs(focused!.fieldMid - focused!.sendMid),
+      'send arrow centered on tall field',
+    ).toBeLessThanOrEqual(3);
+    expect(
+      focused!.panelBottom - focused!.footerBottom,
+      'keep a bottom inset',
+    ).toBeGreaterThanOrEqual(4);
+    expect(
+      focused!.footerBottom - focused!.fieldBottom,
+      'textarea keeps footer padding below it',
+    ).toBeGreaterThanOrEqual(12);
 
     await page.locator('.chat-panel__title').click();
     await expect(fineprint).toBeVisible();
     const blurredHeight = await input.evaluate((el) => el.getBoundingClientRect().height);
-    expect(Math.abs(blurredHeight - idleHeight)).toBeLessThanOrEqual(2);
+    expect(Math.abs(blurredHeight - idle!.fieldH)).toBeLessThanOrEqual(2);
   });
 
   test('hamburger and locale popovers close each other', async ({ page }) => {

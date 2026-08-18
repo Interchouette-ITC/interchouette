@@ -21,6 +21,11 @@ test.describe('chat widget', () => {
     const panel = page.locator('#interchouette-chat-panel');
     await expect(panel).toHaveClass(/chat-panel--open/);
     await expect(page.getByRole('dialog', { name: /Chat with/i })).toBeVisible();
+    const starterChips = page.locator('.chat-panel__chips .chat-chip');
+    if (await starterChips.first().isVisible()) {
+      const desktop = (page.viewportSize()?.width ?? 0) >= 1280;
+      await expect(starterChips).toHaveCount(desktop ? 3 : 2);
+    }
     await expect(
       page.getByRole('button', { name: 'Forget this chat and clear the local transcript' }),
     ).toBeVisible();
@@ -49,6 +54,41 @@ test.describe('chat widget', () => {
       clearance!.panelTop,
       'desktop chat must sit below the site header',
     ).toBeGreaterThanOrEqual(clearance!.headerBottom - 1);
+
+    const wide = (page.viewportSize()?.width ?? 0) >= 768;
+    if (wide) {
+      const ticket = page.locator('.chat-panel__ticket');
+      if (await ticket.isVisible()) {
+        const place = await page.evaluate(() => {
+          const titleEl = document.querySelector('.chat-panel__title');
+          const statusEl = document.querySelector('.chat-panel__status');
+          const ticketEl = document.querySelector('.chat-panel__ticket');
+          if (!titleEl || !statusEl || !ticketEl) {
+            return null;
+          }
+          const title = titleEl.getBoundingClientRect();
+          const status = statusEl.getBoundingClientRect();
+          const code = ticketEl.getBoundingClientRect();
+          return {
+            titleBottom: title.bottom,
+            statusTop: status.top,
+            ticketTop: code.top,
+            copyVisible:
+              getComputedStyle(document.querySelector('.chat-panel__ticket-copy') as Element)
+                .display !== 'none',
+          };
+        });
+        expect(place).not.toBeNull();
+        expect(place!.ticketTop, 'desktop ticket stays on the status row').toBeGreaterThan(
+          place!.titleBottom - 2,
+        );
+        expect(
+          Math.abs(place!.ticketTop - place!.statusTop),
+          'desktop ticket aligns with status, not the title',
+        ).toBeLessThanOrEqual(8);
+        expect(place!.copyVisible, 'desktop ticket keeps the copy icon').toBe(true);
+      }
+    }
     const bandMid = (clearance!.headerBottom + clearance!.vh) / 2;
     const panelMid = (clearance!.panelTop + clearance!.panelBottom) / 2;
     if (clearance!.vh <= 860) {
