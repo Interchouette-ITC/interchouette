@@ -30,7 +30,6 @@ export const FR_CHAT = {
   bookingTitle: 'Choisir un créneau',
   bookingOpen: 'Ouvrir Google Calendar',
   bookingClose: 'Fermer le calendrier',
-  bookingNewTab: 'Ouvrir dans un nouvel onglet',
   bookingPickSlot: 'Choisir un créneau',
   titleGreg: 'Chat avec Greg',
   titleItcy: 'Chat avec ITCy',

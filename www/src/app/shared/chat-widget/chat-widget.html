@@ -308,13 +308,6 @@
             <button type="button" class="chat-panel__booking-open" (click)="openBooking()">
               {{ copy.chat.bookingOpen }}
             </button>
-            <a
-              class="chat-panel__booking-link"
-              [href]="bookingScheduleUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              >{{ copy.chat.bookingNewTab }}</a
-            >
           </div>
         }
         @if (bookingOpen() && bookingEnabled()) {

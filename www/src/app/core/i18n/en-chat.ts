@@ -30,7 +30,6 @@ export const EN_CHAT = {
   bookingTitle: 'Pick a time slot',
   bookingOpen: 'Open Google Calendar',
   bookingClose: 'Close calendar',
-  bookingNewTab: 'Open in a new tab',
   bookingPickSlot: 'Pick a slot',
   titleGreg: 'Chat with Greg',
   titleItcy: 'Chat with ITCy',
