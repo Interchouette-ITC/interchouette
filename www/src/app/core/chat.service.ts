@@ -3,11 +3,19 @@ import { Injectable, computed, effect, signal } from '@angular/core';
 import {
   CHAT_EMAIL_ANNOUNCED_KEY,
   CHAT_EMAIL_KEY,
+  CHAT_ORIGIN_BOUND_KEYS,
   CHAT_STORAGE_KEY,
+  CHAT_STORE_MAX_MESSAGES,
   CHAT_WIDGET_ENABLED,
   chatApiBase,
   chatWsUrl,
 } from './chat.constants';
+import {
+  clearChatOriginBoundKeys,
+  readOriginBoundValue,
+  removeOriginBoundValue,
+  writeOriginBoundValue,
+} from './chat-store-vault';
 import { icConsoleWrite } from './ic-console';
 import { siteLocale } from './site-locale';
 
@@ -78,6 +86,11 @@ export class ChatService {
   private attempt = 0;
   /** Last email posted on this socket session (dedupe Save spam). */
   private lastPostedEmail = '';
+  /** Decrypted email cache for this page (origin-bound store is async). */
+  private emailCache = '';
+  private announcedEmailCache = '';
+  private secretsHydrated = false;
+  private persistQueue: Promise<void> = Promise.resolve();
 
   constructor() {
     effect(() => {
@@ -237,7 +250,8 @@ export class ChatService {
     const silent = options.silent === true && !this.open();
     this.showOpening();
 
-    const stored = this.readStore();
+    await this.hydrateLocalSecrets();
+    const stored = await this.readStore();
     if (stored?.sessionId) {
       this.sessionId = stored.sessionId;
       this.shortCode.set(stored.resumeCode);
@@ -247,7 +261,7 @@ export class ChatService {
       if (resumed) {
         return true;
       }
-      this.clearStore();
+      this.clearTranscriptStore();
       this.showOpening();
     }
 
@@ -309,8 +323,8 @@ export class ChatService {
     if (!trimmed) {
       return;
     }
-    // Always keep a local copy (localStorage, not cookies). Notify only when the socket is up.
-    this.persistEmail(trimmed);
+    // Keep a local copy in the origin-bound store (not cookies). Notify only when the socket is up.
+    void this.persistEmail(trimmed);
     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
       return;
     }
@@ -326,50 +340,68 @@ export class ChatService {
     this.socket.send(JSON.stringify({ type: 'email', email: trimmed, announce: shouldAnnounce }));
   }
 
-  /** Last email the visitor saved in chat (browser localStorage). */
+  /** Last email the visitor saved in chat (memory cache of the origin-bound store). */
   readSavedEmail(): string {
-    return this.readStorageKey(CHAT_EMAIL_KEY);
+    return this.emailCache;
+  }
+
+  /**
+   * Wipe the local transcript, saved email, and resume token, then open a new session.
+   * Slack / Greg still have anything already relayed.
+   */
+  async forgetChat(): Promise<void> {
+    this.clearRetry();
+    this.socket?.close();
+    this.socket = null;
+    this.sessionId = null;
+    this.shortCode.set('');
+    this.messages.set([]);
+    this.lastPostedEmail = '';
+    this.emailCache = '';
+    this.announcedEmailCache = '';
+    this.secretsHydrated = true;
+    this.wsReady.set(false);
+    await this.persistQueue.catch(() => undefined);
+    clearChatOriginBoundKeys(CHAT_ORIGIN_BOUND_KEYS);
+    if (typeof sessionStorage !== 'undefined') {
+      try {
+        sessionStorage.removeItem(CHAT_OPENED_KEY);
+      } catch {
+        /* private mode */
+      }
+    }
+    await this.connect({ silent: !this.open() });
   }
 
   private readAnnouncedEmail(): string {
-    return this.readStorageKey(CHAT_EMAIL_ANNOUNCED_KEY);
+    return this.announcedEmailCache;
   }
 
-  private readStorageKey(key: string): string {
-    if (typeof localStorage === 'undefined') {
-      return '';
+  private async hydrateLocalSecrets(): Promise<void> {
+    if (this.secretsHydrated) {
+      return;
     }
-    try {
-      const raw = localStorage.getItem(key)?.trim() ?? '';
-      if (!raw || raw === 'undefined' || raw === 'null') {
-        if (raw === 'undefined' || raw === 'null') {
-          localStorage.removeItem(key);
-        }
-        return '';
-      }
-      return raw;
-    } catch {
-      return '';
-    }
+    this.emailCache = (await readOriginBoundValue(CHAT_EMAIL_KEY)) ?? '';
+    this.announcedEmailCache = (await readOriginBoundValue(CHAT_EMAIL_ANNOUNCED_KEY)) ?? '';
+    this.secretsHydrated = true;
   }
 
   private persistEmail(email: string): void {
-    this.writeStorageKey(CHAT_EMAIL_KEY, email);
+    this.emailCache = email;
+    this.enqueuePersist(() => writeOriginBoundValue(CHAT_EMAIL_KEY, email));
   }
 
   private persistAnnouncedEmail(email: string): void {
-    this.writeStorageKey(CHAT_EMAIL_ANNOUNCED_KEY, email);
+    this.announcedEmailCache = email;
+    this.enqueuePersist(() => writeOriginBoundValue(CHAT_EMAIL_ANNOUNCED_KEY, email));
   }
 
-  private writeStorageKey(key: string, value: string): void {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-    try {
-      localStorage.setItem(key, value);
-    } catch {
-      /* quota / private mode */
-    }
+  private enqueuePersist(task: () => Promise<void>): void {
+    this.persistQueue = this.persistQueue
+      .then(() => task())
+      .catch(() => {
+        /* quota / private mode / crypto unavailable */
+      });
   }
 
   private applyPresence(mode: 'live' | 'away', label: string, hero: 'greg' | 'itcy'): void {
@@ -553,47 +585,36 @@ export class ChatService {
     }
   }
 
-  private clearStore(): void {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-    try {
-      localStorage.removeItem(CHAT_STORAGE_KEY);
-    } catch {
-      /* private mode */
-    }
+  private clearTranscriptStore(): void {
+    this.enqueuePersist(async () => {
+      removeOriginBoundValue(CHAT_STORAGE_KEY);
+    });
   }
 
   private persist(payload: StoredChat): void {
-    if (typeof localStorage === 'undefined') {
-      return;
-    }
-    try {
-      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(payload));
-    } catch {
-      /* quota / private mode */
-    }
+    const trimmed: StoredChat = {
+      ...payload,
+      messages: payload.messages.slice(-CHAT_STORE_MAX_MESSAGES),
+    };
+    this.enqueuePersist(() => writeOriginBoundValue(CHAT_STORAGE_KEY, JSON.stringify(trimmed)));
   }
 
-  private readStore(): StoredChat | null {
-    if (typeof localStorage === 'undefined') {
+  private async readStore(): Promise<StoredChat | null> {
+    const raw = await readOriginBoundValue(CHAT_STORAGE_KEY);
+    if (!raw) {
       return null;
     }
     try {
-      const raw = localStorage.getItem(CHAT_STORAGE_KEY);
-      if (!raw) {
-        return null;
-      }
       const parsed = JSON.parse(raw) as StoredChat;
       if (!parsed.sessionId || !Array.isArray(parsed.messages)) {
         return null;
       }
       // Drop stale transcripts after 7 days.
       if (Date.now() - (parsed.savedAt || 0) > 7 * 24 * 60 * 60 * 1000) {
-        localStorage.removeItem(CHAT_STORAGE_KEY);
+        this.clearTranscriptStore();
         return null;
       }
-      parsed.messages = sanitizeStoredMessages(parsed.messages);
+      parsed.messages = sanitizeStoredMessages(parsed.messages).slice(-CHAT_STORE_MAX_MESSAGES);
       return parsed;
     } catch {
       return null;

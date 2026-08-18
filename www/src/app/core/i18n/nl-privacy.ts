@@ -1,6 +1,6 @@
 export const NL_PRIVACY = {
   title: 'Privacybeleid',
-  updated: 'Laatst bijgewerkt: 17 augustus 2026',
+  updated: 'Laatst bijgewerkt: 18 augustus 2026',
   intro:
     'Dit privacybeleid beschrijft hoe Interchouette - ITC ("wij", "ons" of "onze"), geëxploiteerd door Gregory Roussac, informatie verzamelt, gebruikt en beschermt wanneer u onze websites, toepassingen en gerelateerde diensten (de "Diensten") gebruikt, inclusief integraties met platforms van derden zoals LinkedIn.',
   collectHeading: '1. Gegevens die wij verzamelen',
@@ -27,14 +27,14 @@ export const NL_PRIVACY = {
   cookiesGa:
     'Google Analytics 4 (meet-id op deze site) kan cookies / identificatoren zetten om geaggregeerd verkeer te begrijpen. Het wordt alleen geladen nadat u niet-essentiële cookies Accepteert in de toestemmingsbanner. Als u Weigert, laden wij die analytics-tag niet voor uw browser.',
   cookiesChat:
-    'Chatopslag in uw browser (localStorage / sessionStorage) bewaart een kort chat-hervattoken, recente berichten (ongeveer zeven dagen) en eventuele e-mail die u in het chatformulier hebt opgeslagen, zodat die opnieuw kan verschijnen wanneer u dat formulier weer opent.',
+    'Chatopslag in deze browser bewaart een kort hervattoken, de laatste berichten (ongeveer zeven dagen) en eventuele e-mail die u in het chatformulier hebt opgeslagen. Die cache is versleuteld met een sleutel gebonden aan deze site-oorsprong, zodat een vluchtige blik op localStorage de tekst niet toont. Dit is geen end-to-end versleuteling. Deze chat vergeten in het paneel wist de lokale cache.',
   cookiesConsent:
     'De toestemmingskeuze zelf wordt lokaal opgeslagen zodat wij Accepteren of Weigeren onthouden.',
   cookiesCustomer:
     'Klantlogin, wanneer gebruikt, slaat de Google-profielvelden hierboven op in localStorage onder een sitesleutel. Het wissen van sitegegevens verwijdert die sessie.',
   chatHeading: '3. Bezoekerschat, Slack en optionele e-mail',
   chatP:
-    'Wanneer chat beschikbaar is, kunnen berichten naar Gregory Roussac worden doorgestuurd via Slack wanneer hij online is. Wanneer hij afwezig is, kunnen antwoorden worden gegenereerd uit openbare Interchouette-notities (onder meer via Interchouette MCP) en kan OpenRouter worden gebruikt voor taalmodelantwoorden. Als u een e-mail in de chat achterlaat, gebruiken wij die alleen zodat Greg kan opvolgen; die e-mail blijft ook in uw browseropslag zoals hierboven tot u sitegegevens wist.',
+    'Wanneer chat beschikbaar is, kunnen berichten naar Gregory Roussac worden doorgestuurd via Slack wanneer hij online is. Wanneer hij afwezig is, kunnen antwoorden worden gegenereerd uit openbare Interchouette-notities (onder meer via Interchouette MCP) en kan OpenRouter worden gebruikt voor taalmodelantwoorden. Als u een e-mail in de chat achterlaat, gebruiken wij die alleen zodat Greg kan opvolgen; die e-mail blijft ook in uw browseropslag zoals hierboven tot u Deze chat vergeten gebruikt of sitegegevens wist.',
   gisHeading: '4. Klantlogin (Google Sign-In)',
   gisP1:
     'De site kan een knop Klantlogin tonen die Google Identity Services in deze browser gebruikt. Wanneer een Google-client-id is geconfigureerd, toont Google een popup; wij slaan daarna uw naam, e-mail, profielfoto en Google-subjectidentificator alleen in deze browser op. Wij sturen het Google-token niet naar servers van Interchouette. Deze login opent geen privé-backoffice, klantenportaal of Interchouette-account.',
@@ -75,7 +75,7 @@ export const NL_PRIVACY = {
   retentionLead:
     'Wij bewaren persoonsgegevens alleen zolang nodig voor de doelen in dit beleid, tenzij een langere termijn wettelijk verplicht is. In het bijzonder:',
   retentionChat:
-    'De chattranscriptcache in de browser is bedoeld om na ongeveer zeven dagen te verlopen (of eerder als u sitegegevens wist);',
+    'De chatcache in de browser is bedoeld om na ongeveer zeven dagen te verlopen, of eerder als u Deze chat vergeten gebruikt of sitegegevens wist;',
   retentionSlack:
     'Slack-chatthreads en optionele opvolgings-e-mail worden bewaard zolang nodig om te reageren en de Diensten te laten werken, en daarna verwijderd of geminimaliseerd wanneer ze niet meer nodig zijn;',
   retentionGis:
