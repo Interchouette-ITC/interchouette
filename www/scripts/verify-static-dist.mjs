@@ -15,7 +15,6 @@ const required = [
   'privacy/index.html',
   'terms/index.html',
   'news/index.html',
-  'login/index.html',
   'account/index.html',
   '_redirects',
   'sitemap.xml',
@@ -38,7 +37,6 @@ const htmlPages = [
   'privacy/index.html',
   'terms/index.html',
   'news/index.html',
-  'login/index.html',
   'account/index.html',
 ];
 
