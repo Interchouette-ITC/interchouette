@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 
 import { CustomerSession } from './customer-session';
 import { GIS_CLIENT_ID } from './gis.constants';
+import { consumeGisSignInQuery, isGisLoginHost } from './gis-origin';
 import { initGisOneTap, openGisSignIn } from './gis-signin';
 
 @Injectable({ providedIn: 'root' })
@@ -17,14 +18,18 @@ export class GisOneTapService {
   }
 
   preload(): void {
-    if (!this.configured()) {
+    if (!this.configured() || !this.onGisHost()) {
       return;
     }
-    void this.ensureReady();
+    void this.ensureReady().then((ok) => {
+      if (ok) {
+        this.openFromQuery();
+      }
+    });
   }
 
   openSignIn(): void {
-    if (!this.configured()) {
+    if (!this.configured() || !this.onGisHost()) {
       return;
     }
     if (this.ready) {
@@ -38,8 +43,24 @@ export class GisOneTapService {
     });
   }
 
+  private onGisHost(): boolean {
+    return typeof location !== 'undefined' && isGisLoginHost(location.hostname);
+  }
+
+  private openFromQuery(): void {
+    if (typeof location === 'undefined' || typeof history === 'undefined') {
+      return;
+    }
+    const open = consumeGisSignInQuery(location.href, (url) => {
+      history.replaceState({}, '', url);
+    });
+    if (open) {
+      openGisSignIn();
+    }
+  }
+
   private ensureReady(): Promise<boolean> {
-    if (!this.configured()) {
+    if (!this.configured() || !this.onGisHost()) {
       return Promise.resolve(false);
     }
     if (this.ready) {
