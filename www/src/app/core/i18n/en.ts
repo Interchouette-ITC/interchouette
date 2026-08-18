@@ -12,6 +12,7 @@ export const EN = {
   headerNews: 'News',
   headerSlack: 'Join our Slack',
   headerLogin: 'Client login',
+  headerLang: 'Language',
   headerMarquee:
     "★ Internet, c'est chouette ★ Rust · Wasm · Freelance ★ Interchouette - ITC ★ Gregory Roussac ★",
   footerHome: 'Home',

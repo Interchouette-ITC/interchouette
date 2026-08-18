@@ -31,6 +31,7 @@ fn build_cors(cors_origin: &str) -> CorsLayer {
     use axum::http::{HeaderValue, Method};
     let mut origins = vec![
         HeaderValue::from_static("https://interchouette.net"),
+        HeaderValue::from_static("https://www.interchouette.net"),
         HeaderValue::from_static("https://interchouette.nl"),
         HeaderValue::from_static("https://www.interchouette.nl"),
         HeaderValue::from_static("https://interchouette.fr"),
@@ -62,4 +63,48 @@ pub async fn run_http(addr: &str, cors_origin: String) -> Result<()> {
     tracing::info!(%addr, "interchouette-chat listening");
     axum::serve(listener, app).await?;
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::{Request, StatusCode};
+    use tower::ServiceExt;
+
+    #[tokio::test]
+    async fn cors_allows_locale_tld_origins() {
+        use axum::routing::get;
+
+        let app = Router::new()
+            .route("/health", get(|| async { "ok" }))
+            .layer(build_cors("https://interchouette.net"));
+        for origin in [
+            "https://interchouette.fr",
+            "https://www.interchouette.nl",
+            "https://www.interchouette.net",
+        ] {
+            let response = app
+                .clone()
+                .oneshot(
+                    Request::builder()
+                        .method("OPTIONS")
+                        .uri("/health")
+                        .header("origin", origin)
+                        .header("access-control-request-method", "POST")
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
+            let allow = response
+                .headers()
+                .get("access-control-allow-origin")
+                .unwrap_or_else(|| panic!("missing ACAO for {origin}"))
+                .to_str()
+                .unwrap();
+            assert_eq!(allow, origin);
+        }
+    }
 }

@@ -6,12 +6,15 @@ import {
   OnInit,
   signal,
 } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 
 import { SLACK_JOIN_URL } from '../../core/chat.constants';
 import { CustomerSession } from '../../core/customer-session';
 import { GisOneTapService } from '../../core/gis-onetap.service';
+import { LOCALE_LINKS, localeSwitchHref } from '../../core/locale-href';
 import { LocaleService } from '../../core/locale.service';
+import { LOCALE_TLDS } from '../../core/seo.constants';
+import type { SiteLocale } from '../../core/site-locale';
 
 @Component({
   selector: 'app-site-header',
@@ -24,7 +27,13 @@ import { LocaleService } from '../../core/locale.service';
   },
 })
 export class SiteHeader implements OnInit, OnDestroy {
-  protected readonly copy = inject(LocaleService).copy;
+  private readonly router = inject(Router);
+  private readonly locale = inject(LocaleService);
+  protected readonly copy = this.locale.copy;
+  protected readonly currentLocale = this.locale.locale;
+  protected readonly tld = LOCALE_TLDS[this.locale.locale];
+  protected readonly brandHost = `interchouette.${this.tld}`;
+  protected readonly langs = LOCALE_LINKS;
   protected readonly session = inject(CustomerSession);
   private readonly gis = inject(GisOneTapService);
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
@@ -40,6 +49,11 @@ export class SiteHeader implements OnInit, OnDestroy {
     if (this.marqueeTimer) {
       clearTimeout(this.marqueeTimer);
     }
+  }
+
+  protected localeHref(locale: SiteLocale): string {
+    const host = typeof location === 'undefined' ? '' : location.hostname;
+    return localeSwitchHref(locale, this.router.url, host);
   }
 
   protected onClientLogin(): void {

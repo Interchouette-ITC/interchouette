@@ -30,6 +30,7 @@ describe('SiteFooter', () => {
     expect(el.querySelector('a[routerlink="/about"]')?.textContent).toContain('About');
     expect(el.querySelector('a[routerlink="/privacy"]')?.textContent).toContain('Privacy');
     expect(el.querySelector('a[routerlink="/terms"]')?.textContent).toContain('Terms');
+    expect(el.querySelector('.site-footer__tld')).toBeNull();
   });
 
   it('includes a Home link in the footer markup', async () => {

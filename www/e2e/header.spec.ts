@@ -7,12 +7,24 @@ test.describe('site header and locale', () => {
     await expect(header.getByRole('link', { name: 'interchouette.net' })).toBeVisible();
     await expect(header.getByRole('link', { name: 'News' })).toBeVisible();
     await expect(header.getByRole('button', { name: 'Client login' })).toBeVisible();
+    await expect(header.locator('.site-header__lang summary')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Gregory Roussac' })).toBeVisible();
     await expect(page.getByText('Development for product teams.')).toBeVisible();
 
     await page.goto('/news');
     await expect(page.getByRole('heading', { name: 'News' })).toBeVisible();
     await expect(page.getByText('No posts yet.')).toBeVisible();
+  });
+
+  test('header flag dropdown switches locale on localhost', async ({ page }) => {
+    await page.goto('/');
+    const header = page.locator('app-site-header');
+    await header.locator('.site-header__lang summary').click();
+    await header.getByRole('link', { name: 'Nederlands' }).click();
+    await expect(page).toHaveURL(/\?lang=nl/);
+    await expect(page.locator('html')).toHaveAttribute('lang', 'nl');
+    await expect(header.getByRole('link', { name: 'Nieuws' })).toBeVisible();
+    await expect(page.getByText('Ontwikkeling voor productteams.')).toBeVisible();
   });
 
   test('localhost lang query switches header and home copy', async ({ page }) => {
@@ -23,6 +35,13 @@ test.describe('site header and locale', () => {
       page.locator('app-site-header').getByRole('link', { name: 'Nieuws' }),
     ).toBeVisible();
     await expect(page.getByText('Ontwikkeling voor productteams.')).toBeVisible();
+    await expect(
+      page.locator('app-site-header').getByRole('link', { name: 'interchouette.nl' }),
+    ).toBeVisible();
+    await expect(page.locator('app-site-footer')).not.toContainText('interchouette.nl');
+    await expect(page.locator('app-site-footer')).not.toContainText('interchouette.fr');
+    await expect(page.locator('app-site-footer').getByRole('link', { name: 'Over' })).toBeVisible();
+    await expect(page.locator('app-site-footer').getByRole('link', { name: 'AV' })).toBeVisible();
 
     await page.goto('/?lang=fr');
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
@@ -31,6 +50,10 @@ test.describe('site header and locale', () => {
       page.locator('app-site-header').getByRole('link', { name: 'Actualités' }),
     ).toBeVisible();
     await expect(page.getByText('Développement pour les équipes produit.')).toBeVisible();
+    await expect(
+      page.locator('app-site-footer').getByRole('link', { name: 'Vie privée' }),
+    ).toBeVisible();
+    await expect(page.locator('app-site-footer').getByRole('link', { name: 'CGU' })).toBeVisible();
 
     await page.goto('/about?lang=nl');
     await expect(page.getByRole('heading', { name: /Over Interchouette/i })).toBeVisible();
