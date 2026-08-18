@@ -21,6 +21,9 @@ test.describe('chat widget', () => {
     const panel = page.locator('#interchouette-chat-panel');
     await expect(panel).toHaveClass(/chat-panel--open/);
     await expect(page.getByRole('dialog', { name: /Chat with/i })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Forget this chat and clear the local transcript' }),
+    ).toBeVisible();
     await expect(page.locator('form.chat-panel__compose')).toHaveAttribute(
       'toolname',
       'send_site_chat_message',

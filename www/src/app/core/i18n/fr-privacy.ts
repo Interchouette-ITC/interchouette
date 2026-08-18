@@ -1,6 +1,6 @@
 export const FR_PRIVACY = {
   title: 'Politique de confidentialité',
-  updated: 'Dernière mise à jour : 17 août 2026',
+  updated: 'Dernière mise à jour : 18 août 2026',
   intro:
     'La présente politique de confidentialité décrit la manière dont Interchouette - ITC (« nous », « notre » ou « nos »), exploité par Gregory Roussac, collecte, utilise et protège les informations lorsque vous utilisez nos sites web, applications et services associés (les « Services »), y compris les intégrations avec des plateformes tierces telles que LinkedIn.',
   collectHeading: '1. Données que nous collectons',
@@ -27,14 +27,14 @@ export const FR_PRIVACY = {
   cookiesGa:
     "Google Analytics 4 (identifiant de mesure sur ce site) peut déposer des cookies / identifiants pour comprendre le trafic agrégé. Il ne se charge qu'après que vous avez Accepté les cookies non essentiels dans la bannière de consentement. Si vous Refusez, nous ne chargeons pas cette balise analytics pour votre navigateur.",
   cookiesChat:
-    "Le stockage du chat dans votre navigateur (localStorage / sessionStorage) conserve un court jeton de reprise de chat, les messages récents (environ sept jours) et tout e-mail que vous avez choisi d'enregistrer dans le formulaire de chat afin qu'il réapparaisse lorsque vous rouvrez ce formulaire.",
+    "Le stockage du chat dans ce navigateur conserve un court jeton de reprise, les derniers messages (environ sept jours) et tout e-mail enregistré dans le formulaire. Ce cache est chiffré avec une clé liée à l'origine de ce site, afin qu'un regard occasionnel sur localStorage n'affiche pas le texte. Ce n'est pas un chiffrement de bout en bout. Oublier ce chat dans le panneau efface le cache local.",
   cookiesConsent:
     "Le choix de consentement lui-même est stocké localement afin que nous nous souvenions d'Accepter ou de Refuser.",
   cookiesCustomer:
     "La connexion client, lorsqu'elle est utilisée, stocke les champs de profil Google ci-dessus dans localStorage sous une clé du site. Effacer les données du site supprime cette session.",
   chatHeading: '3. Chat visiteur, Slack et e-mail facultatif',
   chatP:
-    "Lorsque le chat est disponible, les messages peuvent être relayés à Gregory Roussac via Slack lorsqu'il est en ligne. Lorsqu'il est absent, les réponses peuvent être générées à partir de notes publiques Interchouette (y compris via Interchouette MCP) et peuvent utiliser OpenRouter pour des réponses de modèle de langage. Si vous laissez un e-mail dans le chat, nous l'utilisons uniquement pour que Greg puisse vous recontacter ; il est aussi conservé dans le stockage de votre navigateur comme ci-dessus jusqu'à ce que vous effaciez les données du site.",
+    "Lorsque le chat est disponible, les messages peuvent être relayés à Gregory Roussac via Slack lorsqu'il est en ligne. Lorsqu'il est absent, les réponses peuvent être générées à partir de notes publiques Interchouette (y compris via Interchouette MCP) et peuvent utiliser OpenRouter pour des réponses de modèle de langage. Si vous laissez un e-mail dans le chat, nous l'utilisons uniquement pour que Greg puisse vous recontacter ; il est aussi conservé dans le stockage de votre navigateur comme ci-dessus jusqu'à ce que vous utilisiez Oublier ce chat ou effaciez les données du site.",
   gisHeading: '4. Connexion client (Google Sign-In)',
   gisP1:
     "Le site peut afficher un bouton Connexion client qui utilise Google Identity Services dans ce navigateur. Lorsqu'un identifiant client Google est configuré, Google affiche une fenêtre ; nous stockons ensuite votre nom, e-mail, photo de profil et identifiant subject Google dans ce navigateur uniquement. Nous n'envoyons pas le jeton Google vers les serveurs d'Interchouette. Cette connexion n'ouvre pas d'arrière-bureau privé, de portail client ou de compte Interchouette.",
@@ -75,7 +75,7 @@ export const FR_PRIVACY = {
   retentionLead:
     'Nous conservons les données personnelles seulement aussi longtemps que nécessaire aux fins décrites dans la présente politique, sauf si une durée plus longue est exigée par la loi. En particulier :',
   retentionChat:
-    'Le cache de transcription du chat dans le navigateur est destiné à expirer après environ sept jours (ou plus tôt si vous effacez les données du site) ;',
+    'Le cache du chat dans le navigateur est destiné à expirer après environ sept jours, ou plus tôt si vous utilisez Oublier ce chat ou effacez les données du site ;',
   retentionSlack:
     "Les fils de chat Slack et l'e-mail de suivi facultatif sont conservés aussi longtemps que nécessaire pour répondre et exploiter les Services, puis supprimés ou minimisés lorsqu'ils ne sont plus nécessaires ;",
   retentionGis:

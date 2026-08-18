@@ -42,6 +42,16 @@ export const CHAT_EMAIL_KEY = 'ic.chat.email';
 /** Last email that was announced to Slack (dedupe across reloads). */
 export const CHAT_EMAIL_ANNOUNCED_KEY = 'ic.chat.email.announced';
 
+/** Last N transcript lines kept in the origin-bound browser cache. */
+export const CHAT_STORE_MAX_MESSAGES = 40;
+
+/** localStorage keys wrapped with the origin-bound chat vault. */
+export const CHAT_ORIGIN_BOUND_KEYS = [
+  CHAT_STORAGE_KEY,
+  CHAT_EMAIL_KEY,
+  CHAT_EMAIL_ANNOUNCED_KEY,
+] as const;
+
 export const CONTACT_EMAIL = 'contact@interchouette.net';
 
 /** Public Slack invite (home / about / chat intro). */

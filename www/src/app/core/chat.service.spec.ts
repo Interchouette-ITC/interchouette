@@ -126,4 +126,50 @@ describe('ChatService', () => {
     expect(service.shortCode()).toBe('S-00AB');
     expect(service.error()).toBeNull();
   });
+
+  it('forgetChat clears messages and saved email cache', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        session_id: 'sess-2',
+        short_code: 'S-00CD',
+        mode: 'away',
+        label: 'Away',
+        hero: 'itcy',
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    class FakeSocket {
+      readyState = 1;
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: (() => void) | null = null;
+      onclose: (() => void) | null = null;
+      send = vi.fn();
+      close = vi.fn();
+
+      constructor() {
+        queueMicrotask(() => {
+          this.onmessage?.(
+            new MessageEvent('message', {
+              data: JSON.stringify({
+                type: 'ready',
+                session_id: 'sess-2',
+                short_code: 'S-00CD',
+              }),
+            }),
+          );
+        });
+      }
+    }
+    vi.stubGlobal('WebSocket', FakeSocket);
+
+    await service.openPanel();
+    service.sendEmail('ada@example.com');
+    expect(service.readSavedEmail()).toBe('ada@example.com');
+    await service.forgetChat();
+    expect(service.readSavedEmail()).toBe('');
+    expect(service.messages()).toEqual([]);
+    expect(service.shortCode()).toBe('S-00CD');
+  });
 });
