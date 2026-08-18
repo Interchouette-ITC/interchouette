@@ -192,7 +192,13 @@
           <div class="chat-welcome">
             <div class="chat-welcome__halo" aria-hidden="true"></div>
             <div class="chat-welcome__mark" aria-hidden="true">
-              <img src="/img/itcy-mascot-2x.webp" width="88" height="88" alt="" decoding="async" />
+              <img
+                [src]="chat.hero() === 'greg' ? '/img/3099551.jpeg' : '/img/itcy-mascot-2x.webp'"
+                width="88"
+                height="88"
+                alt=""
+                decoding="async"
+              />
             </div>
             <p class="chat-welcome__kicker">{{ emptyKicker() }}</p>
             <h3>{{ emptyTitle() }}</h3>

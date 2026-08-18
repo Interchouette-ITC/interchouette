@@ -39,6 +39,8 @@ Website static site stays separate. Chat needs its **own** web service (WebSocke
 
 Copy `.env.example` to `.env` and fill Slack plus `OPENROUTER_API_KEY`. Away mode needs `OPENROUTER_MODEL` (example default: `google/gemini-2.5-flash`) and `MCP_URL`. The binary loads repo-root `.env` on start (does not override vars already in the shell).
 
+`CHAT_ENV=local` does not open Slack Socket Mode (that connection stays on prod). Greg replies are read from the open Slack thread over HTTP, about every two seconds, only for sessions that already have a thread.
+
 ```bash
 cargo run --manifest-path backend/Cargo.toml
 ```

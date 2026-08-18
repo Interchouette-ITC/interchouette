@@ -47,7 +47,7 @@ impl Hub {
     pub async fn subscribe(&self, session_id: &str) -> broadcast::Receiver<ChatEvent> {
         let mut map = self.inner.write().await;
         let bus = map.entry(session_id.to_string()).or_insert_with(|| {
-            let (tx, _) = broadcast::channel(64);
+            let (tx, _) = broadcast::channel(256);
             SessionBus { tx }
         });
         let rx = bus.tx.subscribe();
@@ -59,20 +59,16 @@ impl Hub {
     pub async fn publish(&self, session_id: &str, event: ChatEvent) {
         let map = self.inner.read().await;
         if let Some(bus) = map.get(session_id) {
-            if bus.tx.receiver_count() > 0 {
-                let _ = bus.tx.send(event);
-            }
+            let _ = bus.tx.send(event);
         }
     }
 
-    /// Publish the same event to every session bus that still has receivers.
+    /// Publish the same event to every session bus.
     pub async fn publish_many(&self, session_ids: &[String], event: ChatEvent) {
         let map = self.inner.read().await;
         for id in session_ids {
             if let Some(bus) = map.get(id) {
-                if bus.tx.receiver_count() > 0 {
-                    let _ = bus.tx.send(event.clone());
-                }
+                let _ = bus.tx.send(event.clone());
             }
         }
     }

@@ -271,7 +271,7 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected ticketDisplay(): string {
-    return this.chat.shortCode().trim().replace(/^IC-/i, '');
+    return this.chat.shortCode().trim();
   }
 
   protected ticketCopyAria(): string {
