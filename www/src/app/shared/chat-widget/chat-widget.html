@@ -51,7 +51,7 @@
             decoding="async"
           />
         </span>
-        @if (!chat.open() && (chat.mode() === 'live' || chat.mode() === 'away')) {
+        @if (!chat.open()) {
           <span class="chat-fab__badge" [attr.data-mode]="chat.mode()" aria-hidden="true"></span>
         }
       </button>
@@ -77,17 +77,13 @@
       <header class="chat-panel__hero">
         <div class="chat-panel__avatar-wrap" aria-hidden="true">
           <div class="chat-panel__avatar">
-            @if (chat.hero() === 'neutral') {
-              <span class="chat-panel__orbit"><i></i></span>
-            } @else {
-              <img
-                src="/img/avatar-interchouette.png"
-                width="72"
-                height="72"
-                alt=""
-                decoding="async"
-              />
-            }
+            <img
+              src="/img/avatar-interchouette.png"
+              width="72"
+              height="72"
+              alt=""
+              decoding="async"
+            />
           </div>
         </div>
 

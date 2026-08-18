@@ -239,7 +239,8 @@
   animation: chatStatusPulse 2s ease-out infinite;
 }
 
-.chat-fab__badge[data-mode='away'] {
+.chat-fab__badge[data-mode='away'],
+.chat-fab__badge[data-mode='connecting'] {
   background: var(--chat-warn);
 }
 
@@ -464,23 +465,6 @@
   -webkit-user-drag: none;
   user-select: none;
   pointer-events: none;
-}
-
-.chat-panel__orbit {
-  width: 1.15rem;
-  height: 1.15rem;
-  border-radius: 999px;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  display: grid;
-  place-items: center;
-}
-
-.chat-panel__orbit i {
-  width: 0.4rem;
-  height: 0.4rem;
-  border-radius: 999px;
-  background: #fff;
-  animation: chatPulse 1.1s ease-in-out infinite;
 }
 
 .chat-panel__presence {
@@ -1451,7 +1435,6 @@
   .chat-skel__line,
   .chat-skel__avatar,
   .chat-bubble__dots span,
-  .chat-panel__orbit i,
   .chat-panel__close {
     animation: none !important;
     transition: none !important;
