@@ -280,24 +280,35 @@ fn system_prompt(locale: ChatLocale) -> String {
 
 fn system_prompt_with_booking(locale: ChatLocale, booking_url: Option<&str>) -> String {
     let lang = locale.language_name();
+    let booking_tag_instruction =
+        "When you have collected first name, last name, email, and a confirmed slot \
+         (ISO 8601, e.g. 2026-08-25T14:00:00), append this exact tag at the END of your reply \
+         and nowhere else: \
+         [[BOOKING: first=FIRSTNAME|last=LASTNAME|email=EMAIL|slot=SLOT]] \
+         The tag is machine-read and stripped before the visitor sees the reply. \
+         Do not emit the tag until the visitor has explicitly confirmed all four values. \
+         Do not invent or guess any value.";
     let meeting = match booking_url {
         Some(url) if !url.is_empty() => format!(
             "If they want a meeting, offer two choices (do not skip this): \
              (1) You book for them: collect first name, last name, email \
-             (skip email if already saved in the chat email field), then which day and time \
-             of day works. You do not invent availability. After you have those details, \
-             confirm you passed them to Greg. Do not claim a Google Calendar event already exists. \
+             (skip email if already saved in the chat email field), then ask which day and time \
+             of day works. Do not invent availability. Once the visitor confirms all four values \
+             (first name, last name, email, slot), emit the booking tag described below. \
+             Do not claim a Google Calendar event already exists before you emit the tag. \
              (2) They book themselves in a new browser tab: share this page once, only after \
              they choose this path or ask for the link: {url} \
              Never reply with only the URL on the first booking turn. Never collect name and \
-             email only to dump the URL."
+             email only to dump the URL. {booking_tag_instruction}"
         ),
-        _ => String::from(
+        _ => format!(
             "If they want a meeting, offer to take the booking for them: collect first name, \
-             last name, email (skip email if already saved in the chat email field), then which \
-             day and time of day works. You do not invent availability. After you have those \
-             details, confirm you passed them to Greg. There is no public self-serve calendar \
-             link. Do not claim a Google Calendar event already exists.",
+             last name, email (skip email if already saved in the chat email field), then ask \
+             which day and time of day works. Do not invent availability. Once the visitor \
+             confirms all four values, emit the booking tag described below. \
+             There is no public self-serve calendar link. \
+             Do not claim a Google Calendar event already exists before you emit the tag. \
+             {booking_tag_instruction}"
         ),
     };
     format!(
