@@ -281,24 +281,21 @@ fn system_prompt(locale: ChatLocale) -> String {
 fn system_prompt_with_booking(locale: ChatLocale, booking_url: Option<&str>) -> String {
     let lang = locale.language_name();
     let booking_tag_instruction =
-        "When the visitor has confirmed first name, last name, email, start time, and end time, \
+        "When the visitor has confirmed first name, last name, email, and start time, \
          append this exact tag at the END of your reply and nowhere else: \
-         [[BOOKING: first=FIRSTNAME|last=LASTNAME|email=EMAIL|start=START|end=END|tz=TIMEZONE]] \
-         START and END are ISO 8601 without UTC offset (e.g. 2026-08-25T14:00:00 and 2026-08-25T14:30:00). \
-         TIMEZONE is the IANA name for the visitor's timezone (e.g. Europe/Amsterdam). \
-         The slot duration and timezone come from what the visitor tells you and from \
-         Greg's Google Calendar configuration - do not invent them. \
+         [[BOOKING: first=FIRSTNAME|last=LASTNAME|email=EMAIL|start=START]] \
+         START is ISO 8601 without UTC offset (e.g. 2026-08-25T14:00:00). \
          The tag is machine-read and stripped before the visitor sees the reply. \
-         Do not emit the tag until the visitor has explicitly confirmed all six values. \
+         Do not emit the tag until all four values are confirmed by the visitor. \
          Do not invent or guess any value.";
     let meeting = match booking_url {
         Some(url) if !url.is_empty() => format!(
             "If they want a meeting, offer two choices (do not skip this): \
              (1) You book for them: collect first name, last name, email \
-             (skip email if already saved in the chat email field), then ask which day and time \
-             works. Confirm the start and end time with the visitor before emitting the tag. \
-             Do not invent availability. Once the visitor confirms all six values \
-             (first name, last name, email, start time, end time, timezone), \
+             (skip email if already saved in the chat email field), then ask which day and \
+             start time works. Slots are 90 minutes, Monday to Saturday 10:00-22:00 \
+             Amsterdam time. Do not invent availability outside those windows. \
+             Once the visitor confirms all four values (first name, last name, email, start time), \
              emit the booking tag described below. \
              Do not claim a Google Calendar event already exists before you emit the tag. \
              (2) They book themselves in a new browser tab: share this page once, only after \
@@ -309,9 +306,9 @@ fn system_prompt_with_booking(locale: ChatLocale, booking_url: Option<&str>) -> 
         _ => format!(
             "If they want a meeting, offer to take the booking for them: collect first name, \
              last name, email (skip email if already saved in the chat email field), then ask \
-             which day and time works. Confirm the start and end time with the visitor. \
-             Do not invent availability. Once the visitor confirms all six values \
-             (first name, last name, email, start time, end time, timezone), \
+             which day and start time works. Slots are 90 minutes, Monday to Saturday \
+             10:00-22:00 Amsterdam time. Do not invent availability outside those windows. \
+             Once the visitor confirms all four values (first name, last name, email, start time), \
              emit the booking tag described below. \
              There is no public self-serve calendar link. \
              Do not claim a Google Calendar event already exists before you emit the tag. \
