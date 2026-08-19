@@ -16,12 +16,14 @@
   <div class="site-header__marquee-slot" aria-hidden="true">
     @if (marqueeLive()) {
       <marquee class="site-header__marquee" scrollamount="3" scrolldelay="35">
+        {{ copy.headerMarquee }}
         <a
+          class="site-header__marquee-booking"
           [href]="bookingChatDeepLink"
           target="_blank"
           rel="noopener noreferrer"
-          [attr.title]="copy.headerMarquee"
-          >{{ copy.headerMarquee }}</a
+          title="Book an appointment"
+          >Book an appointment</a
         >
       </marquee>
     }

@@ -91,12 +91,17 @@
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 
-.site-header__marquee a,
-.site-header__marquee a:visited,
-.site-header__marquee a:hover,
-.site-header__marquee a:active {
-  color: inherit;
-  text-decoration: none;
+.site-header__marquee-booking,
+.site-header__marquee-booking:visited {
+  margin-left: 0.55rem;
+  color: #ffd24a;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+.site-header__marquee-booking:hover,
+.site-header__marquee-booking:active {
+  color: #fff3b8;
 }
 
 .site-header__nav {
