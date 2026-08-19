@@ -44,6 +44,9 @@ pub struct BookingConfirmation {
     pub html_link: String,
 }
 
+/// Error prefix used when the requested slot overlaps an existing busy interval.
+pub const SLOT_TAKEN_ERROR_PREFIX: &str = "slot_taken:";
+
 /// Cached access token with an expiry guard.
 #[derive(Clone, Default)]
 struct TokenCache {
@@ -161,6 +164,10 @@ impl CalendarClient {
         let url = EVENTS_ENDPOINT.replace("{id}", &inner.calendar_id);
         let tz = slot_timezone();
         let end = end_time(&req.start, slot_minutes())?;
+        let busy = self.busy_intervals(&req.start, &end).await?;
+        if overlaps_requested_slot(&req.start, &end, &busy) {
+            anyhow::bail!("{SLOT_TAKEN_ERROR_PREFIX} requested slot is already occupied");
+        }
         let body = json!({
             "summary": format!("Meeting with {} {}", req.first_name, req.last_name),
             "start": { "dateTime": req.start, "timeZone": tz },
@@ -237,6 +244,15 @@ fn unix_now() -> u64 {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs()
+}
+
+fn overlaps_requested_slot(start: &str, end: &str, busy: &[BusyInterval]) -> bool {
+    busy.iter()
+        .any(|it| interval_overlaps(start, end, &it.start, &it.end))
+}
+
+fn interval_overlaps(a_start: &str, a_end: &str, b_start: &str, b_end: &str) -> bool {
+    a_start < b_end && a_end > b_start
 }
 
 // ---- API response shapes ----
@@ -439,5 +455,31 @@ mod tests {
     #[test]
     fn test_strip_booking_tag_none() {
         assert_eq!(strip_booking_tag("hello"), "hello");
+    }
+
+    #[test]
+    fn overlap_detection_flags_busy_slot() {
+        let busy = vec![BusyInterval {
+            start: "2026-08-21T16:30:00".to_string(),
+            end: "2026-08-21T17:30:00".to_string(),
+        }];
+        assert!(overlaps_requested_slot(
+            "2026-08-21T17:00:00",
+            "2026-08-21T18:30:00",
+            &busy,
+        ));
+    }
+
+    #[test]
+    fn overlap_detection_accepts_free_slot() {
+        let busy = vec![BusyInterval {
+            start: "2026-08-21T16:30:00".to_string(),
+            end: "2026-08-21T17:30:00".to_string(),
+        }];
+        assert!(!overlaps_requested_slot(
+            "2026-08-21T17:30:00",
+            "2026-08-21T19:00:00",
+            &busy,
+        ));
     }
 }
