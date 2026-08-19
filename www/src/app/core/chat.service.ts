@@ -568,7 +568,7 @@ export class ChatService {
       case 'message': {
         const role = String(data['role'] ?? 'system') as ChatRole;
         const id = String(data['id'] ?? crypto.randomUUID());
-        const text = String(data['text'] ?? '');
+        const text = String(data['text'] ?? '').trim();
         this.messages.update((list) => {
           if (list.some((m) => m.id === id)) {
             return list;
@@ -623,18 +623,20 @@ export class ChatService {
 }
 
 function sanitizeStoredMessages(messages: ChatMessage[]): ChatMessage[] {
-  return messages.filter((msg) => {
-    if (msg.role !== 'system') {
-      return true;
-    }
-    return !(
-      msg.text === LEGACY_SLACK_ACK ||
-      msg.text === LIVE_DELIVERY_ACK ||
-      /slack thread/i.test(msg.text) ||
-      /will reply in this chat when he can/i.test(msg.text) ||
-      /usually within (a few )?minutes/i.test(msg.text)
-    );
-  });
+  return messages
+    .map((msg) => ({ ...msg, text: msg.text.trim() }))
+    .filter((msg) => {
+      if (msg.role !== 'system') {
+        return true;
+      }
+      return !(
+        msg.text === LEGACY_SLACK_ACK ||
+        msg.text === LIVE_DELIVERY_ACK ||
+        /slack thread/i.test(msg.text) ||
+        /will reply in this chat when he can/i.test(msg.text) ||
+        /usually within (a few )?minutes/i.test(msg.text)
+      );
+    });
 }
 
 /** Handshake / wake / network noise: keep the opening placeholder, do not flash an error card. */
