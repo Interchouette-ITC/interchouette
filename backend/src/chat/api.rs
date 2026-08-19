@@ -502,7 +502,7 @@ async fn handle_client_msg(state: &ChatState, session_id: &str, msg: ClientWsMes
             };
             publish_role(state, session_id, "visitor", &text).await;
             if is_booking_chip_shortcut(&text, session.locale) {
-                handle_away(state, &session, session_id, &text, false).await;
+                handle_away(state, &session, session_id, &text).await;
                 return;
             }
             match session.mode {
@@ -510,7 +510,7 @@ async fn handle_client_msg(state: &ChatState, session_id: &str, msg: ClientWsMes
                     handle_live(state, &session, &text).await;
                 }
                 PresenceMode::Away => {
-                    handle_away(state, &session, session_id, &text, true).await;
+                    handle_away(state, &session, session_id, &text).await;
                 }
             }
         }
@@ -577,17 +577,9 @@ async fn handle_live(state: &ChatState, session: &Session, text: &str) {
     let _ = post_to_session_thread(state, session, &format!("Prospect ({env}): {text}")).await;
 }
 
-async fn handle_away(
-    state: &ChatState,
-    session: &Session,
-    session_id: &str,
-    text: &str,
-    relay_to_slack: bool,
-) {
+async fn handle_away(state: &ChatState, session: &Session, session_id: &str, text: &str) {
     let env = crate::chat::chat_env_label();
-    if relay_to_slack {
-        let _ = post_to_session_thread(state, session, &format!("Prospect ({env}): {text}")).await;
-    }
+    let _ = post_to_session_thread(state, session, &format!("Prospect ({env}): {text}")).await;
     state
         .hub
         .publish(
@@ -632,9 +624,7 @@ async fn handle_away(
         || format!("ITCy: {reply}"),
         |e| format!("ITCy: {reply}\n(visitor email: {e})"),
     );
-    if relay_to_slack {
-        let _ = post_to_session_thread(state, session, &mirror).await;
-    }
+    let _ = post_to_session_thread(state, session, &mirror).await;
 }
 
 fn is_booking_chip_shortcut(text: &str, locale: ChatLocale) -> bool {
