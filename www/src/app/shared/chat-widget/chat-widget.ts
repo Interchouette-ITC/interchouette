@@ -613,9 +613,6 @@ export class ChatWidget implements OnDestroy {
     void this.chat.openPanel().then(() => {
       this.focusMessageAfterOpen();
       this.sendBookingChipWhenReady(0);
-      // One-shot deep link: consume params after handling.
-      url.searchParams.delete(CHAT_BOOKING_QUERY);
-      window.history.replaceState({}, '', url.toString());
     });
   }
 
