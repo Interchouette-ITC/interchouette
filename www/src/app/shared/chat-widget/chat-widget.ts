@@ -80,6 +80,9 @@ export class ChatWidget implements OnDestroy {
   private ticketCopyTimer: ReturnType<typeof setTimeout> | null = null;
   private bubbleDismissed = false;
   private wideMql: MediaQueryList | null = null;
+  /** Static ITCy intro stays above the first visitor turn on fresh chats. */
+  private introEligible = true;
+  private readySeen = false;
 
   constructor() {
     afterNextRender(() => {
@@ -115,6 +118,15 @@ export class ChatWidget implements OnDestroy {
       }
       if (this.mounted() && this.chat.ready()) {
         this.tryStartNudge();
+      }
+    });
+    effect(() => {
+      if (!this.chat.ready() || this.readySeen) {
+        return;
+      }
+      this.readySeen = true;
+      if (this.chat.messages().length > 0) {
+        this.introEligible = false;
       }
     });
   }
@@ -211,6 +223,8 @@ export class ChatWidget implements OnDestroy {
     this.showEmail.set(false);
     this.canSend.set(false);
     this.draft = '';
+    this.introEligible = true;
+    this.readySeen = false;
     void this.chat.forgetChat();
   }
 
@@ -327,6 +341,20 @@ export class ChatWidget implements OnDestroy {
       return true;
     }
     return /calendar\.(app\.)?google|calendar\.google\.com\/calendar\/appointments/i.test(text);
+  }
+
+  protected showWelcomeHero(): boolean {
+    return !this.chat.error() && this.chat.messages().length === 0;
+  }
+
+  protected showStaticIntro(): boolean {
+    if (this.chat.error()) {
+      return false;
+    }
+    if (this.chat.connecting() && this.chat.messages().length === 0) {
+      return false;
+    }
+    return this.introEligible;
   }
 
   private scheduleEmailSeed(): void {
