@@ -201,7 +201,7 @@ impl InterchouetteMcp {
             "Chat / booking tools (token = MCP_CHAT_TOKEN):\n\
              - list_chat_capabilities (no token): this help\n\
              - get_chat_relay_status (token): relay status\n\
-             - send_message_to_greg (token): post a free-form message to Greg\n\
+             - send_message_to_gregory_roussac (token): post a free-form message to Greg\n\
              - book_appointment (token): request a meeting (name, email, start time)\n\
              Visitors without a token: use the chat widget at https://interchouette.net/\n\
              WebMCP explorer: https://mcp.interchouette.net/\n\
@@ -226,7 +226,7 @@ impl InterchouetteMcp {
     }
 
     #[tool(description = "Send a message to Gregory Roussac (requires MCP_CHAT_TOKEN).")]
-    async fn send_message_to_greg(
+    async fn send_message_to_gregory_roussac(
         &self,
         Parameters(SendGregArgs {
             token,
@@ -351,7 +351,7 @@ impl ServerHandler for InterchouetteMcp {
             .with_instructions(
                 "Interchouette MCP for Gregory Roussac and Interchouette ITC. \
                  Search with full name Gregory Roussac, Interchouette, Rust MCP, Rust API, Wasm. \
-                 Chat tools: list_chat_capabilities, send_message_to_greg, get_chat_relay_status \
+                 Chat tools: list_chat_capabilities, send_message_to_gregory_roussac, get_chat_relay_status \
                  (write tools need token matching MCP_CHAT_TOKEN). \
                  Official URL: https://mcp.interchouette.net/",
             )
@@ -745,7 +745,7 @@ mod tests {
         let store = Arc::new(Store::open_readonly(db).unwrap());
         let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
         let err = mcp
-            .send_message_to_greg(Parameters(SendGregArgs {
+            .send_message_to_gregory_roussac(Parameters(SendGregArgs {
                 token: "nope".into(),
                 message: "hello".into(),
                 from: None,
