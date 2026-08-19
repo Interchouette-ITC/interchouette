@@ -91,6 +91,14 @@
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
 }
 
+.site-header__marquee a,
+.site-header__marquee a:visited,
+.site-header__marquee a:hover,
+.site-header__marquee a:active {
+  color: inherit;
+  text-decoration: none;
+}
+
 .site-header__nav {
   grid-area: nav;
   justify-self: end;
