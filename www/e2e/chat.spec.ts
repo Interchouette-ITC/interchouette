@@ -105,12 +105,13 @@ test.describe('chat widget', () => {
 
     await page.locator('.chat-panel__email-toggle').click();
     await expect(page.locator('form.chat-panel__email')).toBeVisible();
-    const input = page.getByRole('textbox', { name: 'Message' });
+    const input = page.locator('#interchouette-chat-panel textarea[name="message"]');
     await expect(input).toBeEnabled({ timeout: 15_000 });
     await input.click();
     await expect(page.locator('form.chat-panel__email')).toBeVisible();
-    const composeH = await input.evaluate((el) => el.getBoundingClientRect().height);
-    expect(composeH, 'message field is a multi-line textarea').toBeGreaterThan(60);
+    await expect
+      .poll(async () => input.evaluate((el) => el.getBoundingClientRect().height))
+      .toBeGreaterThan(60);
 
     await input.fill('What is Interchouette?');
     await page.getByRole('button', { name: 'Send message' }).click();

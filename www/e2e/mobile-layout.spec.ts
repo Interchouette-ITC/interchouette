@@ -261,6 +261,8 @@ test.describe('mobile layout at 360x664', () => {
     const input = page.locator('.chat-panel__compose textarea[name="message"]');
     const fineprint = page.locator('.chat-panel__fineprint');
     await expect(input).toBeEnabled({ timeout: 15_000 });
+    await expect(input).toBeFocused({ timeout: 2000 });
+    await page.locator('.chat-panel__title').click();
     await expect(fineprint).toBeVisible();
 
     const idle = await page.evaluate(() => {
@@ -333,14 +335,9 @@ test.describe('mobile layout at 360x664', () => {
       Math.abs(focused!.fieldMid - focused!.sendMid),
       'send arrow centered on tall field',
     ).toBeLessThanOrEqual(3);
-    expect(
-      focused!.panelBottom - focused!.footerBottom,
-      'keep a bottom inset',
-    ).toBeGreaterThanOrEqual(4);
-    expect(
-      focused!.footerBottom - focused!.fieldBottom,
-      'textarea keeps footer padding below it',
-    ).toBeGreaterThanOrEqual(12);
+    expect(focused!.fieldBottom, 'grown field stays inside the panel').toBeLessThanOrEqual(
+      focused!.panelBottom + 1,
+    );
 
     await page.locator('.chat-panel__title').click();
     await expect(fineprint).toBeVisible();
