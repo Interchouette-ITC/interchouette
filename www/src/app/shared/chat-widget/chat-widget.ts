@@ -22,6 +22,7 @@ import { RouterLink } from '@angular/router';
 const NUDGE_EVERY_MS = 60 * 1000;
 const NUDGE_BOUNCE_MS = 1100;
 const FAB_ENTER_MS = 1100;
+const CHAT_BOOKING_QUERY = 'booking';
 
 @Component({
   selector: 'app-chat-widget',
@@ -84,6 +85,7 @@ export class ChatWidget implements OnDestroy {
       this.mounted.set(true);
       this.enterTimer = setTimeout(() => this.fabEnter.set(false), FAB_ENTER_MS);
       void this.chat.warm().then(() => this.tryStartNudge());
+      this.tryHandleDeepLink();
       if (typeof matchMedia === 'undefined') {
         return;
       }
@@ -598,6 +600,34 @@ export class ChatWidget implements OnDestroy {
       clearTimeout(this.ticketCopyTimer);
       this.ticketCopyTimer = null;
     }
+  }
+
+  private tryHandleDeepLink(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has(CHAT_BOOKING_QUERY)) {
+      return;
+    }
+    void this.chat.openPanel().then(() => {
+      this.focusMessageAfterOpen();
+      this.sendBookingChipWhenReady(0);
+      // One-shot deep link: consume params after handling.
+      url.searchParams.delete(CHAT_BOOKING_QUERY);
+      window.history.replaceState({}, '', url.toString());
+    });
+  }
+
+  private sendBookingChipWhenReady(attempt: number): void {
+    if (this.chat.wsReady()) {
+      this.onBookMeeting();
+      return;
+    }
+    if (attempt >= 20) {
+      return;
+    }
+    window.setTimeout(() => this.sendBookingChipWhenReady(attempt + 1), 150);
   }
 
   private scrollToBottom(): void {

@@ -17,6 +17,14 @@
     @if (marqueeLive()) {
       <marquee class="site-header__marquee" scrollamount="3" scrolldelay="35">
         {{ copy.headerMarquee }}
+        <a
+          class="site-header__marquee-booking"
+          [href]="bookingChatDeepLink"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Book an appointment"
+          >Book an appointment</a
+        >
       </marquee>
     }
   </div>

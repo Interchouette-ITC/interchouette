@@ -10,7 +10,7 @@
 //!   `GCAL_CALENDAR_ID`    - target calendar, usually "primary"
 //!
 //! Slot config (must match Google Calendar Appointment schedule settings):
-//!   `GCAL_SLOT_MINUTES`   - slot duration in minutes (default 90)
+//!   `GCAL_SLOT_MINUTES`   - slot duration in minutes (default 45)
 //!   `GCAL_TIMEZONE`       - IANA timezone (default "Europe/Amsterdam")
 
 use std::sync::Arc;
@@ -288,14 +288,14 @@ struct EventInsertResponse {
 
 // ---- Slot config ----
 
-/// Slot duration in minutes from `GCAL_SLOT_MINUTES` (default 90 to match the
+/// Slot duration in minutes from `GCAL_SLOT_MINUTES` (default 45 to match the
 /// Google Calendar Appointment schedule configuration).
 #[must_use]
 pub fn slot_minutes() -> u32 {
     std::env::var("GCAL_SLOT_MINUTES")
         .ok()
         .and_then(|s| s.parse().ok())
-        .unwrap_or(90)
+        .unwrap_or(45)
 }
 
 /// IANA timezone from `GCAL_TIMEZONE` (default "Europe/Amsterdam").
