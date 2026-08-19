@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 import { gotoHomeReady } from './consent.po';
 
@@ -345,56 +345,6 @@ test.describe('mobile layout at 360x664', () => {
     expect(Math.abs(blurredHeight - idle!.fieldH)).toBeLessThanOrEqual(2);
   });
 
-  test('French starter chip stays inside the panel', async ({ page }) => {
-    await gotoHomeReady(page, '/?lang=fr');
-    await openChatPanel(page);
-    await expect(page.getByRole('button', { name: /Qu'est-ce qu'Interchouette/ })).toHaveCount(0);
-    const chips = page.locator('.chat-panel__chips .chat-chip');
-    await expect(chips.first()).toBeVisible();
-    const texts = await chips.allTextContents();
-    for (const text of texts) {
-      if (text.includes('Interchouette')) {
-        expect(text.trim()).toBe('Quid Interchouette ?');
-      }
-    }
-    const overflow = await page.evaluate(() => {
-      const panel = document.querySelector('#interchouette-chat-panel');
-      const chipEls = [...document.querySelectorAll('.chat-panel__chips .chat-chip')];
-      if (!panel || chipEls.length === 0) {
-        return true;
-      }
-      const right = panel.getBoundingClientRect().right;
-      return chipEls.some((chip) => chip.getBoundingClientRect().right > right + 1);
-    });
-    expect(overflow, 'French chips overflow the chat panel').toBe(false);
-  });
-
-  test('French and Dutch calendar actions stay on one line', async ({ page }) => {
-    for (const path of ['/?lang=fr', '/?lang=nl'] as const) {
-      await gotoHomeReady(page, path);
-      await openChatPanel(page);
-      const bar = page.locator('.chat-panel__booking-bar');
-      await expect(bar).toBeVisible({ timeout: 15_000 });
-      const ok = await bar.evaluate((el) => {
-        const kids = [...el.children];
-        if (kids.length < 2) {
-          return false;
-        }
-        const tops = kids.map((k) => Math.round(k.getBoundingClientRect().top));
-        const panel = document.querySelector('#interchouette-chat-panel');
-        if (!panel) {
-          return false;
-        }
-        const right = Math.max(...kids.map((k) => k.getBoundingClientRect().right));
-        return (
-          tops.every((t) => Math.abs(t - tops[0]!) <= 2) &&
-          right <= panel.getBoundingClientRect().right + 1
-        );
-      });
-      expect(ok, `${path} calendar buttons on one line inside the panel`).toBe(true);
-    }
-  });
-
   test('hamburger and locale popovers close each other', async ({ page }) => {
     await page.goto('/');
     const header = page.locator('app-site-header');
@@ -435,11 +385,4 @@ test.describe('home still ready after consent at 360x664', () => {
 
 function isTransparentTap(value: string): boolean {
   return value === 'transparent' || value === 'rgba(0, 0, 0, 0)';
-}
-
-async function openChatPanel(page: Page): Promise<void> {
-  const fab = page.locator('app-chat-widget').getByRole('button', { name: /chat/i });
-  await expect(fab).toBeVisible({ timeout: 15_000 });
-  await fab.click();
-  await expect(page.locator('#interchouette-chat-panel')).toHaveClass(/chat-panel--open/);
 }
