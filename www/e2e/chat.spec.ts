@@ -1,14 +1,91 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('chat widget', () => {
-  test('FAB opens panel and can send when API is up', async ({ page }) => {
-    const api = process.env['CHAT_API_BASE'] ?? 'http://127.0.0.1:8080';
-    const health = await page.request.get(`${api}/health`).catch(() => null);
-    test.skip(!health || !health.ok(), 'chat API not running on :8080');
+  test('FAB opens panel and can send with mocked chat transport', async ({ page }) => {
+    await page.addInitScript(() => {
+      const realFetch = window.fetch.bind(window);
+      window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+        const method = (init?.method ?? 'GET').toUpperCase();
+        const href =
+          typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+        if (method === 'POST' && /\/v1\/sessions$/.test(href)) {
+          return new Response(
+            JSON.stringify({
+              session_id: 'sess-mock',
+              short_code: 'MOCK1234',
+              mode: 'away',
+              label: 'Away',
+              hero: 'itcy',
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+        return realFetch(input, init);
+      };
 
-    const presence = await page.request.get(`${api}/v1/presence`);
-    const presenceBody = presence.ok() ? ((await presence.json()) as { mode?: string }) : {};
-    const away = presenceBody.mode === 'away';
+      class MockChatSocket {
+        static OPEN = 1;
+        static CLOSED = 3;
+        readyState = MockChatSocket.OPEN;
+        onopen: ((ev: Event) => void) | null = null;
+        onmessage: ((ev: MessageEvent) => void) | null = null;
+        onclose: ((ev: Event) => void) | null = null;
+        onerror: ((ev: Event) => void) | null = null;
+
+        constructor(_url: string) {
+          queueMicrotask(() => {
+            this.onopen?.(new Event('open'));
+            this.emit({
+              type: 'ready',
+              session_id: 'sess-mock',
+              short_code: 'MOCK1234',
+              mode: 'away',
+              label: 'Away',
+              hero: 'itcy',
+            });
+          });
+        }
+
+        send(payload: string): void {
+          let parsed: { type?: string; text?: string } | null = null;
+          try {
+            parsed = JSON.parse(payload) as { type?: string; text?: string };
+          } catch {
+            return;
+          }
+          if (parsed.type !== 'message') {
+            return;
+          }
+          const text = String(parsed.text ?? '').trim();
+          this.emit({ type: 'message', id: `v-${Date.now()}`, role: 'visitor', text });
+          this.emit({ type: 'typing', active: true });
+          setTimeout(() => {
+            this.emit({ type: 'typing', active: false });
+            this.emit({
+              type: 'message',
+              id: `i-${Date.now()}`,
+              role: 'itcy',
+              text: 'Interchouette builds Rust, Wasm, and web product work.',
+            });
+          }, 30);
+        }
+
+        close(): void {
+          this.readyState = MockChatSocket.CLOSED;
+          this.onclose?.(new Event('close'));
+        }
+
+        private emit(data: object): void {
+          this.onmessage?.({ data: JSON.stringify(data) } as MessageEvent);
+        }
+      }
+
+      Object.defineProperty(window, 'WebSocket', {
+        configurable: true,
+        writable: true,
+        value: MockChatSocket,
+      });
+    });
 
     await page.goto('/');
     const consent = page.getByRole('dialog', { name: 'Cookie consent' });
@@ -117,12 +194,10 @@ test.describe('chat widget', () => {
     await page.getByRole('button', { name: 'Send message' }).click();
     await expect(page.getByText('What is Interchouette?')).toBeVisible();
 
-    if (away) {
-      const itcy = page.locator('.chat-bubble[data-role="itcy"]').first();
-      await expect(itcy).toBeVisible({ timeout: 25_000 });
-      await expect(itcy).not.toContainText('](mailto:');
-      const select = await itcy.evaluate((el) => getComputedStyle(el).userSelect);
-      expect(select === 'text' || select === 'auto').toBeTruthy();
-    }
+    const itcy = page.locator('.chat-bubble[data-role="itcy"]').first();
+    await expect(itcy).toBeVisible({ timeout: 25_000 });
+    await expect(itcy).not.toContainText('](mailto:');
+    const select = await itcy.evaluate((el) => getComputedStyle(el).userSelect);
+    expect(select === 'text' || select === 'auto').toBeTruthy();
   });
 });
