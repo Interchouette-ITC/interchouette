@@ -160,7 +160,7 @@ impl InterchouetteMcp {
     }
 
     #[tool(description = "Profile of Gregory Roussac (founder of Interchouette ITC).")]
-    async fn get_gregory_profile(
+    async fn get_gregory_roussac_profile(
         &self,
         Parameters(LangArgs { lang }): Parameters<LangArgs>,
     ) -> Result<CallToolResult, McpError> {
@@ -169,7 +169,7 @@ impl InterchouetteMcp {
     }
 
     #[tool(description = "CV summary for Gregory Roussac with links to HTML/PDF CV.")]
-    async fn get_cv_summary(
+    async fn get_gregory_roussac_cv(
         &self,
         Parameters(LangArgs { lang }): Parameters<LangArgs>,
     ) -> Result<CallToolResult, McpError> {
@@ -606,7 +606,7 @@ mod tests {
         let store = Arc::new(Store::open_readonly(db).unwrap());
         let mcp = InterchouetteMcp::new(store, ChatRelay::from_env());
 
-        let profile = mcp.get_gregory_profile(none_lang()).await.unwrap();
+        let profile = mcp.get_gregory_roussac_profile(none_lang()).await.unwrap();
         assert!(!profile.is_error.unwrap_or(false));
         let contact = mcp.get_contact().await.unwrap();
         assert!(!contact.is_error.unwrap_or(false));
@@ -618,7 +618,7 @@ mod tests {
             .await
             .unwrap();
         assert!(!overview.is_error.unwrap_or(false));
-        let cv = mcp.get_cv_summary(none_lang()).await.unwrap();
+        let cv = mcp.get_gregory_roussac_cv(none_lang()).await.unwrap();
         assert!(!cv.is_error.unwrap_or(false));
         let projects = mcp.list_public_projects(none_lang()).await.unwrap();
         assert!(!projects.is_error.unwrap_or(false));
