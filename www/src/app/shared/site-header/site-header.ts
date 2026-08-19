@@ -20,6 +20,9 @@ import { LocaleService } from '../../core/locale.service';
 import { LOCALE_TLDS } from '../../core/seo.constants';
 import type { SiteLocale } from '../../core/site-locale';
 
+const BOOKING_QUERY = 'booking';
+const BOOKING_INTENT_EVENT = 'interchouette:booking-intent';
+
 @Component({
   selector: 'app-site-header',
   imports: [RouterLink, RouterLinkActive],
@@ -44,7 +47,7 @@ export class SiteHeader implements OnInit, OnDestroy {
   protected readonly session = inject(CustomerSession);
   private readonly gis = inject(GisOneTapService);
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
-  protected readonly bookingChatDeepLink = '/?booking';
+  protected readonly bookingChatDeepLink = '?booking';
   protected readonly marqueeLive = signal(false);
   protected readonly desktopNav = signal(isDesktopNav());
   protected readonly menuOpen = signal(false);
@@ -133,6 +136,14 @@ export class SiteHeader implements OnInit, OnDestroy {
     }
   }
 
+  protected onBookingCta(event: MouseEvent): void {
+    event.preventDefault();
+    this.setBookingQueryFlag();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent(BOOKING_INTENT_EVENT));
+    }
+  }
+
   private closePopovers(): void {
     this.langOpen.set(false);
     if (!this.desktopNav()) {
@@ -151,6 +162,23 @@ export class SiteHeader implements OnInit, OnDestroy {
   private readonly onNavBreakpoint = (): void => {
     this.syncDesktopNav();
   };
+
+  private setBookingQueryFlag(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const parts = window.location.search
+      .slice(1)
+      .split('&')
+      .map((part) => part.trim())
+      .filter((part) => part !== '' && part !== 'booking' && part !== 'booking=');
+    const nextSearch = `?${[BOOKING_QUERY, ...parts].join('&')}`;
+    const next = `${window.location.pathname}${nextSearch}${window.location.hash}`;
+    const now = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (next !== now) {
+      window.history.replaceState({}, '', next);
+    }
+  }
 }
 
 function isDesktopNav(): boolean {

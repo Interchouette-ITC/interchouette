@@ -23,6 +23,7 @@ const NUDGE_EVERY_MS = 60 * 1000;
 const NUDGE_BOUNCE_MS = 1100;
 const FAB_ENTER_MS = 1100;
 const CHAT_BOOKING_QUERY = 'booking';
+const BOOKING_INTENT_EVENT = 'interchouette:booking-intent';
 
 @Component({
   selector: 'app-chat-widget',
@@ -119,6 +120,9 @@ export class ChatWidget implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener(BOOKING_INTENT_EVENT, this.onBookingIntent);
+    }
     this.wideMql?.removeEventListener('change', this.onWideChat);
     this.clearBounceTimers();
   }
@@ -606,18 +610,55 @@ export class ChatWidget implements OnDestroy {
     if (typeof window === 'undefined') {
       return;
     }
-    const url = new URL(window.location.href);
-    if (!url.searchParams.has(CHAT_BOOKING_QUERY)) {
+    window.addEventListener(BOOKING_INTENT_EVENT, this.onBookingIntent);
+    if (!this.hasBookingQuery(window.location.search)) {
+      return;
+    }
+    this.triggerBookingIntent();
+    this.consumeBookingQuery();
+  }
+
+  private hasBookingQuery(search: string): boolean {
+    const raw = search.startsWith('?') ? search.slice(1) : search;
+    return raw.split('&').some((part) => {
+      const token = part.trim();
+      return token === CHAT_BOOKING_QUERY || token === `${CHAT_BOOKING_QUERY}=`;
+    });
+  }
+
+  private consumeBookingQuery(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    const parts = window.location.search
+      .slice(1)
+      .split('&')
+      .map((part) => part.trim())
+      .filter(
+        (part) => part !== '' && part !== CHAT_BOOKING_QUERY && part !== `${CHAT_BOOKING_QUERY}=`,
+      );
+    const nextSearch = parts.length > 0 ? `?${parts.join('&')}` : '';
+    const next = `${window.location.pathname}${nextSearch}${window.location.hash}`;
+    const now = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (next !== now) {
+      window.history.replaceState({}, '', next);
+    }
+  }
+
+  private triggerBookingIntent(): void {
+    if (typeof window === 'undefined') {
       return;
     }
     void this.chat.openPanel().then(() => {
       this.focusMessageAfterOpen();
       this.sendBookingChipWhenReady(0);
-      // One-shot deep link: consume params after handling.
-      url.searchParams.delete(CHAT_BOOKING_QUERY);
-      window.history.replaceState({}, '', url.toString());
     });
   }
+
+  private readonly onBookingIntent = (): void => {
+    this.triggerBookingIntent();
+    this.consumeBookingQuery();
+  };
 
   private sendBookingChipWhenReady(attempt: number): void {
     if (this.chat.wsReady()) {

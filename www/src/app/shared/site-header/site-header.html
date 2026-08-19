@@ -20,6 +20,7 @@
         <a
           class="site-header__marquee-booking"
           [href]="bookingChatDeepLink"
+          (click)="onBookingCta($event)"
           [attr.title]="copy.headerBookingCta"
           >{{ copy.headerBookingCta }}</a
         >
