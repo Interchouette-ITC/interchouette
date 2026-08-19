@@ -501,12 +501,16 @@ async fn handle_client_msg(state: &ChatState, session_id: &str, msg: ClientWsMes
                 return;
             };
             publish_role(state, session_id, "visitor", &text).await;
+            if is_booking_chip_shortcut(&text, session.locale) {
+                handle_away(state, &session, session_id, &text, false).await;
+                return;
+            }
             match session.mode {
                 PresenceMode::Live => {
                     handle_live(state, &session, &text).await;
                 }
                 PresenceMode::Away => {
-                    handle_away(state, &session, session_id, &text).await;
+                    handle_away(state, &session, session_id, &text, true).await;
                 }
             }
         }
@@ -573,9 +577,17 @@ async fn handle_live(state: &ChatState, session: &Session, text: &str) {
     let _ = post_to_session_thread(state, session, &format!("Prospect ({env}): {text}")).await;
 }
 
-async fn handle_away(state: &ChatState, session: &Session, session_id: &str, text: &str) {
+async fn handle_away(
+    state: &ChatState,
+    session: &Session,
+    session_id: &str,
+    text: &str,
+    relay_to_slack: bool,
+) {
     let env = crate::chat::chat_env_label();
-    let _ = post_to_session_thread(state, session, &format!("Prospect ({env}): {text}")).await;
+    if relay_to_slack {
+        let _ = post_to_session_thread(state, session, &format!("Prospect ({env}): {text}")).await;
+    }
     state
         .hub
         .publish(
@@ -620,7 +632,18 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
         || format!("ITCy: {reply}"),
         |e| format!("ITCy: {reply}\n(visitor email: {e})"),
     );
-    let _ = post_to_session_thread(state, session, &mirror).await;
+    if relay_to_slack {
+        let _ = post_to_session_thread(state, session, &mirror).await;
+    }
+}
+
+fn is_booking_chip_shortcut(text: &str, locale: ChatLocale) -> bool {
+    let trimmed = text.trim();
+    match locale {
+        ChatLocale::En => trimmed.eq_ignore_ascii_case("Book a meeting"),
+        ChatLocale::Fr => trimmed.eq_ignore_ascii_case("Prendre rendez-vous"),
+        ChatLocale::Nl => trimmed.eq_ignore_ascii_case("Afspraak maken"),
+    }
 }
 
 /// Try to insert a Google Calendar event. Returns an updated reply for the visitor.
@@ -714,6 +737,19 @@ mod tests {
             ),
             calendar: CalendarClient::from_env(),
         }
+    }
+
+    #[test]
+    fn booking_chip_shortcut_matches_by_locale() {
+        assert!(is_booking_chip_shortcut("Book a meeting", ChatLocale::En));
+        assert!(is_booking_chip_shortcut("book a meeting", ChatLocale::En));
+        assert!(is_booking_chip_shortcut(
+            "Prendre rendez-vous",
+            ChatLocale::Fr
+        ));
+        assert!(is_booking_chip_shortcut("Afspraak maken", ChatLocale::Nl));
+        assert!(!is_booking_chip_shortcut("Book a meeting", ChatLocale::Fr));
+        assert!(!is_booking_chip_shortcut("Book meeting", ChatLocale::En));
     }
 
     #[tokio::test]
