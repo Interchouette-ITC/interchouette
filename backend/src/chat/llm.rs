@@ -278,7 +278,8 @@ fn system_prompt_with_booking(locale: ChatLocale, booking_url: Option<&str>) -> 
              (1) You book for them: collect first name, last name, email \
              (skip email if already saved in the chat email field), then a specific start \
              date and time (e.g. 2026-08-20T14:00:00 - slots are 90 min, Mon-Sat 10:00-22:00 \
-             Amsterdam time). Once you have all four values confirmed, output the tag \
+             Amsterdam time). If the visitor gives day+month+time without year, use the current \
+             year and do not ask for year confirmation. Once you have all four values confirmed, output the tag \
              [[BOOKING: first=FIRSTNAME|last=LASTNAME|email=EMAIL|start=YYYY-MM-DDTHH:MM:SS]] \
              on its own line in your reply, then confirm to the visitor. \
              Do not claim a Google Calendar event already exists before the tag is emitted. \
@@ -292,7 +293,8 @@ fn system_prompt_with_booking(locale: ChatLocale, booking_url: Option<&str>) -> 
             "If they want a meeting, offer to take the booking for them: collect first name, \
              last name, email (skip email if already saved in the chat email field), then a \
              specific start date and time (slots are 90 min, Mon-Sat 10:00-22:00 Amsterdam time). \
-             Once you have all four values confirmed, output the tag \
+             If the visitor gives day+month+time without year, use the current year and do not ask \
+             for year confirmation. Once you have all four values confirmed, output the tag \
              [[BOOKING: first=FIRSTNAME|last=LASTNAME|email=EMAIL|start=YYYY-MM-DDTHH:MM:SS]] \
              on its own line in your reply, then confirm to the visitor. \
              Do not claim a Google Calendar event already exists before the tag is emitted. \

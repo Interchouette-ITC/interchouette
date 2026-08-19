@@ -647,7 +647,7 @@ async fn handle_calendar_booking(
             .await;
             let email_hint = visitor_email.unwrap_or(&req.email);
             format!(
-                "{visible_reply} Your meeting is confirmed. \
+                "Your meeting is confirmed. \
                  You will receive a Google Calendar invite at {email_hint}."
             )
         }
@@ -659,10 +659,10 @@ async fn handle_calendar_booking(
                 &format!("BOOKING FAILED (calendar insert): {err}"),
             )
             .await;
-            format!(
-                "{visible_reply} I have passed your details to Greg. \
-                 He will confirm the meeting by email."
-            )
+            "I could not create the Google Calendar event right now. \
+             I have passed your details to Greg. \
+             He will confirm the meeting by email."
+                .to_string()
         }
     }
 }
