@@ -12,7 +12,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 use crate::chat::calendar::{
-    extract_booking_tag, strip_booking_tag, BookingRequest, CalendarClient,
+    extract_booking_tag, strip_booking_tag, BookingRequest, CalendarClient, SLOT_TAKEN_ERROR_PREFIX,
 };
 use crate::chat::hub::{ChatEvent, Hub};
 use crate::chat::llm::AwayBrain;
@@ -228,6 +228,24 @@ async fn book_handler(
                 .into_response()
         }
         Err(err) => {
+            if err.to_string().starts_with(SLOT_TAKEN_ERROR_PREFIX) {
+                tracing::info!("MCP /v1/book: requested slot already occupied");
+                if let Ok(channel) = state.slack.open_dm().await {
+                    let _ = state
+                        .slack
+                        .post_in_thread(
+                            &channel,
+                            None,
+                            "BOOKING FAILED (MCP): requested slot already taken",
+                        )
+                        .await;
+                }
+                return (
+                    axum::http::StatusCode::CONFLICT,
+                    Json(json!({ "error": "slot already taken" })),
+                )
+                    .into_response();
+            }
             tracing::warn!(error = %err, "MCP /v1/book: calendar insert failed");
             if let Ok(channel) = state.slack.open_dm().await {
                 let _ = state
@@ -652,6 +670,16 @@ async fn handle_calendar_booking(
             )
         }
         Err(err) => {
+            if err.to_string().starts_with(SLOT_TAKEN_ERROR_PREFIX) {
+                let _ = post_to_session_thread(
+                    state,
+                    session,
+                    "BOOKING FAILED (slot occupied): requested slot already taken",
+                )
+                .await;
+                return "This time slot is already occupied. Please propose another date/time."
+                    .to_string();
+            }
             tracing::warn!(error = %err, session = %session_id, "Calendar insert failed");
             let _ = post_to_session_thread(
                 state,
