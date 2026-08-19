@@ -276,9 +276,13 @@ fn system_prompt_with_booking(locale: ChatLocale, booking_url: Option<&str>) -> 
         Some(url) if !url.is_empty() => format!(
             "If they want a meeting, offer two choices (do not skip this): \
              (1) You book for them: collect first name, last name, email \
-             (skip email if already saved in the chat email field), then which day and time \
-             of day works. You do not invent availability. After you have those details, \
-             confirm you passed them to Greg. Do not claim a Google Calendar event already exists. \
+             (skip email if already saved in the chat email field), then a specific start \
+             date and time (e.g. 2026-08-20T14:00:00 - slots are 90 min, Mon-Sat 10:00-22:00 \
+             Amsterdam time). Once you have all four values confirmed, output the tag \
+             [[BOOKING: first=FIRSTNAME|last=LASTNAME|email=EMAIL|start=YYYY-MM-DDTHH:MM:SS]] \
+             on its own line in your reply, then confirm to the visitor. \
+             Do not claim a Google Calendar event already exists before the tag is emitted. \
+             Do not output the tag more than once. \
              (2) They book themselves in a new browser tab: share this page once, only after \
              they choose this path or ask for the link: {url} \
              Never reply with only the URL on the first booking turn. Never collect name and \
@@ -286,10 +290,13 @@ fn system_prompt_with_booking(locale: ChatLocale, booking_url: Option<&str>) -> 
         ),
         _ => String::from(
             "If they want a meeting, offer to take the booking for them: collect first name, \
-             last name, email (skip email if already saved in the chat email field), then which \
-             day and time of day works. You do not invent availability. After you have those \
-             details, confirm you passed them to Greg. There is no public self-serve calendar \
-             link. Do not claim a Google Calendar event already exists.",
+             last name, email (skip email if already saved in the chat email field), then a \
+             specific start date and time (slots are 90 min, Mon-Sat 10:00-22:00 Amsterdam time). \
+             Once you have all four values confirmed, output the tag \
+             [[BOOKING: first=FIRSTNAME|last=LASTNAME|email=EMAIL|start=YYYY-MM-DDTHH:MM:SS]] \
+             on its own line in your reply, then confirm to the visitor. \
+             Do not claim a Google Calendar event already exists before the tag is emitted. \
+             There is no public self-serve calendar link.",
         ),
     };
     format!(
