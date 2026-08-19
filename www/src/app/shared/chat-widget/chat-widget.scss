@@ -430,8 +430,7 @@
 
 .chat-panel__status-text {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chat-panel__actions {
@@ -1423,6 +1422,18 @@
   }
 }
 
+@media (min-width: 768px) {
+  .chat-panel__main {
+    grid-template-columns: minmax(0, 1fr) auto var(--chat-hero-actions);
+    padding-right: 0;
+  }
+
+  .chat-panel__eyebrow,
+  .chat-panel__status {
+    grid-column: 1 / 3;
+  }
+}
+
 /* Small phones: panel fills the band under the site header. */
 @media (max-width: 480px) {
   .chat-panel {
@@ -1474,6 +1485,10 @@
 
   .chat-panel__ticket-code {
     font-size: 0.62rem;
+  }
+
+  .chat-panel__status-text {
+    white-space: normal;
   }
 }
 
