@@ -69,7 +69,6 @@
       [attr.aria-modal]="chat.open() ? 'true' : null"
       [attr.aria-label]="title()"
       [attr.inert]="chat.open() ? null : ''"
-      (transitionend)="onPanelTransitionEnd($event)"
     >
       <div class="chat-panel__mesh" aria-hidden="true"></div>
       <div class="chat-panel__shine" aria-hidden="true"></div>
@@ -93,7 +92,7 @@
           <div class="chat-panel__actions">
             <button
               type="button"
-              class="chat-panel__icon-btn chat-panel__expand"
+              class="chat-panel__icon-btn"
               (click)="onToggleExpand()"
               [attr.aria-label]="expandAria()"
               [attr.title]="expandTitle()"
@@ -142,16 +141,15 @@
               <span class="chat-panel__status-text">{{ subtitle() }}</span>
             </p>
             @if (chat.shortCode()) {
-              <button
-                type="button"
-                class="chat-panel__ticket"
-                [class.is-copied]="ticketCopied()"
-                (click)="onCopyTicket($event)"
-                [attr.aria-label]="ticketCopyAria()"
-                [attr.title]="ticketCopyTitle()"
-              >
+              <div class="chat-panel__ticket">
                 <code class="chat-panel__ticket-code">{{ ticketDisplay() }}</code>
-                <span class="chat-panel__ticket-copy" aria-hidden="true">
+                <button
+                  type="button"
+                  class="chat-panel__ticket-copy"
+                  (click)="onCopyTicket($event)"
+                  [attr.aria-label]="ticketCopyAria()"
+                  [attr.title]="ticketCopyTitle()"
+                >
                   @if (ticketCopied()) {
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <path
@@ -167,8 +165,8 @@
                       />
                     </svg>
                   }
-                </span>
-              </button>
+                </button>
+              </div>
             }
           </div>
         </div>
@@ -248,8 +246,8 @@
                     <a
                       class="chat-bubble__link"
                       [href]="part.href"
-                      [attr.target]="isHttpHref(part.href) ? '_blank' : null"
-                      [attr.rel]="isHttpHref(part.href) ? 'noopener noreferrer' : null"
+                      target="_blank"
+                      rel="noopener noreferrer"
                       >{{ part.t }}</a
                     >
                   } @else {
@@ -305,7 +303,7 @@
         }
       </div>
 
-      <footer class="chat-panel__footer" [class.chat-panel__footer--composing]="composing()">
+      <footer class="chat-panel__footer">
         @if (bookingEnabled()) {
           <div class="chat-panel__booking-bar">
             <button
@@ -328,7 +326,7 @@
             </a>
           </div>
         }
-        @if (chat.open() && chat.messages().length === 0 && !chat.error()) {
+        @if (chat.open() && chat.messages().length === 0 && !chat.error() && !chat.connecting()) {
           <div class="chat-panel__chips">
             @for (chip of quickChips(); track chip) {
               <button
@@ -343,7 +341,7 @@
             }
           </div>
         }
-        @if (showEmail()) {
+        @if (showEmail) {
           <form class="chat-panel__email" (submit)="onEmailSubmit($event)">
             <input
               #emailField
@@ -359,7 +357,6 @@
             <button
               type="submit"
               class="chat-panel__email-save"
-              (mousedown)="$event.preventDefault()"
               [attr.title]="copy.chat.saveEmail"
               [attr.aria-label]="copy.chat.saveEmail"
             >
@@ -376,9 +373,8 @@
           <button
             type="button"
             class="chat-panel__email-toggle"
-            (mousedown)="$event.preventDefault()"
             (click)="toggleEmail()"
-            [attr.aria-pressed]="showEmail()"
+            [attr.aria-pressed]="showEmail"
             [attr.title]="copy.chat.leaveEmailTitle"
             [attr.aria-label]="copy.chat.leaveEmailAria"
           >
@@ -386,25 +382,23 @@
           </button>
           <label class="chat-panel__field">
             <span class="visually-hidden">{{ copy.chat.message }}</span>
-            <textarea
+            <input
               #messageField
+              type="text"
               name="message"
-              rows="1"
+              value=""
               [attr.placeholder]="copy.chat.placeholder"
               autocomplete="off"
               maxlength="2000"
               [attr.aria-label]="copy.chat.message"
               toolparamdescription="Visitor chat message to send to Greg or ITCy"
-              (focus)="onComposeFocus()"
-              (blur)="onComposeBlur($event)"
+              [disabled]="!chat.wsReady() || !!chat.error()"
               (input)="onDraftInput($event)"
-              (keydown)="onComposeKeydown($event)"
-            ></textarea>
+            />
           </label>
           <button
             type="submit"
             class="chat-panel__send"
-            (mousedown)="$event.preventDefault()"
             [disabled]="!canSend() || !chat.wsReady() || !!chat.error()"
             [attr.title]="copy.chat.send"
             [attr.aria-label]="copy.chat.send"

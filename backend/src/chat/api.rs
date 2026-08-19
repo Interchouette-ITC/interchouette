@@ -11,6 +11,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
 
+use crate::chat::calendar::{
+    extract_booking_tag, strip_booking_tag, BookingRequest, CalendarClient,
+};
 use crate::chat::hub::{ChatEvent, Hub};
 use crate::chat::llm::AwayBrain;
 use crate::chat::locale::ChatLocale;
@@ -26,6 +29,7 @@ pub struct ChatState {
     pub presence: PresenceSource,
     pub slack: SlackRelay,
     pub away: AwayBrain,
+    pub calendar: CalendarClient,
 }
 
 impl ChatState {
@@ -38,6 +42,7 @@ impl ChatState {
             presence: PresenceSource::from_env(),
             slack: SlackRelay::from_env(),
             away,
+            calendar: CalendarClient::from_env(),
         }
     }
 
@@ -462,7 +467,7 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
         .get(session_id)
         .await
         .and_then(|s| s.visitor_email);
-    let reply = state
+    let raw_reply = state
         .away
         .reply(text, session.locale, &lines, email.as_deref())
         .await;
@@ -476,12 +481,83 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
             },
         )
         .await;
+
+    // Calendar write path: LLM embeds a structured tag when all details are collected.
+    let reply = if let Some(req) = extract_booking_tag(&raw_reply) {
+        let visible = strip_booking_tag(&raw_reply);
+        handle_calendar_booking(state, session, session_id, &req, &visible, email.as_deref()).await
+    } else {
+        raw_reply.clone()
+    };
+
     publish_role(state, session_id, "itcy", &reply).await;
     let mirror = email.map_or_else(
         || format!("ITCy: {reply}"),
         |e| format!("ITCy: {reply}\n(visitor email: {e})"),
     );
     let _ = post_to_session_thread(state, session, &mirror).await;
+}
+
+/// Try to insert a Google Calendar event. Returns an updated reply for the visitor.
+///
+/// On success: confirmation with the event link.
+/// On failure: the LLM text with no booking tag, plus a Slack safety-net post.
+async fn handle_calendar_booking(
+    state: &ChatState,
+    session: &Session,
+    session_id: &str,
+    req: &BookingRequest,
+    visible_reply: &str,
+    visitor_email: Option<&str>,
+) -> String {
+    // Always post details to Slack as a safety net first.
+    let safety = format!(
+        "BOOKING REQUEST: {} {} <{}> slot {}",
+        req.first_name, req.last_name, req.email, req.start
+    );
+    let _ = post_to_session_thread(state, session, &safety).await;
+
+    if !state.calendar.enabled() {
+        tracing::info!(
+            session = %session_id,
+            "CalendarClient not configured; booking details posted to Slack only"
+        );
+        return visible_reply.to_string();
+    }
+
+    match state.calendar.insert_event(req).await {
+        Ok(confirmation) => {
+            tracing::info!(
+                session = %session_id,
+                event_id = %confirmation.event_id,
+                "Google Calendar event created"
+            );
+            let _ = post_to_session_thread(
+                state,
+                session,
+                &format!("BOOKED: {}", confirmation.html_link),
+            )
+            .await;
+            let email_hint = visitor_email.unwrap_or(&req.email);
+            format!(
+                "{visible_reply} Your meeting is confirmed. \
+                 You will receive a Google Calendar invite at {email_hint}."
+            )
+        }
+        Err(err) => {
+            tracing::warn!(error = %err, session = %session_id, "Calendar insert failed");
+            let _ = post_to_session_thread(
+                state,
+                session,
+                &format!("BOOKING FAILED (calendar insert): {err}"),
+            )
+            .await;
+            format!(
+                "{visible_reply} I have passed your details to Greg. \
+                 He will confirm the meeting by email."
+            )
+        }
+    }
 }
 
 #[cfg(test)]
@@ -501,6 +577,7 @@ mod tests {
             away: AwayBrain::with_static_context(
                 "### Test\nInterchouette Rust chat test MCP context.",
             ),
+            calendar: CalendarClient::from_env(),
         }
     }
 

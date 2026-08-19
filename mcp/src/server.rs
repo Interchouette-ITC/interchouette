@@ -27,6 +27,9 @@ use crate::db::Store;
 /// Default bind address (Render sets `PORT`).
 pub const DEFAULT_HTTP_LISTEN: &str = "0.0.0.0:8080";
 
+/// Public Google Calendar appointment schedule (same URL as the site chat widget).
+const BOOKING_SCHEDULE_URL: &str = "https://calendar.app.google/tw9hhtJkmcssZQCY7";
+
 /// Hosts allowed by the Streamable HTTP transport by default.
 pub const DEFAULT_ALLOWED_HOSTS: &[&str] = &[
     "localhost",
@@ -53,6 +56,20 @@ impl InterchouetteMcp {
 
 fn text_ok(text: impl Into<String>) -> CallToolResult {
     CallToolResult::success(vec![ContentBlock::text(text.into())])
+}
+
+fn contact_text() -> String {
+    format!(
+        "Email: contact@interchouette.net\n\
+         Personal: gregory@interchouette.net\n\
+         Site: https://interchouette.net/\n\
+         CV: https://interchouette.net/CV\n\
+         GitHub org: https://github.com/Interchouette-ITC\n\
+         LinkedIn: https://www.linkedin.com/in/gregoryroussac/\n\
+         Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)\n\
+         Twitter: https://twitter.com/interchouette\n\
+         Booking: {BOOKING_SCHEDULE_URL}"
+    )
 }
 
 fn mcp_err(msg: impl Into<String>) -> McpError {
@@ -156,16 +173,7 @@ impl InterchouetteMcp {
 
     #[tool(description = "Public contact channels for Gregory Roussac / Interchouette.")]
     async fn get_contact(&self) -> Result<CallToolResult, McpError> {
-        Ok(text_ok(
-            "Email: contact@interchouette.net\n\
-             Personal: gregory@interchouette.net\n\
-             Site: https://interchouette.net/\n\
-             CV: https://interchouette.net/CV\n\
-             GitHub org: https://github.com/Interchouette-ITC\n\
-             LinkedIn: https://www.linkedin.com/in/gregoryroussac/\n\
-             Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)\n\
-             Twitter: https://twitter.com/interchouette",
-        ))
+        Ok(text_ok(contact_text()))
     }
 
     #[tool(
@@ -535,6 +543,7 @@ mod tests {
         assert!(!profile.is_error.unwrap_or(false));
         let contact = mcp.get_contact().await.unwrap();
         assert!(!contact.is_error.unwrap_or(false));
+        assert!(tool_text(&contact).contains("calendar.app.google"));
         let overview = mcp
             .get_interchouette_overview(Parameters(LangArgs {
                 lang: Some("en".into()),
