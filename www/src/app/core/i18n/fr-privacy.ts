@@ -1,5 +1,10 @@
 export const FR_PRIVACY = {
   title: 'Politique de confidentialité',
+  tabIntro: 'Aperçu',
+  tabData: 'Données',
+  tabFeatures: 'Fonctionnalités',
+  tabRights: 'Droits',
+  tabContact: 'Contact',
   updated: 'Dernière mise à jour : 18 août 2026',
   intro:
     'La présente politique de confidentialité décrit la manière dont Interchouette - ITC (« nous », « notre » ou « nos »), exploité par Gregory Roussac, collecte, utilise et protège les informations lorsque vous utilisez nos sites web, applications et services associés (les « Services »), y compris les intégrations avec des plateformes tierces telles que LinkedIn.',

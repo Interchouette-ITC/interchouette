@@ -1,5 +1,10 @@
 export const NL_PRIVACY = {
   title: 'Privacybeleid',
+  tabIntro: 'Overzicht',
+  tabData: 'Gegevens',
+  tabFeatures: 'Functies',
+  tabRights: 'Rechten',
+  tabContact: 'Contact',
   updated: 'Laatst bijgewerkt: 18 augustus 2026',
   intro:
     'Dit privacybeleid beschrijft hoe Interchouette - ITC ("wij", "ons" of "onze"), geëxploiteerd door Gregory Roussac, informatie verzamelt, gebruikt en beschermt wanneer u onze websites, toepassingen en gerelateerde diensten (de "Diensten") gebruikt, inclusief integraties met platforms van derden zoals LinkedIn.',

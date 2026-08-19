@@ -1,5 +1,12 @@
 export const FR_ABOUT = {
   title: "À propos d'Interchouette - ITC",
+  introLead:
+    "Interchouette (Interchouette - ITC) est une entreprise individuelle néerlandaise basée à Hilversum. Refondée en ZZP en 2022 par Gregory Roussac, c'est la marque de son activité freelance en développement logiciel.",
+  tabAbout: 'À propos',
+  tabWork: 'Travail',
+  tabSite: 'Site',
+  tabItcy: 'ITCy',
+  tabConnect: 'Contact',
   org: 'Organisation',
   githubOrg: 'GitHub · Interchouette - ITC',
   linkedinOrg: 'LinkedIn · Interchouette - ITC',

@@ -1,5 +1,12 @@
 export const NL_ABOUT = {
   title: 'Over Interchouette - ITC',
+  introLead:
+    'Interchouette (Interchouette - ITC) is een Nederlandse eenmanszaak gevestigd in Hilversum. Opnieuw opgericht als ZZP in 2022 door Gregory Roussac; het is het merk voor zijn freelance softwarewerk.',
+  tabAbout: 'Over',
+  tabWork: 'Werk',
+  tabSite: 'Site',
+  tabItcy: 'ITCy',
+  tabConnect: 'Contact',
   org: 'Organisatie',
   githubOrg: 'GitHub · Interchouette - ITC',
   linkedinOrg: 'LinkedIn · Interchouette - ITC',

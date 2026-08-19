@@ -1,5 +1,10 @@
 export const FR_TERMS = {
   title: "Conditions d'utilisation",
+  tabIntro: 'Aperçu',
+  tabService: 'Service',
+  tabRules: 'Règles',
+  tabLegal: 'Juridique',
+  tabContact: 'Contact',
   updated: 'Dernière mise à jour : 17 août 2026',
   intro:
     "Les présentes conditions d'utilisation (« Conditions ») régissent votre accès aux sites web, applications et services associés (les « Services ») fournis par Interchouette - ITC (« nous », « notre » ou « nos »), exploité par Gregory Roussac, ainsi que leur usage.",

@@ -1,0 +1,58 @@
+:host {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.5rem;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.78;
+  transform: rotate(0deg);
+  animation: page-brand-mark-in 0.85s ease 0.35s both;
+  transition: opacity 0.25s ease;
+}
+
+@keyframes page-brand-mark-in {
+  from {
+    opacity: 0;
+    transform: rotate(-8deg) scale(0.88);
+  }
+
+  to {
+    opacity: 0.78;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+:host(.page-brand-mark--about) {
+  width: 3.25rem;
+}
+
+:host(.page-brand-mark--legal) {
+  width: 2.75rem;
+}
+
+.page-brand-mark__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 2px 6px rgba(39, 8, 78, 0.12));
+}
+
+:host-context(.card.about:hover),
+:host-context(.legal:hover) {
+  opacity: 0.92;
+}
+
+@media screen and (max-width: 768px) {
+  :host {
+    top: 1rem;
+    right: 1rem;
+  }
+
+  :host(.page-brand-mark--about) {
+    width: 2.75rem;
+  }
+
+  :host(.page-brand-mark--legal) {
+    width: 2.35rem;
+  }
+}
