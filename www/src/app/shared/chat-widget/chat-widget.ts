@@ -2,6 +2,7 @@ import {
   afterNextRender,
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   ElementRef,
   inject,
@@ -13,7 +14,7 @@ import {
 
 import { ChatRole, ChatService } from '../../core/chat.service';
 import { BOOKING_SCHEDULE_URL, SLACK_JOIN_URL } from '../../core/chat.constants';
-import { ChatLinkPart, splitHttpLinks } from '../../core/chat.links';
+import { ChatLinkPart, isHttpHref as hrefIsHttp, splitHttpLinks } from '../../core/chat.links';
 import { fillCopy } from '../../core/i18n/catalog';
 import { LocaleService } from '../../core/locale.service';
 import { RouterLink } from '@angular/router';
@@ -49,14 +50,25 @@ export class ChatWidget implements OnDestroy {
   protected readonly expanded = signal(false);
   private readonly scroller = viewChild<ElementRef<HTMLElement>>('scroller');
   private readonly emailField = viewChild<ElementRef<HTMLInputElement>>('emailField');
-  private readonly messageField = viewChild<ElementRef<HTMLInputElement>>('messageField');
+  private readonly messageField = viewChild<ElementRef<HTMLTextAreaElement>>('messageField');
 
   protected readonly canSend = signal(false);
   /** Brief “Copied” state for the ticket button. */
   protected readonly ticketCopied = signal(false);
+  /** Message field focused: grow the textarea over the fineprint. */
+  protected readonly composing = signal(false);
+  protected readonly wideChat = signal(isWideChat());
+  protected readonly quickChips = computed(() => {
+    const c = this.copy.chat;
+    const greg = this.chat.hero() === 'greg';
+    if (!this.wideChat()) {
+      return greg ? [c.chipHiGreg, c.chipRust] : [c.chipWhat, c.chipWho];
+    }
+    return greg ? [c.chipHiGreg, c.chipRust, c.chipWhat] : [c.chipWhat, c.chipWho, c.chipRust];
+  });
   /** Always a string: never leave compose bindings as undefined. */
   protected draft = '';
-  protected showEmail = false;
+  protected readonly showEmail = signal(false);
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
   protected readonly bookingScheduleUrl = BOOKING_SCHEDULE_URL;
 
@@ -65,16 +77,26 @@ export class ChatWidget implements OnDestroy {
   private enterTimer: ReturnType<typeof setTimeout> | null = null;
   private ticketCopyTimer: ReturnType<typeof setTimeout> | null = null;
   private bubbleDismissed = false;
+  private wideMql: MediaQueryList | null = null;
 
   constructor() {
     afterNextRender(() => {
       this.mounted.set(true);
       this.enterTimer = setTimeout(() => this.fabEnter.set(false), FAB_ENTER_MS);
       void this.chat.warm().then(() => this.tryStartNudge());
+      if (typeof matchMedia === 'undefined') {
+        return;
+      }
+      this.wideMql = matchMedia('(min-width: 1280px)');
+      this.wideChat.set(this.wideMql.matches);
+      this.wideMql.addEventListener('change', this.onWideChat);
     });
     effect(() => {
       if (!this.chat.open()) {
         this.expanded.set(false);
+        if (!this.draft.trim()) {
+          this.composing.set(false);
+        }
       }
     });
     effect(() => {
@@ -95,17 +117,48 @@ export class ChatWidget implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.wideMql?.removeEventListener('change', this.onWideChat);
     this.clearBounceTimers();
   }
 
   protected onFab(): void {
     this.dismissBubbleAndBounce();
+    const opening = !this.chat.open();
     this.chat.toggle();
+    if (opening) {
+      this.focusMessageAfterOpen();
+    }
   }
 
   protected onNudgeClick(): void {
     this.dismissBubbleAndBounce();
     void this.chat.openPanel();
+    this.focusMessageAfterOpen();
+  }
+
+  protected onPanelTransitionEnd(event: TransitionEvent): void {
+    if (!this.chat.open() || event.propertyName !== 'transform') {
+      return;
+    }
+    if (event.target !== event.currentTarget) {
+      return;
+    }
+    this.focusMessage();
+  }
+
+  private focusMessageAfterOpen(): void {
+    window.setTimeout(() => {
+      if (this.chat.open()) {
+        this.focusMessage();
+      }
+    }, 450);
+  }
+
+  private focusMessage(): void {
+    const field = document.querySelector('#interchouette-chat-panel textarea[name="message"]');
+    if (field instanceof HTMLTextAreaElement) {
+      field.focus();
+    }
   }
 
   protected onClose(): void {
@@ -149,15 +202,42 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected onForgetChat(): void {
-    this.showEmail = false;
+    this.showEmail.set(false);
     this.canSend.set(false);
     this.draft = '';
     void this.chat.forgetChat();
   }
 
+  protected onComposeFocus(): void {
+    this.composing.set(true);
+  }
+
+  protected onComposeBlur(event: FocusEvent): void {
+    const next = event.relatedTarget as Node | null;
+    const form = (event.currentTarget as HTMLElement | null)?.closest('.chat-panel__compose');
+    if (next && form?.contains(next)) {
+      return;
+    }
+    const field = this.messageField()?.nativeElement;
+    if ((field?.value ?? this.draft).trim().length > 0) {
+      return;
+    }
+    this.composing.set(false);
+  }
+
+  protected onComposeKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.shiftKey) {
+      return;
+    }
+    event.preventDefault();
+    this.onSubmit(event);
+  }
+
   protected onDraftInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
+    this.draft = value;
     this.canSend.set(value.trim().length > 0);
+    this.composing.set(true);
   }
 
   protected onSubmit(event: Event): void {
@@ -204,15 +284,16 @@ export class ChatWidget implements OnDestroy {
   }
 
   protected toggleEmail(): void {
-    this.showEmail = !this.showEmail;
-    if (this.showEmail) {
+    const next = !this.showEmail();
+    this.showEmail.set(next);
+    if (next) {
       this.scheduleEmailSeed();
     }
   }
 
   protected onChip(text: string): void {
     if (text === this.copy.chat.chipLeaveEmail) {
-      this.showEmail = true;
+      this.showEmail.set(true);
       this.scheduleEmailSeed();
       return;
     }
@@ -255,14 +336,6 @@ export class ChatWidget implements OnDestroy {
     if (saved) {
       input.value = saved;
     }
-  }
-
-  protected quickChips(): string[] {
-    const c = this.copy.chat;
-    if (this.chat.hero() === 'greg') {
-      return [c.chipHiGreg, c.chipRust];
-    }
-    return [c.chipWhat, c.chipWho];
   }
 
   protected title(): string {
@@ -415,6 +488,10 @@ export class ChatWidget implements OnDestroy {
     return splitHttpLinks(text);
   }
 
+  protected isHttpHref(href: string | null): boolean {
+    return hrefIsHttp(href);
+  }
+
   protected whoLabel(role: ChatRole): string {
     const c = this.copy.chat;
     switch (role) {
@@ -529,4 +606,12 @@ export class ChatWidget implements OnDestroy {
       el.scrollTop = el.scrollHeight;
     }
   }
+
+  private readonly onWideChat = (): void => {
+    this.wideChat.set(this.wideMql?.matches ?? isWideChat());
+  };
+}
+
+function isWideChat(): boolean {
+  return typeof matchMedia !== 'undefined' && matchMedia('(min-width: 1280px)').matches;
 }

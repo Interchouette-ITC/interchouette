@@ -75,7 +75,7 @@ test.describe('chat widget', () => {
           const status = statusEl.getBoundingClientRect();
           const code = ticketEl.getBoundingClientRect();
           return {
-            titleTop: title.top,
+            titleBottom: title.bottom,
             statusTop: status.top,
             ticketTop: code.top,
             copyVisible:
@@ -84,10 +84,13 @@ test.describe('chat widget', () => {
           };
         });
         expect(place).not.toBeNull();
+        expect(place!.ticketTop, 'desktop ticket stays on the status row').toBeGreaterThan(
+          place!.titleBottom - 2,
+        );
         expect(
-          Math.abs(place!.ticketTop - place!.titleTop),
-          'desktop ticket aligns with the title row',
-        ).toBeLessThanOrEqual(12);
+          Math.abs(place!.ticketTop - place!.statusTop),
+          'desktop ticket aligns with status, not the title',
+        ).toBeLessThanOrEqual(8);
         expect(place!.copyVisible, 'desktop ticket keeps the copy icon').toBe(true);
       }
     }

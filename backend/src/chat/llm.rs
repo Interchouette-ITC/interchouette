@@ -266,60 +266,39 @@ fn required_env(name: &str) -> Option<String> {
     std::env::var(name).ok().filter(|s| !s.is_empty())
 }
 
-/// Public Google Calendar appointment schedule (same URL as the site widget).
-const BOOKING_SCHEDULE_URL: &str = "https://calendar.app.google/tw9hhtJkmcssZQCY7";
-
-fn booking_schedule_url() -> String {
-    required_env("BOOKING_SCHEDULE_URL").unwrap_or_else(|| BOOKING_SCHEDULE_URL.to_owned())
-}
-
 fn system_prompt(locale: ChatLocale) -> String {
-    let url = booking_schedule_url();
-    system_prompt_with_booking(locale, Some(url.as_str()))
+    system_prompt_with_booking(locale, required_env("BOOKING_SCHEDULE_URL").as_deref())
 }
 
 fn system_prompt_with_booking(locale: ChatLocale, booking_url: Option<&str>) -> String {
     let lang = locale.language_name();
-    let booking_tag_instruction =
-        "When the visitor has confirmed first name, last name, email, and start time, \
-         append this exact tag at the END of your reply and nowhere else: \
-         [[BOOKING: first=FIRSTNAME|last=LASTNAME|email=EMAIL|start=START]] \
-         START is ISO 8601 without UTC offset (e.g. 2026-08-25T14:00:00). \
-         The tag is machine-read and stripped before the visitor sees the reply. \
-         Do not emit the tag until all four values are confirmed by the visitor. \
-         Do not invent or guess any value.";
     let meeting = match booking_url {
         Some(url) if !url.is_empty() => format!(
             "If they want a meeting, offer two choices (do not skip this): \
              (1) You book for them: collect first name, last name, email \
-             (skip email if already saved in the chat email field), then ask which day and \
-             start time works. Slots are 90 minutes, Monday to Saturday 10:00-22:00 \
-             Amsterdam time. Do not invent availability outside those windows. \
-             Once the visitor confirms all four values (first name, last name, email, start time), \
-             emit the booking tag described below. \
-             Do not claim a Google Calendar event already exists before you emit the tag. \
+             (skip email if already saved in the chat email field), then which day and time \
+             of day works. You do not invent availability. After you have those details, \
+             confirm you passed them to Greg. Do not claim a Google Calendar event already exists. \
              (2) They book themselves in a new browser tab: share this page once, only after \
              they choose this path or ask for the link: {url} \
              Never reply with only the URL on the first booking turn. Never collect name and \
-             email only to dump the URL. {booking_tag_instruction}"
+             email only to dump the URL."
         ),
-        _ => format!(
+        _ => String::from(
             "If they want a meeting, offer to take the booking for them: collect first name, \
-             last name, email (skip email if already saved in the chat email field), then ask \
-             which day and start time works. Slots are 90 minutes, Monday to Saturday \
-             10:00-22:00 Amsterdam time. Do not invent availability outside those windows. \
-             Once the visitor confirms all four values (first name, last name, email, start time), \
-             emit the booking tag described below. \
-             There is no public self-serve calendar link. \
-             Do not claim a Google Calendar event already exists before you emit the tag. \
-             {booking_tag_instruction}"
+             last name, email (skip email if already saved in the chat email field), then which \
+             day and time of day works. You do not invent availability. After you have those \
+             details, confirm you passed them to Greg. There is no public self-serve calendar \
+             link. Do not claim a Google Calendar event already exists.",
         ),
     };
     format!(
         "You are ITCy, the Linux owl assistant for Interchouette ITC (Gregory Roussac). \
          Reply in {lang} only. You are an AI, never pretend to be Greg. \
          Be concise, friendly, and helpful. Prefer inviting the visitor to leave an email \
-         so Greg can follow up. Use the public notes and the prior turns. \
+         in the chat email field so Greg can follow up. The only public address is \
+         contact@interchouette.net. Never invent other emails, including greg@ or similar. \
+         Do not paste markdown mailto links. Use the public notes and the prior turns. \
          Once the chat has started, do not greet or re-introduce yourself. \
          Do not ask again for details the visitor already gave. \
          If asked which model, vendor, or size you are, say you are ITCy, the on-site assistant. \
@@ -590,8 +569,9 @@ mod tests {
         assert!(en.contains("do not greet or re-introduce yourself"));
         assert!(en.contains("on-site assistant"));
         assert!(en.contains("Confidentiality (must follow)"));
-        assert!(en.contains("offer two choices"));
-        assert!(en.contains("calendar.app.google"));
+        assert!(en.contains("contact@interchouette.net"));
+        assert!(en.contains("Never invent other emails"));
+        assert!(en.contains("offer to take the booking") || en.contains("offer two choices"));
         let booked = system_prompt_with_booking(
             ChatLocale::En,
             Some("https://calendar.google.com/calendar/appointments/schedules/example"),
@@ -600,7 +580,14 @@ mod tests {
         assert!(booked.contains("first name, last name"));
         assert!(booked.contains("Never reply with only the URL on the first booking turn"));
         assert!(booked.contains("Do not claim a Google Calendar event already exists"));
+        assert!(booked.contains("offer two choices"));
         assert!(!booked.contains("no public booking page yet"));
+        let app = system_prompt_with_booking(
+            ChatLocale::En,
+            Some("https://calendar.app.google/tw9hhtJkmcssZQCY7"),
+        );
+        assert!(app.contains("calendar.app.google"));
+        assert!(app.contains("offer two choices"));
         let nl = system_prompt(ChatLocale::Nl);
         assert!(nl.contains("Reply in Dutch only"));
     }
