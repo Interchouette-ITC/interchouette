@@ -28,7 +28,7 @@ export const NL_CHAT = {
   chipWho: 'Wie is Greg?',
   chipBook: 'Afspraak maken',
   bookingTitle: 'Kies een tijdslot',
-  bookingOpen: 'Google Calendar openen',
+  bookingOpen: 'Agenda openen',
   bookingClose: 'Agenda sluiten',
   bookingPickSlot: 'Kies een slot',
   titleGreg: 'Chat met Greg',
