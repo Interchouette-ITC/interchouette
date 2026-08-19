@@ -242,21 +242,8 @@
               @if (msg.role !== 'visitor' && msg.role !== 'system') {
                 <span class="chat-bubble__who">{{ whoLabel(msg.role) }}</span>
               }
-              <p>
-                @for (part of linkParts(msg.text); track $index) {
-                  @if (part.href) {
-                    <a
-                      class="chat-bubble__link"
-                      [href]="part.href"
-                      [attr.target]="isHttpHref(part.href) ? '_blank' : null"
-                      [attr.rel]="isHttpHref(part.href) ? 'noopener noreferrer' : null"
-                      >{{ part.t }}</a
-                    >
-                  } @else {
-                    {{ part.t }}
-                  }
-                }
-              </p>
+              <!-- prettier-ignore -->
+              <p><ng-container>@for (part of linkParts(msg.text); track $index) { @if (part.href) { <a class="chat-bubble__link" [href]="part.href" [attr.target]="isHttpHref(part.href) ? '_blank' : null" [attr.rel]="isHttpHref(part.href) ? 'noopener noreferrer' : null">{{ part.t }}</a> } @else { <span>{{ part.t }}</span> } }</ng-container></p>
               @if ((msg.role === 'itcy' || msg.role === 'greg') && messageOffersBooking(msg.text)) {
                 <a
                   class="chat-bubble__booking"
