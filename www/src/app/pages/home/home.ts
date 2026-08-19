@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 
-import { CONTACT_EMAIL, CHAT_WIDGET_ENABLED } from '../../core/chat.constants';
+import { CHAT_WIDGET_ENABLED, CONTACT_EMAIL } from '../../core/chat.constants';
 import { ChatService } from '../../core/chat.service';
 import { fillCopy } from '../../core/i18n/catalog';
 import { LocaleService } from '../../core/locale.service';

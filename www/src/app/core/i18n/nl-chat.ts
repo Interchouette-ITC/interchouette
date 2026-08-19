@@ -30,7 +30,6 @@ export const NL_CHAT = {
   bookingTitle: 'Kies een tijdslot',
   bookingOpen: 'Google Calendar openen',
   bookingClose: 'Agenda sluiten',
-  bookingNewTab: 'Openen in een nieuw tabblad',
   bookingPickSlot: 'Kies een slot',
   titleGreg: 'Chat met Greg',
   titleItcy: 'Chat met ITCy',
