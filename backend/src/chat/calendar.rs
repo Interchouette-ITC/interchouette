@@ -20,16 +20,20 @@ const FREEBUSY_ENDPOINT: &str = "https://www.googleapis.com/calendar/v3/freeBusy
 const EVENTS_ENDPOINT: &str = "https://www.googleapis.com/calendar/v3/calendars/{id}/events";
 
 /// A meeting request extracted from an `ITCy` conversation.
+///
+/// Start, end, and timezone are all provided by the LLM/visitor - the backend
+/// does not hardcode slot duration or timezone. Google Calendar's own configuration
+/// (Appointment schedule duration, timezone) is what drives these values.
 #[derive(Debug, Clone)]
 pub struct BookingRequest {
     pub first_name: String,
     pub last_name: String,
     pub email: String,
-    /// ISO 8601 datetime string as proposed by the visitor / `ITCy` (e.g. "2026-08-25T14:00:00").
+    /// ISO 8601 start datetime, no UTC offset (e.g. "2026-08-25T14:00:00").
     pub start: String,
-    /// Duration in minutes (from `GCAL_SLOT_MINUTES`, default 30).
-    pub duration_minutes: u32,
-    /// Timezone name (e.g. "Europe/Paris"). Derived from `GCAL_TIMEZONE`.
+    /// ISO 8601 end datetime, no UTC offset (e.g. "2026-08-25T14:30:00").
+    pub end: String,
+    /// IANA timezone name (e.g. "Europe/Amsterdam").
     pub timezone: String,
 }
 
@@ -155,11 +159,10 @@ impl CalendarClient {
             .ok_or_else(|| anyhow::anyhow!("CalendarClient not configured"))?;
         let token = self.access_token().await?;
         let url = EVENTS_ENDPOINT.replace("{id}", &inner.calendar_id);
-        let end = end_time(&req.start, req.duration_minutes)?;
         let body = json!({
             "summary": format!("Meeting with {} {}", req.first_name, req.last_name),
             "start": { "dateTime": req.start, "timeZone": req.timezone },
-            "end":   { "dateTime": end,       "timeZone": req.timezone },
+            "end":   { "dateTime": req.end,   "timeZone": req.timezone },
             "attendees": [{
                 "email":       req.email,
                 "displayName": format!("{} {}", req.first_name, req.last_name),
@@ -227,33 +230,6 @@ impl CalendarClient {
     }
 }
 
-/// Compute the end datetime string by adding `duration_minutes` to a naive ISO 8601 start.
-///
-/// Accepts `"YYYY-MM-DDTHH:MM:SS"` (no offset). Returns the same format.
-fn end_time(start: &str, duration_minutes: u32) -> anyhow::Result<String> {
-    // Parse as naive datetime (no timezone offset in the string; TZ is sent separately).
-    let (date_part, time_part) = start
-        .split_once('T')
-        .ok_or_else(|| anyhow::anyhow!("invalid start datetime: {start}"))?;
-    let parts: Vec<u32> = time_part
-        .split(':')
-        .map(str::parse::<u32>)
-        .collect::<Result<_, _>>()
-        .map_err(|e| anyhow::anyhow!("invalid time: {e}"))?;
-    let (h, m, s) = match parts.as_slice() {
-        [h, m] => (*h, *m, 0u32),
-        [h, m, s] => (*h, *m, *s),
-        _ => anyhow::bail!("unexpected time parts in: {start}"),
-    };
-    let total_mins = h * 60 + m + duration_minutes;
-    let nh = total_mins / 60;
-    let nm = total_mins % 60;
-    if nh >= 24 {
-        anyhow::bail!("end time overflows midnight for start {start}");
-    }
-    Ok(format!("{date_part}T{nh:02}:{nm:02}:{s:02}"))
-}
-
 fn unix_now() -> u64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -292,65 +268,54 @@ struct EventInsertResponse {
     html_link: String,
 }
 
-// ---- Env-derived slot config ----
-
-/// Duration in minutes from `GCAL_SLOT_MINUTES` (default 30).
-#[must_use]
-pub fn slot_minutes() -> u32 {
-    std::env::var("GCAL_SLOT_MINUTES")
-        .ok()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(30)
-}
-
-/// Timezone name from `GCAL_TIMEZONE` (default "Europe/Paris").
-#[must_use]
-pub fn slot_timezone() -> String {
-    std::env::var("GCAL_TIMEZONE")
-        .ok()
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| "Europe/Paris".into())
-}
-
 // ---- Booking intent extraction ----
 
 /// Signal emitted by the LLM inside its reply when booking details are complete.
 ///
-/// Format: `[[BOOKING: first=...|last=...|email=...|slot=...]]`
+/// Format: `[[BOOKING: first=...|last=...|email=...|start=...|end=...|tz=...]]`
+///
+/// The LLM provides start, end, and timezone directly from the visitor-confirmed slot.
 /// The backend strips this tag from the visible reply and triggers the calendar write.
 const BOOKING_TAG_PREFIX: &str = "[[BOOKING:";
 const BOOKING_TAG_SUFFIX: &str = "]]";
 
 /// Extract a `BookingRequest` from the LLM reply if it contains a booking tag.
-/// Returns `None` if the tag is absent or malformed.
+/// Returns `None` if the tag is absent or any required field is missing.
 #[must_use]
 pub fn extract_booking_tag(reply: &str) -> Option<BookingRequest> {
-    let start = reply.find(BOOKING_TAG_PREFIX)?;
-    let inner_start = start + BOOKING_TAG_PREFIX.len();
-    let end = reply[inner_start..].find(BOOKING_TAG_SUFFIX)? + inner_start;
-    let inner = reply[inner_start..end].trim();
+    let tag_start = reply.find(BOOKING_TAG_PREFIX)?;
+    let inner_start = tag_start + BOOKING_TAG_PREFIX.len();
+    let inner_end = reply[inner_start..].find(BOOKING_TAG_SUFFIX)? + inner_start;
+    let inner = reply[inner_start..inner_end].trim();
     let mut first = None::<String>;
     let mut last = None::<String>;
     let mut email = None::<String>;
-    let mut slot = None::<String>;
+    let mut start = None::<String>;
+    let mut end = None::<String>;
+    let mut tz = None::<String>;
     for part in inner.split('|') {
-        if let Some(v) = part.trim().strip_prefix("first=") {
+        let part = part.trim();
+        if let Some(v) = part.strip_prefix("first=") {
             first = Some(v.trim().to_string());
-        } else if let Some(v) = part.trim().strip_prefix("last=") {
+        } else if let Some(v) = part.strip_prefix("last=") {
             last = Some(v.trim().to_string());
-        } else if let Some(v) = part.trim().strip_prefix("email=") {
+        } else if let Some(v) = part.strip_prefix("email=") {
             email = Some(v.trim().to_string());
-        } else if let Some(v) = part.trim().strip_prefix("slot=") {
-            slot = Some(v.trim().to_string());
+        } else if let Some(v) = part.strip_prefix("start=") {
+            start = Some(v.trim().to_string());
+        } else if let Some(v) = part.strip_prefix("end=") {
+            end = Some(v.trim().to_string());
+        } else if let Some(v) = part.strip_prefix("tz=") {
+            tz = Some(v.trim().to_string());
         }
     }
     Some(BookingRequest {
         first_name: first.filter(|s| !s.is_empty())?,
         last_name: last.filter(|s| !s.is_empty())?,
         email: email.filter(|s| !s.is_empty())?,
-        start: slot.filter(|s| !s.is_empty())?,
-        duration_minutes: slot_minutes(),
-        timezone: slot_timezone(),
+        start: start.filter(|s| !s.is_empty())?,
+        end: end.filter(|s| !s.is_empty())?,
+        timezone: tz.filter(|s| !s.is_empty())?,
     })
 }
 
@@ -381,36 +346,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_end_time_basic() {
-        assert_eq!(
-            end_time("2026-08-25T14:00:00", 30).unwrap(),
-            "2026-08-25T14:30:00"
-        );
-        assert_eq!(
-            end_time("2026-08-25T14:45:00", 30).unwrap(),
-            "2026-08-25T15:15:00"
-        );
-        assert_eq!(
-            end_time("2026-08-25T23:00:00", 30).unwrap(),
-            "2026-08-25T23:30:00"
-        );
-    }
-
-    #[test]
-    fn test_end_time_overflow() {
-        assert!(end_time("2026-08-25T23:45:00", 30).is_err());
-    }
-
-    #[test]
     fn test_extract_booking_tag_full() {
         let reply = "Great, let me book that.\n\
-            [[BOOKING: first=Alice|last=Smith|email=alice@example.com|slot=2026-08-25T14:00:00]]\n\
+            [[BOOKING: first=Alice|last=Smith|email=alice@example.com|start=2026-08-25T14:00:00|end=2026-08-25T14:30:00|tz=Europe/Amsterdam]]\n\
             I will confirm once done.";
         let req = extract_booking_tag(reply).unwrap();
         assert_eq!(req.first_name, "Alice");
         assert_eq!(req.last_name, "Smith");
         assert_eq!(req.email, "alice@example.com");
         assert_eq!(req.start, "2026-08-25T14:00:00");
+        assert_eq!(req.end, "2026-08-25T14:30:00");
+        assert_eq!(req.timezone, "Europe/Amsterdam");
+    }
+
+    #[test]
+    fn test_extract_booking_tag_missing_field() {
+        // Missing end field - should return None.
+        let reply = "[[BOOKING: first=Alice|last=Smith|email=alice@example.com|start=2026-08-25T14:00:00|tz=Europe/Amsterdam]]";
+        assert!(extract_booking_tag(reply).is_none());
     }
 
     #[test]
@@ -420,7 +373,7 @@ mod tests {
 
     #[test]
     fn test_strip_booking_tag_middle() {
-        let reply = "Great. [[BOOKING: first=A|last=B|email=c@d.com|slot=2026-01-01T10:00:00]] I will confirm.";
+        let reply = "Great. [[BOOKING: first=A|last=B|email=c@d.com|start=2026-01-01T10:00:00|end=2026-01-01T10:30:00|tz=Europe/Amsterdam]] I will confirm.";
         assert_eq!(strip_booking_tag(reply), "Great. I will confirm.");
     }
 
