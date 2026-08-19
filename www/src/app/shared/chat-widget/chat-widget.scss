@@ -965,10 +965,16 @@
 
 .chat-panel__booking-bar {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.55rem 0.85rem;
+  gap: 0.4rem;
   margin-bottom: 0.65rem;
+}
+
+.chat-panel__booking-bar .chat-chip,
+.chat-panel__booking-bar .chat-panel__booking-open {
+  flex: 0 1 auto;
+  white-space: nowrap;
 }
 
 .chat-panel__booking-open {
