@@ -44,7 +44,7 @@ export class SiteHeader implements OnInit, OnDestroy {
   protected readonly session = inject(CustomerSession);
   private readonly gis = inject(GisOneTapService);
   protected readonly slackJoinUrl = SLACK_JOIN_URL;
-  protected readonly bookingChatDeepLink = 'https://interchouette.net/?booking';
+  protected readonly bookingChatDeepLink = '/?booking';
   protected readonly marqueeLive = signal(false);
   protected readonly desktopNav = signal(isDesktopNav());
   protected readonly menuOpen = signal(false);
