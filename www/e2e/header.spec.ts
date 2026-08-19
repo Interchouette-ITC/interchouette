@@ -74,6 +74,7 @@ test.describe('site header and locale', () => {
 
     await page.goto('/privacy?lang=nl');
     await expect(page.getByRole('heading', { name: 'Privacybeleid' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Functies' }).click();
     await expect(page.getByText(/Google Identity Services/i)).toBeVisible();
 
     await page.goto('/CV?lang=nl');

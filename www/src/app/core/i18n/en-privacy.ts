@@ -1,5 +1,10 @@
 export const EN_PRIVACY = {
   title: 'Privacy Policy',
+  tabIntro: 'Overview',
+  tabData: 'Data',
+  tabFeatures: 'Features',
+  tabRights: 'Rights',
+  tabContact: 'Contact',
   updated: 'Last updated: 18 August 2026',
   intro:
     'This Privacy Policy describes how Interchouette - ITC ("we", "us", or "our"), operated by Gregory Roussac, collects, uses, and protects information when you use our websites, applications, and related services (the "Services"), including integrations with third-party platforms such as LinkedIn.',

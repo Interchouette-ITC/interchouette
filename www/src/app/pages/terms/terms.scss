@@ -1,3 +1,5 @@
+@use '../../shared/page-tabs/page-tabs.scss' as *;
+
 @font-face {
   font-family: 'Montserrat';
   font-style: normal;
@@ -15,6 +17,7 @@
 
 @media screen and (min-width: 1280px) {
   :host {
+    display: block;
     min-height: 100vh;
     min-height: 100dvh;
     padding-bottom: 2.75rem;
@@ -23,6 +26,7 @@
 }
 
 .legal {
+  position: relative;
   width: min(72rem, 94vw);
   max-width: none;
   margin: 3% auto 2%;
@@ -42,6 +46,11 @@
   font-weight: 700;
   color: #555;
   margin-top: 0;
+}
+
+.legal h1 + .meta + .page-tabs h2,
+.legal h1 + .page-tabs h2 {
+  margin-top: 0.35rem;
 }
 
 .legal h2 {

@@ -1,3 +1,5 @@
+@use '../../shared/page-tabs/page-tabs.scss' as *;
+
 @font-face {
   font-family: 'Montserrat';
   font-style: normal;
@@ -24,6 +26,7 @@
 }
 
 .card.about {
+  position: relative;
   width: min(72rem, 94vw);
   max-width: none;
   margin: 3% auto 2%;
@@ -53,8 +56,14 @@
   margin-bottom: 0.55rem;
 }
 
-.about h1 + h2 {
+.about h1 + h2,
+.about h1 + .page-tabs h2 {
   margin-top: 0.85rem;
+}
+
+.about-intro {
+  margin: 0 0 1rem;
+  color: #555;
 }
 
 .about a {

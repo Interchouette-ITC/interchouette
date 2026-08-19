@@ -1,5 +1,10 @@
 export const NL_TERMS = {
   title: 'Algemene voorwaarden',
+  tabIntro: 'Overzicht',
+  tabService: 'Dienst',
+  tabRules: 'Regels',
+  tabLegal: 'Juridisch',
+  tabContact: 'Contact',
   updated: 'Laatst bijgewerkt: 17 augustus 2026',
   intro:
     'Deze algemene voorwaarden ("Voorwaarden") regelen uw toegang tot en gebruik van websites, toepassingen en gerelateerde diensten (de "Diensten") van Interchouette - ITC ("wij", "ons" of "onze"), geëxploiteerd door Gregory Roussac.',

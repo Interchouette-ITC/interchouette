@@ -1,5 +1,12 @@
 export const EN_ABOUT = {
   title: 'About Interchouette - ITC',
+  introLead:
+    'Interchouette (Interchouette - ITC) is a Dutch sole proprietorship based in Hilversum. Re-founded as ZZP in 2022 by Gregory Roussac, it is the brand for his freelance software work.',
+  tabAbout: 'About',
+  tabWork: 'Work',
+  tabSite: 'Site',
+  tabItcy: 'ITCy',
+  tabConnect: 'Connect',
   org: 'Organization',
   githubOrg: 'GitHub · Interchouette - ITC',
   linkedinOrg: 'LinkedIn · Interchouette - ITC',

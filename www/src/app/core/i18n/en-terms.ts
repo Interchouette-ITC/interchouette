@@ -1,5 +1,10 @@
 export const EN_TERMS = {
   title: 'Terms of Service',
+  tabIntro: 'Overview',
+  tabService: 'Service',
+  tabRules: 'Rules',
+  tabLegal: 'Legal',
+  tabContact: 'Contact',
   updated: 'Last updated: 17 August 2026',
   intro:
     'These Terms of Service ("Terms") govern your access to and use of websites, applications, and related services (the "Services") provided by Interchouette - ITC ("we", "us", or "our"), operated by Gregory Roussac.',

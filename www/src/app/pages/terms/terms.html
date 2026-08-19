@@ -1,84 +1,152 @@
-<article class="legal">
+<article class="legal animated fadeIn">
+  <app-page-brand-mark />
   <a class="back" routerLink="/">&larr; Interchouette</a>
   <h1>{{ copy.terms.title }}</h1>
   <p class="meta">{{ copy.terms.updated }}</p>
 
-  <p>{{ copy.terms.intro }}</p>
-  <p>{{ copy.terms.agree }}</p>
+  <div class="page-tabs">
+    <div class="page-tabs__scroll">
+      <div class="page-tabs__list" role="tablist" [attr.aria-label]="copy.terms.title">
+        @for (tab of tabs; track tab; let i = $index) {
+          <button
+            type="button"
+            class="page-tabs__tab"
+            role="tab"
+            [id]="'terms-tab-' + tab"
+            [attr.aria-selected]="isActive(tab)"
+            [attr.aria-controls]="'terms-panel-' + tab"
+            [attr.tabindex]="isActive(tab) ? 0 : -1"
+            (click)="selectTab(tab)"
+            (keydown)="onTabKeydown($event, i)"
+          >
+            {{ tabLabel(tab) }}
+          </button>
+        }
+      </div>
+    </div>
 
-  <h2>{{ copy.terms.servicesHeading }}</h2>
-  <p>{{ copy.terms.servicesP }}</p>
-
-  <h2>{{ copy.terms.eligibilityHeading }}</h2>
-  <p>{{ copy.terms.eligibilityP }}</p>
-
-  <h2>{{ copy.terms.accountsHeading }}</h2>
-  <p>{{ copy.terms.accountsLead }}</p>
-  <ul>
-    <li>{{ copy.terms.accountsSecure }}</li>
-    <li>{{ copy.terms.accountsActivity }}</li>
-    <li>{{ copy.terms.accountsThird }}</li>
-  </ul>
-  <p>{{ copy.terms.accountsNotResponsible }}</p>
-
-  <h2>{{ copy.terms.gisHeading }}</h2>
-  <p>{{ copy.terms.gisP }}</p>
-
-  <h2>{{ copy.terms.acceptableHeading }}</h2>
-  <p>{{ copy.terms.acceptableLead }}</p>
-  <ul>
-    <li>{{ copy.terms.acceptableUnlawful }}</li>
-    <li>{{ copy.terms.acceptableAccess }}</li>
-    <li>{{ copy.terms.acceptableInterfere }}</li>
-    <li>{{ copy.terms.acceptableMisuse }}</li>
-    <li>{{ copy.terms.acceptablePlatform }}</li>
-  </ul>
-
-  <h2>{{ copy.terms.ipHeading }}</h2>
-  <p>{{ copy.terms.ipP }}</p>
-
-  <h2>{{ copy.terms.privacyHeading }}</h2>
-  <p>
-    {{ copy.terms.privacyBefore }}
-    <a routerLink="/privacy">{{ copy.terms.privacyLink }}</a
-    >{{ copy.terms.privacyAfter }}
-  </p>
-
-  <h2>{{ copy.terms.disclaimerHeading }}</h2>
-  <p>{{ copy.terms.disclaimerP }}</p>
-
-  <h2>{{ copy.terms.liabilityHeading }}</h2>
-  <p>{{ copy.terms.liabilityP }}</p>
-
-  <h2>{{ copy.terms.terminationHeading }}</h2>
-  <p>{{ copy.terms.terminationP }}</p>
-
-  <h2>{{ copy.terms.changesHeading }}</h2>
-  <p>{{ copy.terms.changesP }}</p>
-
-  <h2>{{ copy.terms.contactHeading }}</h2>
-  <p>
-    Interchouette - ITC / Gregory Roussac<br />
-    Email:
-    <a href="mailto:contact@interchouette.net">contact&#64;interchouette.net</a><br />
-    Website:
-    <a href="https://interchouette.net">https://interchouette.net</a><br />
-    {{ copy.footerAbout }}:
-    <a routerLink="/about">{{ copy.terms.contactAbout }}</a>
-    @if (chat.ready()) {
-      <br />
-      {{ copy.terms.contactChat }}
-      <a
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="chatAria()"
-        (click)="openChat($event)"
-        (keydown.enter)="openChat($event)"
-        (keydown.space)="$event.preventDefault(); openChat($event)"
-        >{{ copy.terms.contactChatLink }}</a
+    @if (isActive('intro')) {
+      <section
+        class="page-tabs__panel"
+        role="tabpanel"
+        id="terms-panel-intro"
+        aria-labelledby="terms-tab-intro"
       >
-      {{ copy.terms.contactChatAfter }}
+        <p>{{ copy.terms.intro }}</p>
+        <p>{{ copy.terms.agree }}</p>
+      </section>
     }
-  </p>
+
+    @if (isActive('service')) {
+      <section
+        class="page-tabs__panel"
+        role="tabpanel"
+        id="terms-panel-service"
+        aria-labelledby="terms-tab-service"
+      >
+        <h2>{{ copy.terms.servicesHeading }}</h2>
+        <p>{{ copy.terms.servicesP }}</p>
+
+        <h2>{{ copy.terms.eligibilityHeading }}</h2>
+        <p>{{ copy.terms.eligibilityP }}</p>
+
+        <h2>{{ copy.terms.accountsHeading }}</h2>
+        <p>{{ copy.terms.accountsLead }}</p>
+        <ul>
+          <li>{{ copy.terms.accountsSecure }}</li>
+          <li>{{ copy.terms.accountsActivity }}</li>
+          <li>{{ copy.terms.accountsThird }}</li>
+        </ul>
+        <p>{{ copy.terms.accountsNotResponsible }}</p>
+
+        <h2>{{ copy.terms.gisHeading }}</h2>
+        <p>{{ copy.terms.gisP }}</p>
+      </section>
+    }
+
+    @if (isActive('rules')) {
+      <section
+        class="page-tabs__panel"
+        role="tabpanel"
+        id="terms-panel-rules"
+        aria-labelledby="terms-tab-rules"
+      >
+        <h2>{{ copy.terms.acceptableHeading }}</h2>
+        <p>{{ copy.terms.acceptableLead }}</p>
+        <ul>
+          <li>{{ copy.terms.acceptableUnlawful }}</li>
+          <li>{{ copy.terms.acceptableAccess }}</li>
+          <li>{{ copy.terms.acceptableInterfere }}</li>
+          <li>{{ copy.terms.acceptableMisuse }}</li>
+          <li>{{ copy.terms.acceptablePlatform }}</li>
+        </ul>
+
+        <h2>{{ copy.terms.ipHeading }}</h2>
+        <p>{{ copy.terms.ipP }}</p>
+      </section>
+    }
+
+    @if (isActive('legal')) {
+      <section
+        class="page-tabs__panel"
+        role="tabpanel"
+        id="terms-panel-legal"
+        aria-labelledby="terms-tab-legal"
+      >
+        <h2>{{ copy.terms.privacyHeading }}</h2>
+        <p>
+          {{ copy.terms.privacyBefore }}
+          <a routerLink="/privacy">{{ copy.terms.privacyLink }}</a
+          >{{ copy.terms.privacyAfter }}
+        </p>
+
+        <h2>{{ copy.terms.disclaimerHeading }}</h2>
+        <p>{{ copy.terms.disclaimerP }}</p>
+
+        <h2>{{ copy.terms.liabilityHeading }}</h2>
+        <p>{{ copy.terms.liabilityP }}</p>
+
+        <h2>{{ copy.terms.terminationHeading }}</h2>
+        <p>{{ copy.terms.terminationP }}</p>
+
+        <h2>{{ copy.terms.changesHeading }}</h2>
+        <p>{{ copy.terms.changesP }}</p>
+      </section>
+    }
+
+    @if (isActive('contact')) {
+      <section
+        class="page-tabs__panel"
+        role="tabpanel"
+        id="terms-panel-contact"
+        aria-labelledby="terms-tab-contact"
+      >
+        <h2>{{ copy.terms.contactHeading }}</h2>
+        <p>
+          Interchouette - ITC / Gregory Roussac<br />
+          Email:
+          <a href="mailto:contact@interchouette.net">contact&#64;interchouette.net</a><br />
+          Website:
+          <a href="https://interchouette.net">https://interchouette.net</a><br />
+          {{ copy.footerAbout }}:
+          <a routerLink="/about">{{ copy.terms.contactAbout }}</a>
+          @if (chat.ready()) {
+            <br />
+            {{ copy.terms.contactChat }}
+            <a
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="chatAria()"
+              (click)="openChat($event)"
+              (keydown.enter)="openChat($event)"
+              (keydown.space)="$event.preventDefault(); openChat($event)"
+              >{{ copy.terms.contactChatLink }}</a
+            >
+            {{ copy.terms.contactChatAfter }}
+          }
+        </p>
+      </section>
+    }
+  </div>
 </article>
 <app-site-footer />

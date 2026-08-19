@@ -1,125 +1,193 @@
-<article class="legal">
+<article class="legal animated fadeIn">
+  <app-page-brand-mark />
   <a class="back" routerLink="/">&larr; Interchouette</a>
   <h1>{{ copy.privacy.title }}</h1>
   <p class="meta">{{ copy.privacy.updated }}</p>
 
-  <p>{{ copy.privacy.intro }}</p>
+  <div class="page-tabs">
+    <div class="page-tabs__scroll">
+      <div class="page-tabs__list" role="tablist" [attr.aria-label]="copy.privacy.title">
+        @for (tab of tabs; track tab; let i = $index) {
+          <button
+            type="button"
+            class="page-tabs__tab"
+            role="tab"
+            [id]="'privacy-tab-' + tab"
+            [attr.aria-selected]="isActive(tab)"
+            [attr.aria-controls]="'privacy-panel-' + tab"
+            [attr.tabindex]="isActive(tab) ? 0 : -1"
+            (click)="selectTab(tab)"
+            (keydown)="onTabKeydown($event, i)"
+          >
+            {{ tabLabel(tab) }}
+          </button>
+        }
+      </div>
+    </div>
 
-  <h2>{{ copy.privacy.collectHeading }}</h2>
-  <p>{{ copy.privacy.collectLead }}</p>
-  <ul>
-    <li>{{ copy.privacy.collectAccount }}</li>
-    <li>{{ copy.privacy.collectAuth }}</li>
-    <li>{{ copy.privacy.collectUsage }}</li>
-    <li>{{ copy.privacy.collectChat }}</li>
-    <li>{{ copy.privacy.collectGis }}</li>
-    <li>{{ copy.privacy.collectComms }}</li>
-  </ul>
-  <p>{{ copy.privacy.collectSensitive }}</p>
-
-  <h2>{{ copy.privacy.cookiesHeading }}</h2>
-  <p>
-    {{ copy.privacy.cookiesLeadBefore }}
-    <strong>{{ copy.privacy.cookiesEssential }}</strong>
-    {{ copy.privacy.cookiesLeadMid }}
-    <strong>{{ copy.privacy.cookiesNonEssential }}</strong>
-    {{ copy.privacy.cookiesLeadAfter }}
-  </p>
-  <ul>
-    <li>{{ copy.privacy.cookiesGa }}</li>
-    <li>{{ copy.privacy.cookiesChat }}</li>
-    <li>{{ copy.privacy.cookiesConsent }}</li>
-    <li>{{ copy.privacy.cookiesCustomer }}</li>
-  </ul>
-
-  <h2>{{ copy.privacy.chatHeading }}</h2>
-  <p>{{ copy.privacy.chatP }}</p>
-
-  <h2>{{ copy.privacy.gisHeading }}</h2>
-  <p>{{ copy.privacy.gisP1 }}</p>
-  <p>{{ copy.privacy.gisP2 }}</p>
-
-  <h2>{{ copy.privacy.calHeading }}</h2>
-  <p>{{ copy.privacy.calP }}</p>
-
-  <h2>{{ copy.privacy.whyHeading }}</h2>
-  <p>{{ copy.privacy.whyLead }}</p>
-  <ul>
-    <li>{{ copy.privacy.whyProvide }}</li>
-    <li>{{ copy.privacy.whyAuth }}</li>
-    <li>{{ copy.privacy.whyChat }}</li>
-    <li>{{ copy.privacy.whyGis }}</li>
-    <li>{{ copy.privacy.whySupport }}</li>
-    <li>{{ copy.privacy.whySecurity }}</li>
-    <li>{{ copy.privacy.whyAnalytics }}</li>
-  </ul>
-
-  <h2>{{ copy.privacy.shareHeading }}</h2>
-  <p>{{ copy.privacy.shareLead }}</p>
-  <ul>
-    <li>{{ copy.privacy.shareProviders }}</li>
-    <li>{{ copy.privacy.shareSlack }}</li>
-    <li>{{ copy.privacy.shareOpenRouter }}</li>
-    <li>{{ copy.privacy.shareGoogle }}</li>
-    <li>{{ copy.privacy.sharePlatforms }}</li>
-    <li>{{ copy.privacy.shareAuthorities }}</li>
-  </ul>
-
-  <h2>{{ copy.privacy.linkedinHeading }}</h2>
-  <p>{{ copy.privacy.linkedinP }}</p>
-
-  <h2>{{ copy.privacy.retentionHeading }}</h2>
-  <p>{{ copy.privacy.retentionLead }}</p>
-  <ul>
-    <li>{{ copy.privacy.retentionChat }}</li>
-    <li>{{ copy.privacy.retentionSlack }}</li>
-    <li>{{ copy.privacy.retentionGis }}</li>
-    <li>{{ copy.privacy.retentionAnalytics }}</li>
-  </ul>
-  <p>{{ copy.privacy.retentionEnd }}</p>
-
-  <h2>{{ copy.privacy.rightsHeading }}</h2>
-  <p>{{ copy.privacy.rightsLead }}</p>
-  <ul>
-    <li>{{ copy.privacy.rightsAccess }}</li>
-    <li>{{ copy.privacy.rightsCorrect }}</li>
-    <li>{{ copy.privacy.rightsDelete }}</li>
-    <li>{{ copy.privacy.rightsWithdraw }}</li>
-  </ul>
-  <p>{{ copy.privacy.rightsEmail }}</p>
-
-  <h2>{{ copy.privacy.securityHeading }}</h2>
-  <p>{{ copy.privacy.securityP }}</p>
-
-  <h2>{{ copy.privacy.childrenHeading }}</h2>
-  <p>{{ copy.privacy.childrenP }}</p>
-
-  <h2>{{ copy.privacy.changesHeading }}</h2>
-  <p>{{ copy.privacy.changesP }}</p>
-
-  <h2>{{ copy.privacy.contactHeading }}</h2>
-  <p>
-    Interchouette - ITC / Gregory Roussac<br />
-    Email:
-    <a href="mailto:contact@interchouette.net">contact&#64;interchouette.net</a><br />
-    Website:
-    <a href="https://interchouette.net">https://interchouette.net</a><br />
-    {{ copy.footerAbout }}:
-    <a routerLink="/about">{{ copy.privacy.contactAbout }}</a>
-    @if (chat.ready()) {
-      <br />
-      {{ copy.privacy.contactChat }}
-      <a
-        role="button"
-        tabindex="0"
-        [attr.aria-label]="chatAria()"
-        (click)="openChat($event)"
-        (keydown.enter)="openChat($event)"
-        (keydown.space)="$event.preventDefault(); openChat($event)"
-        >{{ copy.privacy.contactChatLink }}</a
+    @if (isActive('intro')) {
+      <section
+        class="page-tabs__panel"
+        role="tabpanel"
+        id="privacy-panel-intro"
+        aria-labelledby="privacy-tab-intro"
       >
-      {{ copy.privacy.contactChatAfter }}
+        <p>{{ copy.privacy.intro }}</p>
+      </section>
     }
-  </p>
+
+    @if (isActive('data')) {
+      <section
+        class="page-tabs__panel"
+        role="tabpanel"
+        id="privacy-panel-data"
+        aria-labelledby="privacy-tab-data"
+      >
+        <h2>{{ copy.privacy.collectHeading }}</h2>
+        <p>{{ copy.privacy.collectLead }}</p>
+        <ul>
+          <li>{{ copy.privacy.collectAccount }}</li>
+          <li>{{ copy.privacy.collectAuth }}</li>
+          <li>{{ copy.privacy.collectUsage }}</li>
+          <li>{{ copy.privacy.collectChat }}</li>
+          <li>{{ copy.privacy.collectGis }}</li>
+          <li>{{ copy.privacy.collectComms }}</li>
+        </ul>
+        <p>{{ copy.privacy.collectSensitive }}</p>
+
+        <h2>{{ copy.privacy.cookiesHeading }}</h2>
+        <p>
+          {{ copy.privacy.cookiesLeadBefore }}
+          <strong>{{ copy.privacy.cookiesEssential }}</strong>
+          {{ copy.privacy.cookiesLeadMid }}
+          <strong>{{ copy.privacy.cookiesNonEssential }}</strong>
+          {{ copy.privacy.cookiesLeadAfter }}
+        </p>
+        <ul>
+          <li>{{ copy.privacy.cookiesGa }}</li>
+          <li>{{ copy.privacy.cookiesChat }}</li>
+          <li>{{ copy.privacy.cookiesConsent }}</li>
+          <li>{{ copy.privacy.cookiesCustomer }}</li>
+        </ul>
+      </section>
+    }
+
+    @if (isActive('features')) {
+      <section
+        class="page-tabs__panel"
+        role="tabpanel"
+        id="privacy-panel-features"
+        aria-labelledby="privacy-tab-features"
+      >
+        <h2>{{ copy.privacy.chatHeading }}</h2>
+        <p>{{ copy.privacy.chatP }}</p>
+
+        <h2>{{ copy.privacy.gisHeading }}</h2>
+        <p>{{ copy.privacy.gisP1 }}</p>
+        <p>{{ copy.privacy.gisP2 }}</p>
+
+        <h2>{{ copy.privacy.calHeading }}</h2>
+        <p>{{ copy.privacy.calP }}</p>
+      </section>
+    }
+
+    @if (isActive('rights')) {
+      <section
+        class="page-tabs__panel"
+        role="tabpanel"
+        id="privacy-panel-rights"
+        aria-labelledby="privacy-tab-rights"
+      >
+        <h2>{{ copy.privacy.whyHeading }}</h2>
+        <p>{{ copy.privacy.whyLead }}</p>
+        <ul>
+          <li>{{ copy.privacy.whyProvide }}</li>
+          <li>{{ copy.privacy.whyAuth }}</li>
+          <li>{{ copy.privacy.whyChat }}</li>
+          <li>{{ copy.privacy.whyGis }}</li>
+          <li>{{ copy.privacy.whySupport }}</li>
+          <li>{{ copy.privacy.whySecurity }}</li>
+          <li>{{ copy.privacy.whyAnalytics }}</li>
+        </ul>
+
+        <h2>{{ copy.privacy.shareHeading }}</h2>
+        <p>{{ copy.privacy.shareLead }}</p>
+        <ul>
+          <li>{{ copy.privacy.shareProviders }}</li>
+          <li>{{ copy.privacy.shareSlack }}</li>
+          <li>{{ copy.privacy.shareOpenRouter }}</li>
+          <li>{{ copy.privacy.shareGoogle }}</li>
+          <li>{{ copy.privacy.sharePlatforms }}</li>
+          <li>{{ copy.privacy.shareAuthorities }}</li>
+        </ul>
+
+        <h2>{{ copy.privacy.linkedinHeading }}</h2>
+        <p>{{ copy.privacy.linkedinP }}</p>
+
+        <h2>{{ copy.privacy.retentionHeading }}</h2>
+        <p>{{ copy.privacy.retentionLead }}</p>
+        <ul>
+          <li>{{ copy.privacy.retentionChat }}</li>
+          <li>{{ copy.privacy.retentionSlack }}</li>
+          <li>{{ copy.privacy.retentionGis }}</li>
+          <li>{{ copy.privacy.retentionAnalytics }}</li>
+        </ul>
+        <p>{{ copy.privacy.retentionEnd }}</p>
+
+        <h2>{{ copy.privacy.rightsHeading }}</h2>
+        <p>{{ copy.privacy.rightsLead }}</p>
+        <ul>
+          <li>{{ copy.privacy.rightsAccess }}</li>
+          <li>{{ copy.privacy.rightsCorrect }}</li>
+          <li>{{ copy.privacy.rightsDelete }}</li>
+          <li>{{ copy.privacy.rightsWithdraw }}</li>
+        </ul>
+        <p>{{ copy.privacy.rightsEmail }}</p>
+
+        <h2>{{ copy.privacy.securityHeading }}</h2>
+        <p>{{ copy.privacy.securityP }}</p>
+
+        <h2>{{ copy.privacy.childrenHeading }}</h2>
+        <p>{{ copy.privacy.childrenP }}</p>
+
+        <h2>{{ copy.privacy.changesHeading }}</h2>
+        <p>{{ copy.privacy.changesP }}</p>
+      </section>
+    }
+
+    @if (isActive('contact')) {
+      <section
+        class="page-tabs__panel"
+        role="tabpanel"
+        id="privacy-panel-contact"
+        aria-labelledby="privacy-tab-contact"
+      >
+        <h2>{{ copy.privacy.contactHeading }}</h2>
+        <p>
+          Interchouette - ITC / Gregory Roussac<br />
+          Email:
+          <a href="mailto:contact@interchouette.net">contact&#64;interchouette.net</a><br />
+          Website:
+          <a href="https://interchouette.net">https://interchouette.net</a><br />
+          {{ copy.footerAbout }}:
+          <a routerLink="/about">{{ copy.privacy.contactAbout }}</a>
+          @if (chat.ready()) {
+            <br />
+            {{ copy.privacy.contactChat }}
+            <a
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="chatAria()"
+              (click)="openChat($event)"
+              (keydown.enter)="openChat($event)"
+              (keydown.space)="$event.preventDefault(); openChat($event)"
+              >{{ copy.privacy.contactChatLink }}</a
+            >
+            {{ copy.privacy.contactChatAfter }}
+          }
+        </p>
+      </section>
+    }
+  </div>
 </article>
 <app-site-footer />
