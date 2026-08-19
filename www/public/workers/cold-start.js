@@ -4,12 +4,14 @@
  */
 const host = self.location.hostname;
 const local = host === 'localhost' || host === '127.0.0.1';
-const urls = local
-  ? [`http://${host}:8080/health`]
-  : ['https://chat.interchouette.net/health', 'https://mcp.interchouette.net/health'];
 
-for (const url of urls) {
-  void pingUntilWarm(url);
+if (!local) {
+  for (const url of [
+    'https://chat.interchouette.net/health',
+    'https://mcp.interchouette.net/health',
+  ]) {
+    void pingUntilWarm(url);
+  }
 }
 
 async function pingUntilWarm(url) {
