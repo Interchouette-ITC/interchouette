@@ -1,6 +1,7 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { BOOKING_SCHEDULE_URL } from './chat.constants';
 import { SITE_ORIGIN } from './seo.constants';
 
 /** Public pages agents may open (Angular paths, no leading slash except home). */
@@ -55,6 +56,7 @@ export function contactText(): string {
     'LinkedIn: https://www.linkedin.com/in/gregoryroussac/',
     'Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)',
     'Twitter: https://twitter.com/interchouette',
+    `Booking: ${BOOKING_SCHEDULE_URL}`,
   ].join('\n');
 }
 

@@ -27,6 +27,9 @@ use crate::db::Store;
 /// Default bind address (Render sets `PORT`).
 pub const DEFAULT_HTTP_LISTEN: &str = "0.0.0.0:8080";
 
+/// Public Google Calendar appointment schedule (same URL as the site chat widget).
+const BOOKING_SCHEDULE_URL: &str = "https://calendar.app.google/tw9hhtJkmcssZQCY7";
+
 /// Hosts allowed by the Streamable HTTP transport by default.
 pub const DEFAULT_ALLOWED_HOSTS: &[&str] = &[
     "localhost",
@@ -41,18 +44,50 @@ pub const DEFAULT_ALLOWED_HOSTS: &[&str] = &[
 pub struct InterchouetteMcp {
     store: Arc<Store>,
     chat: ChatRelay,
+    /// Base URL of the chat backend, from env `CHAT_BACKEND_URL`.
+    chat_backend_url: Option<String>,
+    http: reqwest::Client,
 }
 
 impl InterchouetteMcp {
     /// Build an MCP handler over an opened store + chat relay.
     #[must_use]
-    pub const fn new(store: Arc<Store>, chat: ChatRelay) -> Self {
-        Self { store, chat }
+    pub fn new(store: Arc<Store>, chat: ChatRelay) -> Self {
+        let chat_backend_url = std::env::var("CHAT_BACKEND_URL")
+            .ok()
+            .filter(|s| !s.is_empty());
+        let http = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(30))
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new());
+        Self {
+            store,
+            chat,
+            chat_backend_url,
+            http,
+        }
     }
 }
 
 fn text_ok(text: impl Into<String>) -> CallToolResult {
     CallToolResult::success(vec![ContentBlock::text(text.into())])
+}
+
+fn contact_text() -> String {
+    format!(
+        "Email: contact@interchouette.net\n\
+         Personal: gregory@interchouette.net\n\
+         Site: https://interchouette.net/\n\
+         CV: https://interchouette.net/CV\n\
+         GitHub org: https://github.com/Interchouette-ITC\n\
+         LinkedIn: https://www.linkedin.com/in/gregoryroussac/\n\
+         Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)\n\
+         Twitter: https://twitter.com/interchouette\n\
+         Booking (self-serve): {BOOKING_SCHEDULE_URL}\n\
+         Book via MCP (token required): use book_appointment tool on this server\n\
+         Chat widget (no token): https://interchouette.net/ (open chat)\n\
+         WebMCP: https://mcp.interchouette.net/"
+    )
 }
 
 fn mcp_err(msg: impl Into<String>) -> McpError {
@@ -87,6 +122,20 @@ struct SendGregArgs {
     message: String,
     /// Optional label for who/where the message came from.
     from: Option<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct BookArgs {
+    /// Must match env `MCP_CHAT_TOKEN` on the server.
+    token: String,
+    /// Visitor first name.
+    first_name: String,
+    /// Visitor last name.
+    last_name: String,
+    /// Visitor email address.
+    email: String,
+    /// Requested start time: ISO 8601 without UTC offset, e.g. "2026-08-25T14:00:00".
+    start: String,
 }
 
 #[tool_router]
@@ -126,7 +175,7 @@ impl InterchouetteMcp {
     }
 
     #[tool(description = "Profile of Gregory Roussac (founder of Interchouette ITC).")]
-    async fn get_gregory_profile(
+    async fn get_gregory_roussac_profile(
         &self,
         Parameters(LangArgs { lang }): Parameters<LangArgs>,
     ) -> Result<CallToolResult, McpError> {
@@ -135,7 +184,7 @@ impl InterchouetteMcp {
     }
 
     #[tool(description = "CV summary for Gregory Roussac with links to HTML/PDF CV.")]
-    async fn get_cv_summary(
+    async fn get_gregory_roussac_cv(
         &self,
         Parameters(LangArgs { lang }): Parameters<LangArgs>,
     ) -> Result<CallToolResult, McpError> {
@@ -156,16 +205,7 @@ impl InterchouetteMcp {
 
     #[tool(description = "Public contact channels for Gregory Roussac / Interchouette.")]
     async fn get_contact(&self) -> Result<CallToolResult, McpError> {
-        Ok(text_ok(
-            "Email: contact@interchouette.net\n\
-             Personal: gregory@interchouette.net\n\
-             Site: https://interchouette.net/\n\
-             CV: https://interchouette.net/CV\n\
-             GitHub org: https://github.com/Interchouette-ITC\n\
-             LinkedIn: https://www.linkedin.com/in/gregoryroussac/\n\
-             Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)\n\
-             Twitter: https://twitter.com/interchouette",
-        ))
+        Ok(text_ok(contact_text()))
     }
 
     #[tool(
@@ -173,19 +213,20 @@ impl InterchouetteMcp {
     )]
     async fn list_chat_capabilities(&self) -> Result<CallToolResult, McpError> {
         Ok(text_ok(format!(
-            "Chat tools:\n\
+            "Chat / booking tools (token = MCP_CHAT_TOKEN):\n\
              - list_chat_capabilities (no token): this help\n\
-             - send_message_to_greg (token): post a DM to Greg via Slack\n\
-             - get_chat_relay_status (token): whether Slack relay + token are configured\n\
-             Pass token matching server MCP_CHAT_TOKEN. Site chat widget is separate \
-             (https://chat.interchouette.net).\n\
-             token_configured={}\nslack_configured={}",
+             - get_chat_relay_status (token): relay status\n\
+             - send_message_to_gregory_roussac (token): post a free-form message to Greg\n\
+             - book_appointment (token): request a meeting (name, email, start time)\n\
+             Visitors without a token: use the chat widget at https://interchouette.net/\n\
+             WebMCP explorer: https://mcp.interchouette.net/\n\
+             token_configured={}\nrelay_configured={}",
             self.chat.token_configured(),
             self.chat.slack_configured()
         )))
     }
 
-    #[tool(description = "Reports whether MCP Slack chat relay is configured (no secrets leaked).")]
+    #[tool(description = "Reports whether the MCP chat relay is configured (no secrets leaked).")]
     async fn get_chat_relay_status(
         &self,
         Parameters(TokenArgs { token }): Parameters<TokenArgs>,
@@ -194,15 +235,13 @@ impl InterchouetteMcp {
             return Err(mcp_err("invalid or missing token"));
         }
         Ok(text_ok(format!(
-            "token_ok=true\nslack_configured={}\n",
+            "token_ok=true\nrelay_configured={}\n",
             self.chat.slack_configured()
         )))
     }
 
-    #[tool(
-        description = "Send a message to Gregory Roussac via Slack DM (requires MCP_CHAT_TOKEN)."
-    )]
-    async fn send_message_to_greg(
+    #[tool(description = "Send a message to Gregory Roussac (requires MCP_CHAT_TOKEN).")]
+    async fn send_message_to_gregory_roussac(
         &self,
         Parameters(SendGregArgs {
             token,
@@ -214,9 +253,7 @@ impl InterchouetteMcp {
             return Err(mcp_err("invalid or missing token"));
         }
         if !self.chat.slack_configured() {
-            return Err(mcp_err(
-                "Slack relay not configured (need SLACK_BOT_TOKEN and GREG_SLACK_USER_ID)",
-            ));
+            return Err(mcp_err("message relay not configured on this server"));
         }
         let trimmed = message.trim();
         if trimmed.is_empty() {
@@ -233,6 +270,74 @@ impl InterchouetteMcp {
             .await
             .map_err(|err| mcp_err(err.to_string()))?;
         Ok(text_ok("Message posted to Greg's Slack DM."))
+    }
+
+    #[tool(
+        description = "Book a meeting with Gregory Roussac directly on his calendar. \
+                       Requires MCP_CHAT_TOKEN. Provide first_name, last_name, email, and \
+                       start (ISO 8601 datetime without UTC offset, e.g. 2026-08-25T14:00:00). \
+                       Alternative: visitors can book directly at https://interchouette.net/ via the chat widget (no token needed)."
+    )]
+    async fn book_appointment(
+        &self,
+        Parameters(BookArgs {
+            token,
+            first_name,
+            last_name,
+            email,
+            start,
+        }): Parameters<BookArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        if !self.chat.authorize(&token) {
+            return Err(mcp_err("invalid or missing token"));
+        }
+        for (field, val) in [
+            ("first_name", first_name.trim()),
+            ("last_name", last_name.trim()),
+            ("email", email.trim()),
+            ("start", start.trim()),
+        ] {
+            if val.is_empty() {
+                return Err(mcp_err(format!("{field} is required")));
+            }
+        }
+        let Some(base_url) = &self.chat_backend_url else {
+            return Err(mcp_err(
+                "booking not available (CHAT_BACKEND_URL not configured)",
+            ));
+        };
+        let url = format!("{base_url}/v1/book");
+        let resp = self
+            .http
+            .post(&url)
+            .json(&json!({
+                "token": token,
+                "first_name": first_name.trim(),
+                "last_name": last_name.trim(),
+                "email": email.trim(),
+                "start": start.trim(),
+            }))
+            .send()
+            .await
+            .map_err(|err| mcp_err(format!("chat backend unreachable: {err}")))?;
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body: serde_json::Value = resp.json().await.unwrap_or_default();
+            let msg = body["error"].as_str().unwrap_or("booking failed");
+            return Err(mcp_err(format!("[{status}] {msg}")));
+        }
+        let body: serde_json::Value = resp.json().await.unwrap_or_default();
+        let html_link = body["html_link"].as_str().unwrap_or(BOOKING_SCHEDULE_URL);
+        Ok(text_ok(format!(
+            "Meeting booked for {} {} <{}> starting {}.\n\
+             Google Calendar event: {html_link}\n\
+             You will receive a calendar invite at {}.",
+            first_name.trim(),
+            last_name.trim(),
+            email.trim(),
+            start.trim(),
+            email.trim(),
+        )))
     }
 }
 
@@ -276,7 +381,7 @@ impl ServerHandler for InterchouetteMcp {
             .with_instructions(
                 "Interchouette MCP for Gregory Roussac and Interchouette ITC. \
                  Search with full name Gregory Roussac, Interchouette, Rust MCP, Rust API, Wasm. \
-                 Chat tools: list_chat_capabilities, send_message_to_greg, get_chat_relay_status \
+                 Chat tools: list_chat_capabilities, send_message_to_gregory_roussac, get_chat_relay_status \
                  (write tools need token matching MCP_CHAT_TOKEN). \
                  Official URL: https://mcp.interchouette.net/",
             )
@@ -531,10 +636,11 @@ mod tests {
         let store = Arc::new(Store::open_readonly(db).unwrap());
         let mcp = InterchouetteMcp::new(store, ChatRelay::from_env());
 
-        let profile = mcp.get_gregory_profile(none_lang()).await.unwrap();
+        let profile = mcp.get_gregory_roussac_profile(none_lang()).await.unwrap();
         assert!(!profile.is_error.unwrap_or(false));
         let contact = mcp.get_contact().await.unwrap();
         assert!(!contact.is_error.unwrap_or(false));
+        assert!(tool_text(&contact).contains("calendar.app.google"));
         let overview = mcp
             .get_interchouette_overview(Parameters(LangArgs {
                 lang: Some("en".into()),
@@ -542,7 +648,7 @@ mod tests {
             .await
             .unwrap();
         assert!(!overview.is_error.unwrap_or(false));
-        let cv = mcp.get_cv_summary(none_lang()).await.unwrap();
+        let cv = mcp.get_gregory_roussac_cv(none_lang()).await.unwrap();
         assert!(!cv.is_error.unwrap_or(false));
         let projects = mcp.list_public_projects(none_lang()).await.unwrap();
         assert!(!projects.is_error.unwrap_or(false));
@@ -669,12 +775,57 @@ mod tests {
         let store = Arc::new(Store::open_readonly(db).unwrap());
         let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
         let err = mcp
-            .send_message_to_greg(Parameters(SendGregArgs {
+            .send_message_to_gregory_roussac(Parameters(SendGregArgs {
                 token: "nope".into(),
                 message: "hello".into(),
                 from: None,
             }))
             .await;
         assert!(err.is_err());
+    }
+
+    #[tokio::test]
+    async fn book_appointment_rejects_bad_token() {
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db).unwrap());
+        let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
+        let err = mcp
+            .book_appointment(Parameters(BookArgs {
+                token: "wrong".into(),
+                first_name: "Alice".into(),
+                last_name: "Test".into(),
+                email: "alice@example.com".into(),
+                start: "2026-09-01T10:00:00".into(),
+            }))
+            .await;
+        assert!(err.is_err());
+        let msg = err.unwrap_err().message;
+        assert!(msg.contains("token"), "expected token error, got: {msg}");
+    }
+
+    #[tokio::test]
+    async fn book_appointment_without_backend_url_returns_error() {
+        // CHAT_BACKEND_URL is not set => booking unavailable.
+        std::env::remove_var("CHAT_BACKEND_URL");
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db).unwrap());
+        let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
+        let err = mcp
+            .book_appointment(Parameters(BookArgs {
+                token: "secret".into(),
+                first_name: "Alice".into(),
+                last_name: "Test".into(),
+                email: "alice@example.com".into(),
+                start: "2026-09-01T10:00:00".into(),
+            }))
+            .await;
+        assert!(err.is_err());
+        let msg = err.unwrap_err().message;
+        assert!(
+            msg.contains("CHAT_BACKEND_URL"),
+            "expected backend URL error, got: {msg}"
+        );
     }
 }

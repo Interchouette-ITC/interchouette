@@ -4,6 +4,7 @@
 //! Away mode queries content via the remote MCP HTTP API (not local `SQLite`).
 
 mod api;
+pub(crate) mod calendar;
 mod env_label;
 mod guard;
 mod hub;
@@ -16,6 +17,7 @@ mod slack;
 mod socket;
 
 pub use api::{chat_router, ChatState};
+pub use calendar::CalendarClient;
 pub use env_label::chat_env_label;
 pub use llm::AwayBrain;
 pub use presence::{PresenceMode, PresenceSnapshot};

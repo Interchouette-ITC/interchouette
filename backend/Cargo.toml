@@ -24,6 +24,7 @@ dotenvy = "0.15"
 futures-util = "0.3"
 llm-guard = "0.2"
 reqwest = { version = "0.13", default-features = false, features = [
+    "form",
     "json",
     "rustls",
 ] }

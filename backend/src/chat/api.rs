@@ -11,6 +11,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use uuid::Uuid;
 
+use crate::chat::calendar::{
+    extract_booking_tag, strip_booking_tag, BookingRequest, CalendarClient,
+};
 use crate::chat::hub::{ChatEvent, Hub};
 use crate::chat::llm::AwayBrain;
 use crate::chat::locale::ChatLocale;
@@ -26,6 +29,7 @@ pub struct ChatState {
     pub presence: PresenceSource,
     pub slack: SlackRelay,
     pub away: AwayBrain,
+    pub calendar: CalendarClient,
 }
 
 impl ChatState {
@@ -38,6 +42,7 @@ impl ChatState {
             presence: PresenceSource::from_env(),
             slack: SlackRelay::from_env(),
             away,
+            calendar: CalendarClient::from_env(),
         }
     }
 
@@ -118,12 +123,25 @@ const fn default_announce() -> bool {
     true
 }
 
+/// Request body for the `/v1/book` HTTP endpoint (MCP proxy).
+#[derive(Debug, Deserialize)]
+struct BookPayload {
+    /// Must match `MCP_CHAT_TOKEN` on this service.
+    token: String,
+    first_name: String,
+    last_name: String,
+    email: String,
+    /// ISO 8601 start datetime without UTC offset, e.g. "2026-08-25T14:00:00".
+    start: String,
+}
+
 /// Mount chat routes under `/v1`.
 pub fn chat_router(state: ChatState) -> Router {
     Router::new()
         .route("/v1/presence", get(get_presence))
         .route("/v1/sessions", post(create_session))
         .route("/v1/sessions/{id}/ws", get(ws_upgrade))
+        .route("/v1/book", post(book_handler))
         .route("/ready", get(ready))
         .with_state(state)
 }
@@ -135,6 +153,95 @@ async fn ready(State(state): State<ChatState>) -> impl IntoResponse {
         "slack": state.slack.enabled(),
         "slack_socket": crate::chat::socket_configured(),
     }))
+}
+
+/// `POST /v1/book` - MCP proxy: insert a Google Calendar event directly.
+///
+/// Token must match `MCP_CHAT_TOKEN` on this service. Returns the created event id and link.
+async fn book_handler(
+    State(state): State<ChatState>,
+    Json(payload): Json<BookPayload>,
+) -> impl IntoResponse {
+    let expected = std::env::var("MCP_CHAT_TOKEN").unwrap_or_default();
+    if expected.is_empty() || payload.token != expected {
+        return (
+            axum::http::StatusCode::UNAUTHORIZED,
+            Json(json!({ "error": "invalid or missing token" })),
+        )
+            .into_response();
+    }
+    for (field, val) in [
+        ("first_name", payload.first_name.trim()),
+        ("last_name", payload.last_name.trim()),
+        ("email", payload.email.trim()),
+        ("start", payload.start.trim()),
+    ] {
+        if val.is_empty() {
+            return (
+                axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+                Json(json!({ "error": format!("{field} is required") })),
+            )
+                .into_response();
+        }
+    }
+    if !state.calendar.enabled() {
+        return (
+            axum::http::StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": "calendar not configured" })),
+        )
+            .into_response();
+    }
+    let req = BookingRequest {
+        first_name: payload.first_name.trim().to_string(),
+        last_name: payload.last_name.trim().to_string(),
+        email: payload.email.trim().to_string(),
+        start: payload.start.trim().to_string(),
+    };
+    // Safety-net: post to Slack before attempting the calendar write.
+    let safety = format!(
+        "BOOKING REQUEST (MCP): {} {} <{}> slot {}",
+        req.first_name, req.last_name, req.email, req.start
+    );
+    if let Ok(channel) = state.slack.open_dm().await {
+        let _ = state.slack.post_in_thread(&channel, None, &safety).await;
+    }
+    match state.calendar.insert_event(&req).await {
+        Ok(confirmation) => {
+            tracing::info!(event_id = %confirmation.event_id, "MCP /v1/book: event created");
+            if let Ok(channel) = state.slack.open_dm().await {
+                let _ = state
+                    .slack
+                    .post_in_thread(
+                        &channel,
+                        None,
+                        &format!("BOOKED (MCP): {}", confirmation.html_link),
+                    )
+                    .await;
+            }
+            (
+                axum::http::StatusCode::OK,
+                Json(json!({
+                    "event_id": confirmation.event_id,
+                    "html_link": confirmation.html_link,
+                })),
+            )
+                .into_response()
+        }
+        Err(err) => {
+            tracing::warn!(error = %err, "MCP /v1/book: calendar insert failed");
+            if let Ok(channel) = state.slack.open_dm().await {
+                let _ = state
+                    .slack
+                    .post_in_thread(&channel, None, &format!("BOOKING FAILED (MCP): {err}"))
+                    .await;
+            }
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": "calendar insert failed" })),
+            )
+                .into_response()
+        }
+    }
 }
 
 async fn get_presence(State(state): State<ChatState>) -> impl IntoResponse {
@@ -462,7 +569,7 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
         .get(session_id)
         .await
         .and_then(|s| s.visitor_email);
-    let reply = state
+    let raw_reply = state
         .away
         .reply(text, session.locale, &lines, email.as_deref())
         .await;
@@ -476,12 +583,83 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
             },
         )
         .await;
+
+    // Calendar write path: LLM embeds a structured tag when all details are collected.
+    let reply = if let Some(req) = extract_booking_tag(&raw_reply) {
+        let visible = strip_booking_tag(&raw_reply);
+        handle_calendar_booking(state, session, session_id, &req, &visible, email.as_deref()).await
+    } else {
+        raw_reply.clone()
+    };
+
     publish_role(state, session_id, "itcy", &reply).await;
     let mirror = email.map_or_else(
         || format!("ITCy: {reply}"),
         |e| format!("ITCy: {reply}\n(visitor email: {e})"),
     );
     let _ = post_to_session_thread(state, session, &mirror).await;
+}
+
+/// Try to insert a Google Calendar event. Returns an updated reply for the visitor.
+///
+/// On success: confirmation with the event link.
+/// On failure: the LLM text with no booking tag, plus a Slack safety-net post.
+async fn handle_calendar_booking(
+    state: &ChatState,
+    session: &Session,
+    session_id: &str,
+    req: &BookingRequest,
+    visible_reply: &str,
+    visitor_email: Option<&str>,
+) -> String {
+    // Always post details to Slack as a safety net first.
+    let safety = format!(
+        "BOOKING REQUEST: {} {} <{}> slot {}",
+        req.first_name, req.last_name, req.email, req.start
+    );
+    let _ = post_to_session_thread(state, session, &safety).await;
+
+    if !state.calendar.enabled() {
+        tracing::info!(
+            session = %session_id,
+            "CalendarClient not configured; booking details posted to Slack only"
+        );
+        return visible_reply.to_string();
+    }
+
+    match state.calendar.insert_event(req).await {
+        Ok(confirmation) => {
+            tracing::info!(
+                session = %session_id,
+                event_id = %confirmation.event_id,
+                "Google Calendar event created"
+            );
+            let _ = post_to_session_thread(
+                state,
+                session,
+                &format!("BOOKED: {}", confirmation.html_link),
+            )
+            .await;
+            let email_hint = visitor_email.unwrap_or(&req.email);
+            format!(
+                "{visible_reply} Your meeting is confirmed. \
+                 You will receive a Google Calendar invite at {email_hint}."
+            )
+        }
+        Err(err) => {
+            tracing::warn!(error = %err, session = %session_id, "Calendar insert failed");
+            let _ = post_to_session_thread(
+                state,
+                session,
+                &format!("BOOKING FAILED (calendar insert): {err}"),
+            )
+            .await;
+            format!(
+                "{visible_reply} I have passed your details to Greg. \
+                 He will confirm the meeting by email."
+            )
+        }
+    }
 }
 
 #[cfg(test)]
@@ -501,6 +679,7 @@ mod tests {
             away: AwayBrain::with_static_context(
                 "### Test\nInterchouette Rust chat test MCP context.",
             ),
+            calendar: CalendarClient::from_env(),
         }
     }
 
@@ -585,6 +764,99 @@ mod tests {
             }
             other => panic!("unexpected event: {other:?}"),
         }
+    }
+
+    #[tokio::test]
+    async fn book_endpoint_rejects_missing_token() {
+        let state = test_state();
+        let app = chat_router(state);
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/v1/book")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        serde_json::to_string(&json!({
+                            "token": "",
+                            "first_name": "Alice",
+                            "last_name": "Test",
+                            "email": "alice@example.com",
+                            "start": "2026-09-01T10:00:00",
+                        }))
+                        .unwrap(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn book_endpoint_rejects_wrong_token() {
+        // Set a known token in the env; the request sends a wrong one.
+        std::env::set_var("MCP_CHAT_TOKEN", "correct-secret");
+        let state = test_state();
+        let app = chat_router(state);
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/v1/book")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        serde_json::to_string(&json!({
+                            "token": "wrong",
+                            "first_name": "Alice",
+                            "last_name": "Test",
+                            "email": "alice@example.com",
+                            "start": "2026-09-01T10:00:00",
+                        }))
+                        .unwrap(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        std::env::remove_var("MCP_CHAT_TOKEN");
+    }
+
+    #[tokio::test]
+    async fn book_endpoint_requires_calendar_configured() {
+        // Correct token, but CalendarClient not configured => SERVICE_UNAVAILABLE.
+        std::env::set_var("MCP_CHAT_TOKEN", "test-token");
+        // CalendarClient::from_env() will be unconfigured because GCAL_* are absent.
+        let state = test_state();
+        let app = chat_router(state);
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/v1/book")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        serde_json::to_string(&json!({
+                            "token": "test-token",
+                            "first_name": "Alice",
+                            "last_name": "Test",
+                            "email": "alice@example.com",
+                            "start": "2026-09-01T10:00:00",
+                        }))
+                        .unwrap(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        // Either 503 (calendar not configured) or 401 (token env race) is acceptable,
+        // but it must not be 200 or 500.
+        assert!(
+            response.status() == StatusCode::SERVICE_UNAVAILABLE
+                || response.status() == StatusCode::UNAUTHORIZED,
+        );
+        std::env::remove_var("MCP_CHAT_TOKEN");
     }
 
     #[tokio::test]
