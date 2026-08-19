@@ -186,43 +186,53 @@
             </div>
             <div class="chat-skel__line chat-skel__line--short"></div>
           </div>
-        } @else if (chat.messages().length === 0 && !chat.error()) {
-          <div class="chat-welcome">
-            <div class="chat-welcome__halo" aria-hidden="true"></div>
-            <div class="chat-welcome__mark" aria-hidden="true">
-              <img
-                [src]="chat.hero() === 'greg' ? '/img/3099551.jpeg' : '/img/itcy-mascot-2x.webp'"
-                width="88"
-                height="88"
-                alt=""
-                decoding="async"
-              />
+        } @else {
+          @if (showWelcomeHero()) {
+            <div class="chat-welcome">
+              <div class="chat-welcome__halo" aria-hidden="true"></div>
+              <div class="chat-welcome__mark" aria-hidden="true">
+                <img
+                  [src]="chat.hero() === 'greg' ? '/img/3099551.jpeg' : '/img/itcy-mascot-2x.webp'"
+                  width="88"
+                  height="88"
+                  alt=""
+                  decoding="async"
+                />
+              </div>
+              <p class="chat-welcome__kicker">{{ emptyKicker() }}</p>
+              <h3>{{ emptyTitle() }}</h3>
+              <p class="chat-welcome__hint">{{ emptyHint() }}</p>
             </div>
-            <p class="chat-welcome__kicker">{{ emptyKicker() }}</p>
-            <h3>{{ emptyTitle() }}</h3>
-            <p class="chat-welcome__hint">{{ emptyHint() }}</p>
-          </div>
+          }
 
-          <article class="chat-row chat-row--intro" [attr.data-role]="introRole()">
-            <div class="chat-row__avatar" aria-hidden="true">
-              <img src="/img/itcy-mascot-1x.webp" width="32" height="32" alt="" decoding="async" />
-            </div>
-            <div class="chat-bubble" [attr.data-role]="introRole()">
-              <span class="chat-bubble__who">{{ whoLabel(introRole()) }}</span>
-              <p>{{ introLead() }}</p>
-              <p>{{ introCan() }}</p>
-              <p>
-                {{ introSlackBefore()
-                }}<a
-                  class="chat-bubble__link"
-                  [href]="slackJoinUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  >{{ introSlackLinkLabel() }}</a
-                >{{ introSlackAfter() }}
-              </p>
-            </div>
-          </article>
+          @if (showStaticIntro()) {
+            <article class="chat-row chat-row--intro" [attr.data-role]="introRole()">
+              <div class="chat-row__avatar" aria-hidden="true">
+                <img
+                  src="/img/itcy-mascot-1x.webp"
+                  width="32"
+                  height="32"
+                  alt=""
+                  decoding="async"
+                />
+              </div>
+              <div class="chat-bubble" [attr.data-role]="introRole()">
+                <span class="chat-bubble__who">{{ whoLabel(introRole()) }}</span>
+                <p>{{ introLead() }}</p>
+                <p>{{ introCan() }}</p>
+                <p>
+                  {{ introSlackBefore()
+                  }}<a
+                    class="chat-bubble__link"
+                    [href]="slackJoinUrl"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >{{ introSlackLinkLabel() }}</a
+                  >{{ introSlackAfter() }}
+                </p>
+              </div>
+            </article>
+          }
         }
 
         @for (msg of chat.messages(); track msg.id; let i = $index) {
