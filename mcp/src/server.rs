@@ -120,7 +120,6 @@ struct BookArgs {
     /// Visitor email address.
     email: String,
     /// Requested start time: ISO 8601 without UTC offset, e.g. "2026-08-25T14:00:00".
-    /// Slots are 90 minutes, Monday-Saturday 10:00-22:00 Europe/Amsterdam.
     start: String,
 }
 
@@ -265,7 +264,6 @@ impl InterchouetteMcp {
     #[tool(
         description = "Request a meeting with Gregory Roussac. Posts the booking request to Greg \
                        via Slack and returns the self-serve calendar link as a fallback. \
-                       Slots are 90 minutes, Monday-Saturday 10:00-22:00 Europe/Amsterdam. \
                        Requires MCP_CHAT_TOKEN. \
                        Alternative: visitors can book directly at https://interchouette.net/ via the chat widget (no token needed)."
     )]
