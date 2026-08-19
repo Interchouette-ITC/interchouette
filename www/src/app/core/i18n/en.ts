@@ -14,6 +14,7 @@ export const EN = {
   headerLogin: 'Client login',
   headerLang: 'Language',
   headerMenu: 'Menu',
+  headerBookingCta: 'Book an appointment',
   headerMarquee:
     "★ Internet, c'est chouette ★ Rust · Wasm · Freelance ★ Interchouette - ITC ★ Gregory Roussac ★",
   footerHome: 'Home',

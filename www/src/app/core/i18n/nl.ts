@@ -14,6 +14,7 @@ export const NL: SiteCopy = {
   headerLogin: 'Klantlogin',
   headerLang: 'Taal',
   headerMenu: 'Menu',
+  headerBookingCta: 'Afspraak maken',
   headerMarquee:
     "★ Internet, c'est chouette ★ Rust · Wasm · Freelance ★ Interchouette - ITC ★ Gregory Roussac ★",
   footerHome: 'Home',

@@ -22,8 +22,8 @@
           [href]="bookingChatDeepLink"
           target="_blank"
           rel="noopener noreferrer"
-          title="Book an appointment"
-          >Book an appointment</a
+          [attr.title]="copy.headerBookingCta"
+          >{{ copy.headerBookingCta }}</a
         >
       </marquee>
     }
