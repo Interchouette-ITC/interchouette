@@ -69,7 +69,7 @@ fn contact_text() -> String {
          Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)\n\
          Twitter: https://twitter.com/interchouette\n\
          Booking (self-serve): {BOOKING_SCHEDULE_URL}\n\
-         Booking (MCP, token required): use book_appointment tool on this MCP\n\
+         Book via MCP (token required): use book_appointment tool on this server\n\
          Chat widget (no token): https://interchouette.net/ (open chat)\n\
          WebMCP: https://mcp.interchouette.net/"
     )
@@ -200,18 +200,18 @@ impl InterchouetteMcp {
         Ok(text_ok(format!(
             "Chat / booking tools (token = MCP_CHAT_TOKEN):\n\
              - list_chat_capabilities (no token): this help\n\
-             - get_chat_relay_status (token): Slack relay status\n\
-             - send_message_to_greg (token): post a free-form DM to Greg\n\
+             - get_chat_relay_status (token): relay status\n\
+             - send_message_to_greg (token): post a free-form message to Greg\n\
              - book_appointment (token): request a meeting (name, email, start time)\n\
              Visitors without a token: use the chat widget at https://interchouette.net/\n\
              WebMCP explorer: https://mcp.interchouette.net/\n\
-             token_configured={}\nslack_configured={}",
+             token_configured={}\nrelay_configured={}",
             self.chat.token_configured(),
             self.chat.slack_configured()
         )))
     }
 
-    #[tool(description = "Reports whether MCP Slack chat relay is configured (no secrets leaked).")]
+    #[tool(description = "Reports whether the MCP chat relay is configured (no secrets leaked).")]
     async fn get_chat_relay_status(
         &self,
         Parameters(TokenArgs { token }): Parameters<TokenArgs>,
@@ -220,14 +220,12 @@ impl InterchouetteMcp {
             return Err(mcp_err("invalid or missing token"));
         }
         Ok(text_ok(format!(
-            "token_ok=true\nslack_configured={}\n",
+            "token_ok=true\nrelay_configured={}\n",
             self.chat.slack_configured()
         )))
     }
 
-    #[tool(
-        description = "Send a message to Gregory Roussac via Slack DM (requires MCP_CHAT_TOKEN)."
-    )]
+    #[tool(description = "Send a message to Gregory Roussac (requires MCP_CHAT_TOKEN).")]
     async fn send_message_to_greg(
         &self,
         Parameters(SendGregArgs {
@@ -240,9 +238,7 @@ impl InterchouetteMcp {
             return Err(mcp_err("invalid or missing token"));
         }
         if !self.chat.slack_configured() {
-            return Err(mcp_err(
-                "Slack relay not configured (need SLACK_BOT_TOKEN and GREG_SLACK_USER_ID)",
-            ));
+            return Err(mcp_err("message relay not configured on this server"));
         }
         let trimmed = message.trim();
         if trimmed.is_empty() {
