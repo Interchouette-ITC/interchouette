@@ -89,7 +89,7 @@ impl AwayBrain {
                     tracing::warn!("llm_guard blocked model output");
                     return refusal_message(locale).to_string();
                 }
-                text
+                text.trim().to_string()
             }
             Ok(_) => {
                 tracing::warn!("openrouter empty reply; falling back to MCP snippet");

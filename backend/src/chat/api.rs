@@ -501,8 +501,13 @@ async fn publish_role(state: &ChatState, session_id: &str, role: &str, text: &st
 }
 
 async fn ensure_session_thread(state: &ChatState, session: &Session) -> Option<(String, String)> {
-    if let (Some(channel), Some(ts)) = (&session.slack_channel, &session.slack_thread_ts) {
-        return Some((channel.clone(), ts.clone()));
+    // Re-read from registry to avoid a race where two concurrent messages both
+    // see no thread and each create one.
+    let fresh = state.sessions.get(&session.id).await;
+    if let Some(s) = &fresh {
+        if let (Some(channel), Some(ts)) = (&s.slack_channel, &s.slack_thread_ts) {
+            return Some((channel.clone(), ts.clone()));
+        }
     }
     if !state.slack.enabled() {
         return None;
