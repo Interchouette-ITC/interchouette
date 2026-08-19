@@ -44,13 +44,28 @@ pub const DEFAULT_ALLOWED_HOSTS: &[&str] = &[
 pub struct InterchouetteMcp {
     store: Arc<Store>,
     chat: ChatRelay,
+    /// Base URL of the chat backend, from env `CHAT_BACKEND_URL`.
+    chat_backend_url: Option<String>,
+    http: reqwest::Client,
 }
 
 impl InterchouetteMcp {
     /// Build an MCP handler over an opened store + chat relay.
     #[must_use]
-    pub const fn new(store: Arc<Store>, chat: ChatRelay) -> Self {
-        Self { store, chat }
+    pub fn new(store: Arc<Store>, chat: ChatRelay) -> Self {
+        let chat_backend_url = std::env::var("CHAT_BACKEND_URL")
+            .ok()
+            .filter(|s| !s.is_empty());
+        let http = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(30))
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new());
+        Self {
+            store,
+            chat,
+            chat_backend_url,
+            http,
+        }
     }
 }
 
@@ -258,9 +273,9 @@ impl InterchouetteMcp {
     }
 
     #[tool(
-        description = "Request a meeting with Gregory Roussac. Posts the booking request to Greg \
-                       via Slack and returns the self-serve calendar link as a fallback. \
-                       Requires MCP_CHAT_TOKEN. \
+        description = "Book a meeting with Gregory Roussac directly on his calendar. \
+                       Requires MCP_CHAT_TOKEN. Provide first_name, last_name, email, and \
+                       start (ISO 8601 datetime without UTC offset, e.g. 2026-08-25T14:00:00). \
                        Alternative: visitors can book directly at https://interchouette.net/ via the chat widget (no token needed)."
     )]
     async fn book_appointment(
@@ -286,27 +301,42 @@ impl InterchouetteMcp {
                 return Err(mcp_err(format!("{field} is required")));
             }
         }
-        let msg = format!(
-            "[MCP:book_appointment] {} {} <{}> start={}",
-            first_name.trim(),
-            last_name.trim(),
-            email.trim(),
-            start.trim(),
-        );
-        if self.chat.slack_configured() {
-            self.chat
-                .post_to_greg(&msg)
-                .await
-                .map_err(|err| mcp_err(err.to_string()))?;
+        let Some(base_url) = &self.chat_backend_url else {
+            return Err(mcp_err(
+                "booking not available (CHAT_BACKEND_URL not configured)",
+            ));
+        };
+        let url = format!("{base_url}/v1/book");
+        let resp = self
+            .http
+            .post(&url)
+            .json(&json!({
+                "token": token,
+                "first_name": first_name.trim(),
+                "last_name": last_name.trim(),
+                "email": email.trim(),
+                "start": start.trim(),
+            }))
+            .send()
+            .await
+            .map_err(|err| mcp_err(format!("chat backend unreachable: {err}")))?;
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body: serde_json::Value = resp.json().await.unwrap_or_default();
+            let msg = body["error"].as_str().unwrap_or("booking failed");
+            return Err(mcp_err(format!("[{status}] {msg}")));
         }
+        let body: serde_json::Value = resp.json().await.unwrap_or_default();
+        let html_link = body["html_link"].as_str().unwrap_or(BOOKING_SCHEDULE_URL);
         Ok(text_ok(format!(
-            "Booking request received for {} {} <{}> starting {}.\n\
-             Greg has been notified via Slack and will confirm by email.\n\
-             You can also pick a slot directly: {BOOKING_SCHEDULE_URL}",
+            "Meeting booked for {} {} <{}> starting {}.\n\
+             Google Calendar event: {html_link}\n\
+             You will receive a calendar invite at {}.",
             first_name.trim(),
             last_name.trim(),
             email.trim(),
             start.trim(),
+            email.trim(),
         )))
     }
 }
@@ -752,5 +782,50 @@ mod tests {
             }))
             .await;
         assert!(err.is_err());
+    }
+
+    #[tokio::test]
+    async fn book_appointment_rejects_bad_token() {
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db).unwrap());
+        let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
+        let err = mcp
+            .book_appointment(Parameters(BookArgs {
+                token: "wrong".into(),
+                first_name: "Alice".into(),
+                last_name: "Test".into(),
+                email: "alice@example.com".into(),
+                start: "2026-09-01T10:00:00".into(),
+            }))
+            .await;
+        assert!(err.is_err());
+        let msg = err.unwrap_err().message;
+        assert!(msg.contains("token"), "expected token error, got: {msg}");
+    }
+
+    #[tokio::test]
+    async fn book_appointment_without_backend_url_returns_error() {
+        // CHAT_BACKEND_URL is not set => booking unavailable.
+        std::env::remove_var("CHAT_BACKEND_URL");
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db).unwrap());
+        let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
+        let err = mcp
+            .book_appointment(Parameters(BookArgs {
+                token: "secret".into(),
+                first_name: "Alice".into(),
+                last_name: "Test".into(),
+                email: "alice@example.com".into(),
+                start: "2026-09-01T10:00:00".into(),
+            }))
+            .await;
+        assert!(err.is_err());
+        let msg = err.unwrap_err().message;
+        assert!(
+            msg.contains("CHAT_BACKEND_URL"),
+            "expected backend URL error, got: {msg}"
+        );
     }
 }
