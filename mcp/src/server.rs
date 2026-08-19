@@ -68,7 +68,10 @@ fn contact_text() -> String {
          LinkedIn: https://www.linkedin.com/in/gregoryroussac/\n\
          Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)\n\
          Twitter: https://twitter.com/interchouette\n\
-         Booking: {BOOKING_SCHEDULE_URL}"
+         Booking (self-serve): {BOOKING_SCHEDULE_URL}\n\
+         Booking (MCP, token required): use book_appointment tool on this MCP\n\
+         Chat widget (no token): https://interchouette.net/ (open chat)\n\
+         WebMCP: https://mcp.interchouette.net/"
     )
 }
 
@@ -104,6 +107,21 @@ struct SendGregArgs {
     message: String,
     /// Optional label for who/where the message came from.
     from: Option<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct BookArgs {
+    /// Must match env `MCP_CHAT_TOKEN` on the server.
+    token: String,
+    /// Visitor first name.
+    first_name: String,
+    /// Visitor last name.
+    last_name: String,
+    /// Visitor email address.
+    email: String,
+    /// Requested start time: ISO 8601 without UTC offset, e.g. "2026-08-25T14:00:00".
+    /// Slots are 90 minutes, Monday-Saturday 10:00-22:00 Europe/Amsterdam.
+    start: String,
 }
 
 #[tool_router]
@@ -181,12 +199,13 @@ impl InterchouetteMcp {
     )]
     async fn list_chat_capabilities(&self) -> Result<CallToolResult, McpError> {
         Ok(text_ok(format!(
-            "Chat tools:\n\
+            "Chat / booking tools (token = MCP_CHAT_TOKEN):\n\
              - list_chat_capabilities (no token): this help\n\
-             - send_message_to_greg (token): post a DM to Greg via Slack\n\
-             - get_chat_relay_status (token): whether Slack relay + token are configured\n\
-             Pass token matching server MCP_CHAT_TOKEN. Site chat widget is separate \
-             (https://chat.interchouette.net).\n\
+             - get_chat_relay_status (token): Slack relay status\n\
+             - send_message_to_greg (token): post a free-form DM to Greg\n\
+             - book_appointment (token): request a meeting (name, email, start time)\n\
+             Visitors without a token: use the chat widget at https://interchouette.net/\n\
+             WebMCP explorer: https://mcp.interchouette.net/\n\
              token_configured={}\nslack_configured={}",
             self.chat.token_configured(),
             self.chat.slack_configured()
@@ -241,6 +260,60 @@ impl InterchouetteMcp {
             .await
             .map_err(|err| mcp_err(err.to_string()))?;
         Ok(text_ok("Message posted to Greg's Slack DM."))
+    }
+
+    #[tool(
+        description = "Request a meeting with Gregory Roussac. Posts the booking request to Greg \
+                       via Slack and returns the self-serve calendar link as a fallback. \
+                       Slots are 90 minutes, Monday-Saturday 10:00-22:00 Europe/Amsterdam. \
+                       Requires MCP_CHAT_TOKEN. \
+                       Alternative: visitors can book directly at https://interchouette.net/ via the chat widget (no token needed)."
+    )]
+    async fn book_appointment(
+        &self,
+        Parameters(BookArgs {
+            token,
+            first_name,
+            last_name,
+            email,
+            start,
+        }): Parameters<BookArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        if !self.chat.authorize(&token) {
+            return Err(mcp_err("invalid or missing token"));
+        }
+        for (field, val) in [
+            ("first_name", first_name.trim()),
+            ("last_name", last_name.trim()),
+            ("email", email.trim()),
+            ("start", start.trim()),
+        ] {
+            if val.is_empty() {
+                return Err(mcp_err(format!("{field} is required")));
+            }
+        }
+        let msg = format!(
+            "[MCP:book_appointment] {} {} <{}> start={}",
+            first_name.trim(),
+            last_name.trim(),
+            email.trim(),
+            start.trim(),
+        );
+        if self.chat.slack_configured() {
+            self.chat
+                .post_to_greg(&msg)
+                .await
+                .map_err(|err| mcp_err(err.to_string()))?;
+        }
+        Ok(text_ok(format!(
+            "Booking request received for {} {} <{}> starting {}.\n\
+             Greg has been notified via Slack and will confirm by email.\n\
+             You can also pick a slot directly: {BOOKING_SCHEDULE_URL}",
+            first_name.trim(),
+            last_name.trim(),
+            email.trim(),
+            start.trim(),
+        )))
     }
 }
 
