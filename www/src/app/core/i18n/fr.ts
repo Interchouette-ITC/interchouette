@@ -14,6 +14,7 @@ export const FR: SiteCopy = {
   headerLogin: 'Connexion client',
   headerLang: 'Langue',
   headerMenu: 'Menu',
+  headerBookingCta: 'Prendre rendez-vous',
   headerMarquee:
     "★ Internet, c'est chouette ★ Rust · Wasm · Freelance ★ Interchouette - ITC ★ Gregory Roussac ★",
   footerHome: 'Accueil',
