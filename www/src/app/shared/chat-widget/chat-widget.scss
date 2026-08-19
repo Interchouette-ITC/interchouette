@@ -378,10 +378,11 @@
 .chat-panel__main {
   --chat-hero-actions: 5.1rem;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--chat-stack-gap);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  row-gap: var(--chat-stack-gap);
+  column-gap: 0.5rem;
   min-width: 0;
   flex: 1;
   padding-right: var(--chat-hero-actions);
@@ -394,6 +395,8 @@
   text-transform: uppercase;
   opacity: 0.72;
   line-height: 1.2;
+  grid-column: 1 / -1;
+  grid-row: 1;
 }
 
 .chat-panel__title {
@@ -402,16 +405,13 @@
   letter-spacing: -0.03em;
   line-height: 1.2;
   text-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
 }
 
 .chat-panel__meta {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.5rem;
-  min-width: 0;
-  width: calc(100% + var(--chat-hero-actions));
-  margin-right: calc(-1 * var(--chat-hero-actions));
+  display: contents;
 }
 
 .chat-panel__status {
@@ -420,7 +420,8 @@
   align-items: center;
   gap: 0.4rem;
   min-width: 0;
-  flex: 1;
+  grid-column: 1 / -1;
+  grid-row: 3;
   font-size: 0.78rem;
   line-height: 1.2;
   font-weight: 700;
@@ -429,7 +430,8 @@
 
 .chat-panel__status-text {
   min-width: 0;
-  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chat-panel__actions {
@@ -443,7 +445,7 @@
 
 .chat-panel__ticket {
   display: inline-flex;
-  align-items: flex-end;
+  align-items: center;
   flex-shrink: 0;
   gap: 0.25rem;
   margin: 0;
@@ -455,6 +457,10 @@
   font: inherit;
   user-select: text;
   -webkit-user-select: text;
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  align-self: center;
 }
 
 .chat-panel__ticket.is-copied .chat-panel__ticket-code {
@@ -1446,20 +1452,6 @@
     max-height: none;
     transform: none;
   }
-
-  .chat-panel__meta {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.2rem;
-  }
-
-  .chat-panel__status {
-    flex: none;
-  }
-
-  .chat-panel__ticket {
-    align-self: flex-end;
-  }
 }
 
 @media (max-width: 767px) {
@@ -1469,29 +1461,6 @@
 
   .chat-panel__main {
     --chat-hero-actions: 2.6rem;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .chat-panel__eyebrow {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .chat-panel__title {
-    grid-column: 1;
-    grid-row: 2;
-    min-width: 0;
-  }
-
-  .chat-panel__meta {
-    display: contents;
-  }
-
-  .chat-panel__status {
-    grid-column: 1 / -1;
-    grid-row: 3;
-    flex: none;
   }
 
   .chat-panel__ticket-copy {
@@ -1499,10 +1468,6 @@
   }
 
   .chat-panel__ticket {
-    grid-column: 2;
-    grid-row: 2;
-    align-self: center;
-    justify-self: end;
     gap: 0;
     min-width: 1.25rem;
   }
