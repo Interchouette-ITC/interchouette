@@ -12,19 +12,22 @@ import { filter } from 'rxjs/operators';
 import { CHAT_WIDGET_ENABLED } from './core/chat.constants';
 import { isGisCallbackPath } from './core/gis-oauth';
 import { GisOneTapService } from './core/gis-onetap.service';
+import { RADIO_WIDGET_ENABLED } from './core/radio.constants';
 import { ChatWidget } from './shared/chat-widget/chat-widget';
 import { ConsentBanner } from './shared/consent-banner/consent-banner';
+import { RadioWidget } from './shared/radio-widget/radio-widget';
 import { SiteHeader } from './shared/site-header/site-header';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, SiteHeader, ChatWidget, ConsentBanner],
+  imports: [RouterOutlet, SiteHeader, ChatWidget, ConsentBanner, RadioWidget],
   templateUrl: './app.html',
   styleUrl: './app.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
   protected readonly chatEnabled = CHAT_WIDGET_ENABLED;
+  protected readonly radioEnabled = RADIO_WIDGET_ENABLED;
   protected readonly bareChrome = signal(false);
 
   constructor() {

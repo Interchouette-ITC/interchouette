@@ -1,0 +1,34 @@
+@if (mounted()) {
+  <div class="radio-dock" [class.radio-dock--playing]="playing()">
+    <button
+      type="button"
+      class="radio-btn"
+      [class.radio-btn--playing]="playing()"
+      [class.radio-btn--busy]="loading()"
+      [disabled]="error()"
+      (click)="onToggle()"
+      [attr.aria-label]="buttonLabel()"
+      [attr.title]="buttonLabel()"
+      [attr.aria-pressed]="playing()"
+    >
+      <span class="radio-btn__icon" aria-hidden="true">
+        @if (loading()) {
+          <span class="radio-btn__spinner"></span>
+        } @else if (playing()) {
+          <span class="radio-btn__pause"></span>
+        } @else {
+          <span class="radio-btn__play"></span>
+        }
+      </span>
+      <span class="radio-btn__pulse" aria-hidden="true"></span>
+    </button>
+
+    <iframe
+      #playerFrame
+      class="radio-frame visually-hidden"
+      title="Interchouette SoundCloud radio"
+      allow="autoplay"
+      tabindex="-1"
+    ></iframe>
+  </div>
+}
