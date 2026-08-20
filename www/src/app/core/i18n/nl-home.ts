@@ -15,6 +15,7 @@ export const NL_HOME = {
   slack: 'Slack-workspace Interchouette (opent in een nieuw tabblad)',
   twitter: 'X (Twitter) Interchouette (opent in een nieuw tabblad)',
   amazon: 'Amazon-verlanglijst van Gregory Roussac (opent in een nieuw tabblad)',
+  socialNavAria: 'Sociale en contactlinks',
   cardLogoLabel: 'Interchouette-logo',
   cardLogoHints: [
     'Waarom hier klikken? Ons merk — tik nogmaals voor About.',

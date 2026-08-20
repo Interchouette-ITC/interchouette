@@ -93,12 +93,24 @@ impl NewsState {
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct NewsQuery {
-    locale: Option<String>,
+#[derive(Debug, Deserialize, utoipa::IntoParams)]
+#[into_params(parameter_in = Query)]
+pub struct NewsQuery {
+    /// Site locale: `en`, `nl`, or `fr` (default `en`).
+    pub locale: Option<String>,
 }
 
-async fn news_handler(
+/// Cached ITC `LinkedIn` and X posts for the public news page.
+#[utoipa::path(
+    get,
+    path = "/v1/news",
+    tag = "public",
+    params(NewsQuery),
+    responses(
+        (status = 200, description = "News feeds payload", body = NewsResponse)
+    )
+)]
+pub async fn news_handler(
     State(state): State<NewsState>,
     Query(q): Query<NewsQuery>,
 ) -> Json<NewsResponse> {

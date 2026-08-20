@@ -1,4 +1,4 @@
-<div class="card animated fadeIn">
+<article class="card animated fadeIn">
   <div #logoDock class="card-logo-dock">
     @if (logoHintVisible()) {
       <button
@@ -57,48 +57,50 @@
     />
   </div>
   <hr />
-  <h1 class="name">Gregory Roussac</h1>
-  <p class="promise">{{ copy.homePromise }}</p>
-  <p class="subtitle">{{ copy.homeSubtitle }}</p>
-  <p class="location" [attr.title]="contactTitle()" (click)="onContactClick($event)">
-    <a
-      id="contact"
-      class="icons"
-      [attr.href]="chat.ready() ? null : mailHref"
-      [attr.role]="chat.ready() ? 'button' : null"
-      [attr.aria-label]="contactAriaLabel()"
-      [attr.title]="contactTitle()"
-    >
-      <span class="location__cluster" [class.location__cluster--mail-end]="chatEnabled">
-        @if (chat.ready()) {
-          <img
-            class="location__point"
-            src="/img/hand-right2.png"
-            width="28"
-            height="23"
-            alt=""
-            draggable="false"
-            decoding="async"
-            aria-hidden="true"
-          />
-          <i
-            class="fa fa-comments"
-            aria-hidden="true"
-            data-chat
-            [attr.title]="copy.home.chatIcon"
-          ></i>
-        }
-        @if (!chatEnabled) {
-          <i class="fa fa-envelope-o" aria-hidden="true" data-mail [attr.title]="email"></i>
-        }
-        <span class="location__label">Interchouette - ITC</span>
-        @if (chatEnabled) {
-          <i class="fa fa-envelope-o" aria-hidden="true" data-mail [attr.title]="email"></i>
-        }
-      </span>
-    </a>
-  </p>
-  <p class="icons animated pulse">
+  <section class="card-identity" aria-labelledby="home-name">
+    <h1 id="home-name" class="name">Gregory Roussac</h1>
+    <p class="promise">{{ copy.homePromise }}</p>
+    <p class="subtitle">{{ copy.homeSubtitle }}</p>
+    <p class="location" [attr.title]="contactTitle()" (click)="onContactClick($event)">
+      <a
+        id="contact"
+        class="icons"
+        [attr.href]="chat.ready() ? null : mailHref"
+        [attr.role]="chat.ready() ? 'button' : null"
+        [attr.aria-label]="contactAriaLabel()"
+        [attr.title]="contactTitle()"
+      >
+        <span class="location__cluster" [class.location__cluster--mail-end]="chatEnabled">
+          @if (chat.ready()) {
+            <img
+              class="location__point"
+              src="/img/hand-right2.png"
+              width="28"
+              height="23"
+              alt=""
+              draggable="false"
+              decoding="async"
+              aria-hidden="true"
+            />
+            <i
+              class="fa fa-comments"
+              aria-hidden="true"
+              data-chat
+              [attr.title]="copy.home.chatIcon"
+            ></i>
+          }
+          @if (!chatEnabled) {
+            <i class="fa fa-envelope-o" aria-hidden="true" data-mail [attr.title]="email"></i>
+          }
+          <span class="location__label">Interchouette - ITC</span>
+          @if (chatEnabled) {
+            <i class="fa fa-envelope-o" aria-hidden="true" data-mail [attr.title]="email"></i>
+          }
+        </span>
+      </a>
+    </p>
+  </section>
+  <nav class="icons animated pulse" [attr.aria-label]="copy.home.socialNavAria">
     <a routerLink="/CV" [attr.title]="copy.home.cv" [attr.aria-label]="copy.home.cv">
       <span class="fa-stack fa-lg" aria-hidden="true">
         <i class="fa fa-circle-thin fa-stack-2x"></i>
@@ -200,6 +202,6 @@
         <i class="fa fa-amazon fa-stack-1x"></i>
       </span>
     </a>
-  </p>
-</div>
+  </nav>
+</article>
 <app-site-footer />

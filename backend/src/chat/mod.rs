@@ -3,7 +3,7 @@
 //! Active sessions live in memory. Durable retrieval is Slack threads only.
 //! Away mode queries content via the remote MCP HTTP API (not local `SQLite`).
 
-mod api;
+pub(crate) mod api;
 pub(crate) mod calendar;
 mod env_label;
 mod guard;
