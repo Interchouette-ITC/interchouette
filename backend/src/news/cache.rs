@@ -78,7 +78,7 @@ mod tests {
         let cache = NewsCache::default();
         cache.put("en", empty_response()).await;
         assert!(cache
-            .get_fresh("en", Duration::from_secs(60))
+            .get_fresh("en", Duration::from_mins(1))
             .await
             .is_some());
     }
@@ -95,13 +95,13 @@ mod tests {
                 CacheEntry {
                     response: empty_response(),
                     stored_at: Instant::now()
-                        .checked_sub(Duration::from_secs(7200))
+                        .checked_sub(Duration::from_hours(2))
                         .unwrap_or_else(Instant::now),
                 },
             );
         }
         assert!(cache
-            .get_fresh("en", Duration::from_secs(3600))
+            .get_fresh("en", Duration::from_hours(1))
             .await
             .is_none());
         assert!(cache.get_stale("en").await.is_some());
