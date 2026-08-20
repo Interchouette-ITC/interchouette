@@ -1,0 +1,15 @@
+export const NL_NEWS = {
+  title: 'Nieuws',
+  sourcesAria: 'Interchouette social feeds',
+  tabItcLinkedIn: 'Interchouette · LinkedIn',
+  tabItcX: 'Interchouette · X',
+  loading: 'Berichten laden…',
+  error: 'Berichten konden nu niet worden geladen.',
+  empty: 'Nog geen berichten.',
+  viewOnLinkedIn: 'Bekijk op LinkedIn',
+  viewOnX: 'Bekijk op X',
+  updated: 'Laatst bijgewerkt {time}',
+  cacheNote: 'Wordt ongeveer elke 4 uur ververst.',
+  profileItcLinkedIn: 'Interchouette op LinkedIn',
+  profileItcX: '@interchouette op X',
+} as const;

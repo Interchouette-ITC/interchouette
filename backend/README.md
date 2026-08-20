@@ -21,6 +21,11 @@ Website visitor chat: WebSocket sessions, Slack DM for live replies, remote Inte
 | `BOOKING_SCHEDULE_URL` | Public appointment page. When set, ITCy sends this link for meetings                |
 | `MCP_URL`              | Interchouette MCP Streamable HTTP URL (default `https://mcp.interchouette.net/`)    |
 | `CORS_ORIGIN`          | Browser origin (default `https://interchouette.net`)                                |
+| `LINKEDIN_LI_AT`       | LinkedIn `li_at` session cookie for `/v1/news` LinkedIn fetches (server-only)       |
+| `NEWS_CACHE_TTL_SECS`  | News feed cache lifetime in seconds (default `14400`, 4 hours)                      |
+| `NEWS_FETCH_LIMIT`     | Max posts per feed on `/v1/news` (default `8`)                                      |
+
+`GET /v1/news?locale=en|nl|fr` serves cached ITC LinkedIn and ITC X posts for the public `/news` page. Set `LINKEDIN_LI_AT` from your browser LinkedIn cookies when the ITC LinkedIn feed should populate; rotate it when LinkedIn returns an authwall.
 
 Bot OAuth scopes for DM + presence: `im:write`, `chat:write`, `users:read`, `dnd:read`, plus `im:history` for Socket Mode inbound.
 

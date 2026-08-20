@@ -2,6 +2,7 @@ import { EN_ABOUT } from './en-about';
 import { EN_CHAT } from './en-chat';
 import { EN_CONSENT } from './en-consent';
 import { EN_HOME } from './en-home';
+import { EN_NEWS } from './en-news';
 import { EN_PRIVACY } from './en-privacy';
 import { EN_TERMS } from './en-terms';
 import type { DeepLoose, SiteCopyLeafKey } from './copy-types';
@@ -57,6 +58,7 @@ export const EN = {
   about: EN_ABOUT,
   privacy: EN_PRIVACY,
   terms: EN_TERMS,
+  news: EN_NEWS,
 } as const;
 
 export type SiteCopy = DeepLoose<typeof EN>;

@@ -1,0 +1,15 @@
+export const FR_NEWS = {
+  title: 'Actualités',
+  sourcesAria: 'Fil social Interchouette',
+  tabItcLinkedIn: 'Interchouette · LinkedIn',
+  tabItcX: 'Interchouette · X',
+  loading: 'Chargement des publications…',
+  error: 'Impossible de charger les publications pour le moment.',
+  empty: "Pas encore d'articles.",
+  viewOnLinkedIn: 'Voir sur LinkedIn',
+  viewOnX: 'Voir sur X',
+  updated: 'Dernière mise à jour {time}',
+  cacheNote: 'Actualisation environ toutes les 4 heures.',
+  profileItcLinkedIn: 'Interchouette sur LinkedIn',
+  profileItcX: '@interchouette sur X',
+} as const;

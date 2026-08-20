@@ -1,0 +1,165 @@
+//! News HTTP route and refresh orchestration.
+
+use std::time::Duration;
+
+use axum::extract::{Query, State};
+use axum::routing::get;
+use axum::{Json, Router};
+use chrono::Utc;
+use serde::Deserialize;
+use tracing::warn;
+
+use super::cache::NewsCache;
+use super::fetch::NewsFetcher;
+use super::types::{NewsFeeds, NewsResponse};
+
+/// Shared news runtime state.
+#[derive(Clone)]
+pub struct NewsState {
+    cache: NewsCache,
+    fetcher: NewsFetcher,
+    cache_ttl_secs: u64,
+}
+
+impl Default for NewsState {
+    fn default() -> Self {
+        Self::from_env()
+    }
+}
+
+impl NewsState {
+    /// Build from environment (`NEWS_CACHE_TTL_SECS`).
+    #[must_use]
+    pub fn from_env() -> Self {
+        let cache_ttl_secs = std::env::var("NEWS_CACHE_TTL_SECS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(14400);
+        Self {
+            cache: NewsCache::default(),
+            fetcher: NewsFetcher::from_env(),
+            cache_ttl_secs,
+        }
+    }
+
+    /// Mount news routes on the router.
+    pub fn router(self) -> Router {
+        Router::new()
+            .route("/v1/news", get(news_handler))
+            .with_state(self)
+    }
+
+    /// Prefetch feeds for all site locales when the chat process starts.
+    pub fn spawn_cache_warmup(self) {
+        tokio::spawn(async move {
+            for locale in ["en", "nl", "fr"] {
+                let _ = self.load(locale).await;
+            }
+            tracing::info!("news cache warmup finished");
+        });
+    }
+
+    async fn load(&self, locale: &str) -> NewsResponse {
+        let ttl = Duration::from_secs(self.cache_ttl_secs);
+        if let Some(cached) = self.cache.get_fresh(locale, ttl).await {
+            return cached;
+        }
+        match self.refresh(locale).await {
+            Ok(response) => response,
+            Err(err) => {
+                if let Some(stale) = self.cache.get_stale(locale).await {
+                    warn!(error = %err, locale, "news refresh failed; serving stale cache");
+                    return stale;
+                }
+                warn!(error = %err, locale, "news refresh failed; returning empty feeds");
+                empty_response(locale, self.cache_ttl_secs, Some(err))
+            }
+        }
+    }
+
+    async fn refresh(&self, locale: &str) -> Result<NewsResponse, String> {
+        let itc_linkedin = self.fetcher.fetch_itc_linkedin().await;
+        let itc_x = self.fetcher.fetch_itc_x().await;
+        let response = NewsResponse {
+            fetched_at: Utc::now().to_rfc3339(),
+            cache_ttl_secs: self.cache_ttl_secs,
+            feeds: NewsFeeds {
+                itc_linkedin,
+                itc_x,
+            },
+        };
+        self.cache.put(locale, response.clone()).await;
+        Ok(response)
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct NewsQuery {
+    locale: Option<String>,
+}
+
+async fn news_handler(
+    State(state): State<NewsState>,
+    Query(q): Query<NewsQuery>,
+) -> Json<NewsResponse> {
+    let locale = normalize_locale(q.locale.as_deref());
+    Json(state.load(&locale).await)
+}
+
+fn normalize_locale(raw: Option<&str>) -> String {
+    match raw.unwrap_or("en").trim().to_ascii_lowercase().as_str() {
+        "nl" => "nl".into(),
+        "fr" => "fr".into(),
+        _ => "en".into(),
+    }
+}
+
+fn empty_response(_locale: &str, cache_ttl_secs: u64, error: Option<String>) -> NewsResponse {
+    let msg = error.unwrap_or_else(|| "news unavailable".into());
+    let itc_linkedin_profile =
+        "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all".into();
+    let itc_x_profile = "https://x.com/interchouette".into();
+    let empty_feed = |profile_url: String| super::types::NewsFeed {
+        items: vec![],
+        profile_url,
+        error: Some(msg.clone()),
+    };
+    NewsResponse {
+        fetched_at: Utc::now().to_rfc3339(),
+        cache_ttl_secs,
+        feeds: NewsFeeds {
+            itc_linkedin: empty_feed(itc_linkedin_profile),
+            itc_x: empty_feed(itc_x_profile),
+        },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::body::Body;
+    use axum::http::{Request, StatusCode};
+    use tower::ServiceExt;
+
+    #[test]
+    fn normalize_locale_accepts_known_values() {
+        assert_eq!(normalize_locale(Some("nl")), "nl");
+        assert_eq!(normalize_locale(Some("FR")), "fr");
+        assert_eq!(normalize_locale(None), "en");
+    }
+
+    #[tokio::test]
+    async fn news_endpoint_returns_json_shape() {
+        let app = NewsState::from_env().router();
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/v1/news?locale=en")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+    }
+}

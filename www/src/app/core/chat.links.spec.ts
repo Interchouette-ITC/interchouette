@@ -43,6 +43,27 @@ describe('splitHttpLinks', () => {
     ]);
   });
 
+  it('turns an @handle into an X profile link without breaking emails', () => {
+    expect(splitHttpLinks('Powered by @ratatui_rs 🐀')).toEqual([
+      { t: 'Powered by ', href: null },
+      { t: '@ratatui_rs', href: 'https://x.com/ratatui_rs' },
+      { t: ' 🐀', href: null },
+    ]);
+    expect(splitHttpLinks('mail contact@interchouette.net today')).toEqual([
+      { t: 'mail ', href: null },
+      { t: 'contact@interchouette.net', href: 'mailto:contact@interchouette.net' },
+      { t: ' today', href: null },
+    ]);
+  });
+
+  it('linkifies t.co URLs in post text', () => {
+    expect(splitHttpLinks('read https://t.co/QgJQkvznns now')).toEqual([
+      { t: 'read ', href: null },
+      { t: 'https://t.co/QgJQkvznns', href: 'https://t.co/QgJQkvznns' },
+      { t: ' now', href: null },
+    ]);
+  });
+
   it('marks only http(s) as external', () => {
     expect(isHttpHref('https://example.com')).toBe(true);
     expect(isHttpHref('mailto:contact@interchouette.net')).toBe(false);

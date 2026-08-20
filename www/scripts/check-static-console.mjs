@@ -100,9 +100,16 @@ function startStaticServer(listenPort) {
   });
 }
 
-function isIgnorableConsoleError(text) {
+function isIgnorableConsoleError(text, path) {
   // Chat warm hits :8080 / chat host; CI and packed-dist gate have no chat process.
-  return /net::ERR_CONNECTION_REFUSED/i.test(text);
+  if (/net::ERR_CONNECTION_REFUSED/i.test(text)) {
+    return true;
+  }
+  // News feed fetch when chat backend is not running in the static console gate.
+  if (path === '/news' && /Failed to load resource.*404/i.test(text)) {
+    return true;
+  }
+  return /\/v1\/news/i.test(text) && /404|Failed to load resource/i.test(text);
 }
 
 async function collectErrors(page, base, path) {
@@ -112,7 +119,7 @@ async function collectErrors(page, base, path) {
       return;
     }
     const text = msg.text();
-    if (isIgnorableConsoleError(text)) {
+    if (isIgnorableConsoleError(text, path)) {
       return;
     }
     errors.push(`console.error: ${text}`);

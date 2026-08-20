@@ -1,5 +1,7 @@
 import { expect, test, type Locator } from '@playwright/test';
 
+import { mockNewsApi } from './news-mock';
+
 test.describe('site header and locale', () => {
   test('header, News empty state, and login chrome', async ({ page }) => {
     await page.goto('/');
@@ -23,8 +25,11 @@ test.describe('site header and locale', () => {
       await expect(header.getByRole('link', { name: 'News' })).toBeVisible();
     }
 
+    await mockNewsApi(page);
     await page.goto('/news');
     await expect(page.getByRole('heading', { name: 'News' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Gregory · LinkedIn' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Interchouette · X' })).toBeVisible();
     await expect(page.getByText('No posts yet.')).toBeVisible();
   });
 

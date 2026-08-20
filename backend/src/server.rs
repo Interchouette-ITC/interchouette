@@ -7,6 +7,7 @@ use serde_json::json;
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::chat::{chat_router, AwayBrain, ChatState};
+use crate::news::NewsState;
 
 /// Default bind address.
 pub const DEFAULT_HTTP_LISTEN: &str = "0.0.0.0:8080";
@@ -20,9 +21,12 @@ pub fn build_app(cors_origin: &str) -> Router {
 pub fn build_app_parts(cors_origin: &str) -> (Router, ChatState) {
     let cors = build_cors(cors_origin);
     let chat = ChatState::new(AwayBrain::from_env());
+    let news = NewsState::from_env();
+    news.clone().spawn_cache_warmup();
     let app = Router::new()
         .route("/health", get(|| async { Json(json!({ "ok": true })) }))
         .merge(chat_router(chat.clone()))
+        .merge(news.router())
         .layer(cors);
     (app, chat)
 }
