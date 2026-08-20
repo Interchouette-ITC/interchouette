@@ -30,7 +30,27 @@ There is no MCP path on https://interchouette.net/mcp and no mcp:// URI for this
 
 ## Browser agents (WebMCP)
 
-When the browser supports WebMCP, this site registers read-only tools:
-`get_site_overview`, `get_contact`, `list_public_pages`, `open_public_page`, and `get_remote_mcp`.
+When the browser supports WebMCP, this site registers tools via Angular (runtime `modelContext`), including:
+
+- `get_site_overview` - short site overview and public URLs
+- `get_contact` - public contact channels
+- `list_public_pages` - public page list with absolute URLs
+- `open_public_page` - navigate this tab to a public page
+- `get_remote_mcp` - official Streamable HTTP MCP endpoint (not in-page WebMCP)
+
+When the chat widget is enabled:
+
+- `list_chat_capabilities` - live vs away chat and related tools
+- `open_site_chat` - open the site chat panel
+- `send_site_chat_message` - send a visitor message (also declarative `toolname` on the compose form)
+
 `get_remote_mcp` returns the official Streamable HTTP MCP URL above.
 In-page WebMCP is not the remote MCP HTTP endpoint.
+
+## Chat HTTP (public OpenAPI)
+
+Visitor chat and news API (`https://chat.interchouette.net`):
+
+- Public OpenAPI document: https://chat.interchouette.net/openapi.json
+- Documented routes: `GET /health`, `GET /ready`, `GET /v1/presence`, `GET /v1/news`
+- Session, WebSocket, and booking HTTP endpoints are private (not in the public OpenAPI)

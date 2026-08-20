@@ -203,7 +203,7 @@ test.describe('responsive rendering', () => {
     await gotoHomeReady(page);
     await page.waitForTimeout(1600);
 
-    const icons = page.locator('p.icons.animated.pulse');
+    const icons = page.locator('nav.icons.animated.pulse');
     await expect(icons).toBeVisible();
     const iteration = await icons.evaluate((el) => getComputedStyle(el).animationIterationCount);
     expect(iteration, 'pulse must not loop forever (animate.css needs .infinite for that)').toBe(

@@ -4,6 +4,17 @@ Website visitor chat: WebSocket sessions, Slack DM for live replies, remote Inte
 
 **No chat database.** Durable retrieval is the bot↔Greg Slack DM. Away mode must call the remote MCP HTTP API; it does not open `interchouette.db`.
 
+## Public OpenAPI
+
+`GET https://chat.interchouette.net/openapi.json` (local: `http://127.0.0.1:8080/openapi.json`) documents the public subset only:
+
+- `GET /health`
+- `GET /ready`
+- `GET /v1/presence`
+- `GET /v1/news`
+
+Session, WebSocket, and `/v1/book` stay implemented but are omitted from the public document.
+
 ## Env
 
 | Variable               | Role                                                                                |

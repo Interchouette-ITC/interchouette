@@ -28,7 +28,7 @@ test.describe('site header and locale', () => {
     await mockNewsApi(page);
     await page.goto('/news');
     await expect(page.getByRole('heading', { name: 'News' })).toBeVisible();
-    await expect(page.getByRole('tab', { name: 'Gregory · LinkedIn' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Interchouette · LinkedIn' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Interchouette · X' })).toBeVisible();
     await expect(page.getByText('No posts yet.')).toBeVisible();
   });

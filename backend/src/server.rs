@@ -1,13 +1,13 @@
-//! Chat HTTP listener (`/v1/sessions`, `/health`).
+//! Chat HTTP listener (`/v1/sessions`, `/health`, `/openapi.json`).
 
 use anyhow::Result;
 use axum::routing::get;
-use axum::{Json, Router};
-use serde_json::json;
+use axum::Router;
 use tower_http::cors::{Any, CorsLayer};
 
 use crate::chat::{chat_router, AwayBrain, ChatState};
 use crate::news::NewsState;
+use crate::openapi::{health, openapi_router};
 
 /// Default bind address.
 pub const DEFAULT_HTTP_LISTEN: &str = "0.0.0.0:8080";
@@ -24,7 +24,8 @@ pub fn build_app_parts(cors_origin: &str) -> (Router, ChatState) {
     let news = NewsState::from_env();
     news.clone().spawn_cache_warmup();
     let app = Router::new()
-        .route("/health", get(|| async { Json(json!({ "ok": true })) }))
+        .route("/health", get(health))
+        .merge(openapi_router())
         .merge(chat_router(chat.clone()))
         .merge(news.router())
         .layer(cors);

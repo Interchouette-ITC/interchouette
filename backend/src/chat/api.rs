@@ -20,6 +20,7 @@ use crate::chat::locale::ChatLocale;
 use crate::chat::presence::{PresenceMode, PresenceSource};
 use crate::chat::sessions::{ChatLine, Session, SessionRegistry};
 use crate::chat::slack::SlackRelay;
+use crate::openapi::{PresenceResponse, ReadyResponse};
 
 /// Shared chat runtime.
 #[derive(Clone)]
@@ -146,13 +147,22 @@ pub fn chat_router(state: ChatState) -> Router {
         .with_state(state)
 }
 
-async fn ready(State(state): State<ChatState>) -> impl IntoResponse {
-    Json(json!({
-        "ok": true,
-        "chat": true,
-        "slack": state.slack.enabled(),
-        "slack_socket": crate::chat::socket_configured(),
-    }))
+/// Readiness: chat process wiring (Slack optional).
+#[utoipa::path(
+    get,
+    path = "/ready",
+    tag = "public",
+    responses(
+        (status = 200, description = "Chat process readiness", body = ReadyResponse)
+    )
+)]
+pub async fn ready(State(state): State<ChatState>) -> Json<ReadyResponse> {
+    Json(ReadyResponse {
+        ok: true,
+        chat: true,
+        slack: state.slack.enabled(),
+        slack_socket: crate::chat::socket_configured(),
+    })
 }
 
 /// `POST /v1/book` - MCP proxy: insert a Google Calendar event directly.
@@ -262,13 +272,18 @@ async fn book_handler(
     }
 }
 
-async fn get_presence(State(state): State<ChatState>) -> impl IntoResponse {
+/// Current live/away presence for the site chat widget.
+#[utoipa::path(
+    get,
+    path = "/v1/presence",
+    tag = "public",
+    responses(
+        (status = 200, description = "Presence snapshot", body = PresenceResponse)
+    )
+)]
+pub async fn get_presence(State(state): State<ChatState>) -> Json<PresenceResponse> {
     let snap = state.presence.snapshot().await;
-    Json(json!({
-        "mode": snap.mode,
-        "label": snap.label,
-        "hero": snap.hero,
-    }))
+    Json(PresenceResponse::from(snap))
 }
 
 #[derive(Debug, Default, Deserialize)]

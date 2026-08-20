@@ -14,7 +14,7 @@ use serde::Serialize;
 use tokio::sync::RwLock;
 
 /// Chat handoff mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, utoipa::ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PresenceMode {
     Live,
