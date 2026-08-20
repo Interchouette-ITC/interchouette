@@ -203,8 +203,9 @@ fn commentary_text(value: &Value) -> Option<String> {
 
 /// Rewrite `LinkedIn` attributed spans that carry a `hyperlink` as markdown links.
 ///
-/// `LinkedIn` indexes `start` / `length` in UTF-16 code units. Duplicate attributes for the
-/// same span (company urn + hyperlink) are collapsed to the hyperlink URL.
+/// `LinkedIn` indexes `start` / `length` in Unicode scalar values (same as Rust `char`s).
+/// Duplicate attributes for the same span (company urn + hyperlink) are collapsed to the
+/// hyperlink URL.
 fn apply_text_hyperlinks(text: &str, attrs: &[Value]) -> String {
     let mut spans: Vec<(usize, usize, String)> = Vec::new();
     for attr in attrs {
@@ -241,20 +242,17 @@ fn apply_text_hyperlinks(text: &str, attrs: &[Value]) -> String {
         return text.to_string();
     }
     spans.sort_by(|a, b| b.0.cmp(&a.0).then(b.1.cmp(&a.1)));
-    let mut units: Vec<u16> = text.encode_utf16().collect();
+    let mut chars: Vec<char> = text.chars().collect();
     for (start, length, href) in spans {
         let end = match start.checked_add(length) {
-            Some(end) if end <= units.len() => end,
+            Some(end) if end <= chars.len() => end,
             _ => continue,
         };
-        let Ok(label) = String::from_utf16(&units[start..end]) else {
-            continue;
-        };
+        let label: String = chars[start..end].iter().collect();
         let markdown = format!("[{}]({})", escape_markdown_label(&label), href);
-        let replacement: Vec<u16> = markdown.encode_utf16().collect();
-        units.splice(start..end, replacement);
+        chars.splice(start..end, markdown.chars());
     }
-    String::from_utf16_lossy(&units)
+    chars.into_iter().collect()
 }
 
 fn attribute_hyperlink(attr: &Value) -> Option<String> {
@@ -387,6 +385,25 @@ mod tests {
             items[0].text
         );
         assert!(!items[0].text.contains("](null)"));
+    }
+
+    #[test]
+    fn applies_mentions_with_emoji_using_unicode_indices() {
+        let html = include_str!("fixtures/linkedin_itc_mentions.html");
+        let items = parse_linkedin(html, "https://example.com", 8);
+        assert_eq!(items.len(), 1);
+        let text = &items[0].text;
+        assert!(text.contains('\u{1F989}'), "emoji missing: {text}");
+        assert!(
+            text.contains(
+                "[Interchouette - ITC](https://www.linkedin.com/company/interchouette-itc/)"
+            ),
+            "mention missing: {text}"
+        );
+        assert!(
+            !text.contains("[ Interchouette") && !text.contains("IT](https://"),
+            "shifted mention: {text}"
+        );
     }
 
     #[test]
