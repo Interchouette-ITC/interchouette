@@ -178,10 +178,10 @@ fn update_from_object(map: &serde_json::Map<String, Value>) -> Option<NewsItem> 
 fn commentary_text(value: &Value) -> Option<String> {
     if let Some(attributed) = value.get("text").and_then(Value::as_object) {
         let raw = attributed.get("text").and_then(Value::as_str)?;
-        let trimmed = raw.trim();
-        if trimmed.is_empty() {
+        if raw.trim().is_empty() {
             return None;
         }
+        // Do not trim before applying attributes: LinkedIn indexes the full string.
         let attrs = match attributed
             .get("attributesV2")
             .or_else(|| attributed.get("attributes"))
@@ -190,7 +190,7 @@ fn commentary_text(value: &Value) -> Option<String> {
             Some(list) => list.as_slice(),
             None => &[],
         };
-        return Some(apply_text_hyperlinks(trimmed, attrs));
+        return Some(apply_text_hyperlinks(raw, attrs).trim().to_string());
     }
     if let Some(text) = value.as_str() {
         let trimmed = text.trim();
@@ -205,7 +205,8 @@ fn commentary_text(value: &Value) -> Option<String> {
 ///
 /// `LinkedIn` indexes `start` / `length` in Unicode scalar values (same as Rust `char`s).
 /// Duplicate attributes for the same span (company urn + hyperlink) are collapsed to the
-/// hyperlink URL.
+/// hyperlink URL. Spans that land mid-word are skipped so a bad index never produces
+/// fragments like `low Interchouette`.
 fn apply_text_hyperlinks(text: &str, attrs: &[Value]) -> String {
     let mut spans: Vec<(usize, usize, String)> = Vec::new();
     for attr in attrs {
@@ -248,11 +249,31 @@ fn apply_text_hyperlinks(text: &str, attrs: &[Value]) -> String {
             Some(end) if end <= chars.len() => end,
             _ => continue,
         };
+        if !span_is_token_aligned(&chars, start, end) {
+            continue;
+        }
         let label: String = chars[start..end].iter().collect();
         let markdown = format!("[{}]({})", escape_markdown_label(&label), href);
         chars.splice(start..end, markdown.chars());
     }
     chars.into_iter().collect()
+}
+
+/// Reject spans that start or end inside a word (bad index / wrong encoding).
+fn span_is_token_aligned(chars: &[char], start: usize, end: usize) -> bool {
+    if start > 0 {
+        let prev = chars[start - 1];
+        if prev.is_alphanumeric() || prev == '_' || prev == '-' {
+            return false;
+        }
+    }
+    if end < chars.len() {
+        let next = chars[end];
+        if next.is_alphanumeric() || next == '_' || next == '-' {
+            return false;
+        }
+    }
+    true
 }
 
 fn attribute_hyperlink(attr: &Value) -> Option<String> {
@@ -404,6 +425,20 @@ mod tests {
             !text.contains("[ Interchouette") && !text.contains("IT](https://"),
             "shifted mention: {text}"
         );
+        assert!(
+            !text.contains("[low Interchouette") && !text.contains("fol["),
+            "mid-word mention: {text}"
+        );
+    }
+
+    #[test]
+    fn skips_mid_word_hyperlink_spans() {
+        // Off-by-one span would turn "follow Interchouette - ITC," into "fol[low Interchouette -](...)ITC,".
+        let html = r#"<html><body><code>{"metadata":{"actionsPosition":"ACTOR_COMPONENT","backendUrn":"urn:li:activity:1"},"entityUrn":"urn:li:fsd_update:(urn:li:activity:1,FEED,)","commentary":{"text":{"text":"If you follow Interchouette - ITC, ok.","attributesV2":[{"start":10,"length":19,"detailData":{"hyperlink":"https://www.linkedin.com/company/interchouette-itc/"}}]}},"createdAt":1755600000000}</code></body></html>"#;
+        let items = parse_linkedin(html, "https://example.com", 8);
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].text, "If you follow Interchouette - ITC, ok.");
+        assert!(!items[0].text.contains("]("));
     }
 
     #[test]
