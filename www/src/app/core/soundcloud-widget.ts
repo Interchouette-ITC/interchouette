@@ -14,18 +14,20 @@ export type SoundCloudWidget = {
   skip: (soundIndex: number) => void;
   setVolume: (volume: number) => void;
   getSounds: (callback: (sounds: SoundCloudSound[]) => void) => void;
+  getCurrentSound: (callback: (sound: SoundCloudSound | null) => void) => void;
   getCurrentSoundIndex: (callback: (index: number) => void) => void;
   isPaused: (callback: (paused: boolean) => void) => void;
 };
 
 export type SoundCloudWidgetFactory = {
-  Widget: (iframe: HTMLIFrameElement | string) => SoundCloudWidget;
-  Events: {
-    READY: string;
-    PLAY: string;
-    PAUSE: string;
-    FINISH: string;
-    ERROR: string;
+  Widget: ((iframe: HTMLIFrameElement | string) => SoundCloudWidget) & {
+    Events: {
+      READY: string;
+      PLAY: string;
+      PAUSE: string;
+      FINISH: string;
+      ERROR: string;
+    };
   };
 };
 
@@ -39,7 +41,7 @@ const SC_SCRIPT = 'https://w.soundcloud.com/player/api.js';
 let scriptPromise: Promise<void> | null = null;
 
 function scReady(): boolean {
-  return Boolean(window.SC?.Widget && window.SC?.Events);
+  return typeof window.SC?.Widget === 'function';
 }
 
 function waitForScApi(): Promise<void> {
@@ -73,9 +75,13 @@ export function loadSoundCloudWidgetApi(): Promise<void> {
   }
   if (!scriptPromise) {
     scriptPromise = new Promise((resolve, reject) => {
+      const fail = (err: Error): void => {
+        scriptPromise = null;
+        reject(err);
+      };
       const existing = document.querySelector<HTMLScriptElement>('script[data-ic-sc-widget]');
       if (existing) {
-        void waitForScApi().then(resolve).catch(reject);
+        void waitForScApi().then(resolve).catch(fail);
         return;
       }
       const script = document.createElement('script');
@@ -83,9 +89,9 @@ export function loadSoundCloudWidgetApi(): Promise<void> {
       script.async = true;
       script.dataset['icScWidget'] = 'true';
       script.onload = () => {
-        void waitForScApi().then(resolve).catch(reject);
+        void waitForScApi().then(resolve).catch(fail);
       };
-      script.onerror = () => reject(new Error('SoundCloud widget script failed'));
+      script.onerror = () => fail(new Error('SoundCloud widget script failed'));
       document.head.appendChild(script);
     });
   }
@@ -106,14 +112,24 @@ export function pickRandomIndex(length: number, avoid?: number): number {
   return index;
 }
 
-export function scWidget(iframe: HTMLIFrameElement): SoundCloudWidget | null {
+export function scEvents(): SoundCloudWidgetFactory['Widget']['Events'] {
+  const fromApi = window.SC?.Widget?.Events;
+  if (fromApi) {
+    return fromApi;
+  }
+  return {
+    READY: 'ready',
+    PLAY: 'play',
+    PAUSE: 'pause',
+    FINISH: 'finish',
+    ERROR: 'error',
+  };
+}
+
+export function scWidget(target: HTMLIFrameElement | string): SoundCloudWidget | null {
   try {
-    return window.SC?.Widget(iframe) ?? null;
+    return window.SC?.Widget(target) ?? null;
   } catch {
     return null;
   }
-}
-
-export function scEvents(): SoundCloudWidgetFactory['Events'] | null {
-  return window.SC?.Events ?? null;
 }

@@ -3,12 +3,13 @@
  * Tag pill + topic + local clock + nav-relative ms + optional key=value.
  */
 
-export type IcConsoleNamespace = 'ic:chat';
+export type IcConsoleNamespace = 'ic:chat' | 'ic:radio';
 
 export type IcConsoleLevel = 'log' | 'info' | 'warn' | 'error';
 
 const NS_TAG_COLOR: Record<IcConsoleNamespace, string> = {
   'ic:chat': '#00e5ff',
+  'ic:radio': '#ffd24a',
 };
 
 const NS_TAG_ERROR = '#ff1744';
