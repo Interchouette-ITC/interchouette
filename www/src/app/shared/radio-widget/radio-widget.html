@@ -5,7 +5,7 @@
       class="radio-btn"
       [class.radio-btn--playing]="playing()"
       [class.radio-btn--busy]="loading()"
-      [disabled]="error()"
+      [disabled]="loading()"
       (click)="onToggle()"
       [attr.aria-label]="buttonLabel()"
       [attr.title]="buttonLabel()"

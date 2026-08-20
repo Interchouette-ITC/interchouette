@@ -72,9 +72,6 @@ export class RadioWidget implements OnDestroy {
   }
 
   protected async onToggle(): Promise<void> {
-    if (this.error()) {
-      return;
-    }
     if (this.widget) {
       this.widget.isPaused((paused) => {
         if (paused) {
@@ -86,10 +83,14 @@ export class RadioWidget implements OnDestroy {
       });
       return;
     }
+    if (this.loading()) {
+      return;
+    }
     await this.boot();
   }
 
   private async boot(): Promise<void> {
+    this.error.set(false);
     this.loading.set(true);
     try {
       await loadSoundCloudWidgetApi();
@@ -122,17 +123,20 @@ export class RadioWidget implements OnDestroy {
         this.wireWidget(widget, events);
         this.wired = true;
       }
-      const timer = setTimeout(() => reject(new Error('SoundCloud widget timeout')), 15000);
-      const done = (): void => {
-        clearTimeout(timer);
-        resolve();
-      };
-      const fail = (): void => {
-        clearTimeout(timer);
-        reject(new Error('SoundCloud widget error'));
-      };
-      widget.bind(events.READY, done);
-      widget.bind(events.ERROR, fail);
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          reject(new Error('SoundCloud widget timeout'));
+        }
+      }, 20000);
+      widget.bind(events.READY, () => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve();
+        }
+      });
     });
   }
 
@@ -161,17 +165,24 @@ export class RadioWidget implements OnDestroy {
         reject(new Error('widget missing'));
         return;
       }
-      widget.getSounds((sounds) => {
-        if (!sounds.length) {
-          reject(new Error('empty playlist'));
-          return;
-        }
-        const index = pickRandomIndex(sounds.length, this.lastIndex);
-        this.lastIndex = index;
-        widget.skip(index);
-        this.resume();
-        resolve();
-      });
+      const tryShuffle = (attempt: number): void => {
+        widget.getSounds((sounds) => {
+          if (!sounds.length) {
+            if (attempt < 10) {
+              setTimeout(() => tryShuffle(attempt + 1), 200);
+              return;
+            }
+            reject(new Error('empty playlist'));
+            return;
+          }
+          const index = pickRandomIndex(sounds.length, this.lastIndex);
+          this.lastIndex = index;
+          widget.skip(index);
+          this.resume();
+          resolve();
+        });
+      };
+      tryShuffle(0);
     });
   }
 
