@@ -43,6 +43,8 @@
   line-height: 1.2;
   cursor: pointer;
   white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
   transition:
     box-shadow 0.24s ease,
     background 0.2s ease,

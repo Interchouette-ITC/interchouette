@@ -11,7 +11,7 @@ DOCKER_BUILDKIT ?= 1
 
 CLIPPY_FLAGS := -D warnings -D clippy::all -D clippy::pedantic -D clippy::nursery
 
-.PHONY: help mcp-lint mcp-test mcp-build \
+.PHONY: help run run-www mcp-lint mcp-test mcp-build \
 	chat-lint chat-test chat-build \
 	mcp-docker-build mcp-docker-push-hub \
 	mcp-docker-push-ghcr-personal mcp-docker-push-ghcr-itc \
@@ -23,6 +23,9 @@ help:
 	@echo "  make mcp-docker-build / mcp-docker-push"
 	@echo "Chat"
 	@echo "  make chat-lint / chat-test / chat-build"
+	@echo "Local"
+	@echo "  make run       chat API + WebSocket (http://127.0.0.1:8080)"
+	@echo "  make run-www   Angular dev server (http://127.0.0.1:4200)"
 	@echo "Tags: :dev :latest only"
 	@echo "Images: $(MCP_HUB_IMAGE) | $(MCP_GHCR_ORG_IMAGE)"
 
@@ -43,6 +46,15 @@ chat-test:
 
 chat-build:
 	cd backend && cargo build --release
+
+# Build then exec the binary (do not leave cargo run holding the target lock).
+# Loads repo-root .env via backend/src/main.rs. Run www in another terminal: make run-www
+run:
+	@clear 2>/dev/null || true
+	cd backend && cargo build && exec ./target/debug/interchouette-chat
+
+run-www:
+	cd www && NG_CLI_ANALYTICS=false npm start
 
 mcp-docker-build:
 	DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) docker build --pull --network=host \

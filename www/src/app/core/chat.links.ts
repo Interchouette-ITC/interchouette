@@ -2,9 +2,9 @@ export type ChatLinkPart = { t: string; href: string | null };
 
 const TRAILING_PUNCT = /[),.;!?]+$/u;
 const TOKEN =
-  /\[([^\]]+)\]\((https?:\/\/[^)\s]+|mailto:[^)\s]+)\)|\bhttps?:\/\/[^\s<>]+|\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
+  /\[([^\]]+)\]\((https?:\/\/[^)\s]+|mailto:[^)\s]+)\)|\bhttps?:\/\/[^\s<>]+|\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b|(?<![\w.+-])@([A-Za-z0-9_]{1,15})\b/g;
 
-/** Split chat text so markdown links, http(s) URLs, and emails render as anchors. */
+/** Split chat text so markdown links, http(s) URLs, emails, and @handles render as anchors. */
 export function splitHttpLinks(text: string): ChatLinkPart[] {
   const parts: ChatLinkPart[] = [];
   let last = 0;
@@ -16,8 +16,11 @@ export function splitHttpLinks(text: string): ChatLinkPart[] {
     }
     const label = match[1];
     const mdHref = match[2];
+    const mention = match[3];
     if (label !== undefined && mdHref !== undefined) {
       parts.push({ t: label, href: mdHref });
+    } else if (mention !== undefined) {
+      parts.push({ t: `@${mention}`, href: `https://x.com/${mention}` });
     } else if (raw.includes('@') && !/^https?:/i.test(raw)) {
       parts.push({ t: raw, href: `mailto:${raw}` });
     } else {

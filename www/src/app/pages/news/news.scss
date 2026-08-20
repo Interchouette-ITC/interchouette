@@ -1,0 +1,238 @@
+@use '../../shared/page-tabs/page-tabs.scss' as *;
+
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/montserrat-latin-400.woff2') format('woff2');
+}
+
+:host {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  padding-top: 2.15rem;
+  box-sizing: border-box;
+}
+
+@media screen and (min-width: 1280px) {
+  :host {
+    display: block;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-bottom: 2.75rem;
+    box-sizing: border-box;
+  }
+}
+
+.card.news {
+  position: relative;
+  width: min(72rem, 94vw);
+  max-width: none;
+  margin: 3% auto 2%;
+  padding: 2.35rem 3rem;
+  background: #fff;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  color: #444;
+  font-weight: 400;
+  line-height: 1.65;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.news h1 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #555;
+  margin: 0 0 0.65rem;
+}
+
+.news-sources {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0 0 1.15rem;
+}
+
+.news-source {
+  display: inline-flex;
+  text-decoration: none;
+  color: #27084e;
+  line-height: 1;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.news-source .fa-stack {
+  font-size: 1.45rem;
+  transition: transform 0.45s ease;
+}
+
+.news-source:hover .fa-stack,
+.news-source:focus-visible .fa-stack {
+  transform: rotate(360deg);
+}
+
+.news-source--linkedin:hover .fa-linkedin,
+.news-source--linkedin:focus-visible .fa-linkedin {
+  color: #fff;
+  background-color: #036795;
+  border-radius: 50%;
+}
+
+.news-source--x:hover .fa-twitter,
+.news-source--x:focus-visible .fa-twitter {
+  color: #fff;
+  background-color: #1da1f2;
+  border-radius: 50%;
+}
+
+.news-tab__icon {
+  display: inline-flex;
+  font-size: 0.92rem;
+  line-height: 1;
+}
+
+.news-tab__icon .fa-linkedin {
+  color: #036795;
+}
+
+.news-tab__icon .fa-twitter {
+  color: #1da1f2;
+}
+
+.page-tabs__tab[aria-selected='true'] .news-tab__icon .fa-linkedin,
+.page-tabs__tab[aria-selected='true'] .news-tab__icon .fa-twitter {
+  color: #fff;
+}
+
+.page-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.news-tab__label {
+  line-height: 1.2;
+}
+
+.news a {
+  color: #27084e;
+  text-decoration: underline;
+  text-decoration-color: rgba(39, 8, 78, 0.35);
+  cursor: pointer;
+}
+
+.news a:hover,
+.news a:focus-visible {
+  color: #3a1868;
+  text-decoration-color: rgba(58, 24, 104, 0.55);
+}
+
+.back,
+.back:link,
+.back:visited {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: #27084e;
+  text-decoration: none;
+}
+
+.back:hover,
+.back:focus-visible {
+  color: #3a1868;
+  text-decoration: underline;
+}
+
+.news-state {
+  min-height: 4rem;
+}
+
+.news-loading,
+.news-empty,
+.news-error {
+  margin: 0 0 1rem;
+}
+
+.news-error {
+  color: #8b2e2e;
+}
+
+.news-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.news-item {
+  padding: 1.1rem 0;
+  border-bottom: 1px solid rgba(39, 8, 78, 0.1);
+}
+
+.news-item:first-child {
+  padding-top: 0.35rem;
+}
+
+.news-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.news-item__date {
+  display: block;
+  margin: 0 0 0.35rem;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.news-item__text {
+  margin: 0 0 0.55rem;
+  white-space: pre-wrap;
+}
+
+.news-item__inline-link {
+  font-weight: inherit;
+}
+
+.news-item__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.news-item__link:hover,
+.news-item__link:focus-visible {
+  text-decoration: underline;
+}
+
+.news-item__link-icon {
+  font-size: 0.88rem;
+  line-height: 1;
+}
+
+.news-item__link-icon.fa-linkedin {
+  color: #036795;
+}
+
+.news-item__link-icon.fa-twitter {
+  color: #1da1f2;
+}
+
+.news-meta {
+  margin: 1.35rem 0 0;
+  color: #888;
+  font-size: 0.85rem;
+}
+
+@media screen and (max-width: 768px) {
+  .card.news {
+    width: auto;
+    margin: 2% 3%;
+    padding: 1.5rem 1.35rem;
+  }
+}

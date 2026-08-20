@@ -1,5 +1,7 @@
 import { expect, test, type ConsoleMessage, type Page } from '@playwright/test';
 
+import { mockNewsApi } from './news-mock';
+
 const routes = [
   '/',
   '/CV',
@@ -23,6 +25,9 @@ test.describe('browser console', () => {
 });
 
 async function collectPageErrors(page: Page, path: string): Promise<string[]> {
+  if (path === '/news') {
+    await mockNewsApi(page);
+  }
   const errors: string[] = [];
   const onConsole = (msg: ConsoleMessage) => {
     if (msg.type() === 'error') {

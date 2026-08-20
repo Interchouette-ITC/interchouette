@@ -1,0 +1,15 @@
+export const EN_NEWS = {
+  title: 'News',
+  sourcesAria: 'Interchouette social feeds',
+  tabItcLinkedIn: 'Interchouette · LinkedIn',
+  tabItcX: 'Interchouette · X',
+  loading: 'Loading posts…',
+  error: 'Could not load posts right now.',
+  empty: 'No posts yet.',
+  viewOnLinkedIn: 'View on LinkedIn',
+  viewOnX: 'View on X',
+  updated: 'Last updated {time}',
+  cacheNote: 'Refreshes about every 4 hours.',
+  profileItcLinkedIn: 'Interchouette on LinkedIn',
+  profileItcX: '@interchouette on X',
+} as const;
