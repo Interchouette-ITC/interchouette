@@ -89,17 +89,27 @@ export class RadioWidget implements OnDestroy {
     await this.boot();
   }
 
+  private frameElement(): HTMLIFrameElement | null {
+    const ref = this.playerFrame() as ElementRef<HTMLIFrameElement> | HTMLIFrameElement | undefined;
+    if (ref instanceof HTMLIFrameElement) {
+      return ref;
+    }
+    if (ref?.nativeElement) {
+      return ref.nativeElement;
+    }
+    return document.querySelector<HTMLIFrameElement>('app-radio-widget iframe.radio-frame');
+  }
+
   private async boot(): Promise<void> {
     this.error.set(false);
     this.loading.set(true);
     try {
       await loadSoundCloudWidgetApi();
-      const frame = this.playerFrame()?.nativeElement;
+      const frame = this.frameElement();
       if (!frame) {
         throw new Error('radio iframe missing');
       }
-      frame.src = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL);
-      await this.waitForWidget(frame);
+      await this.waitForWidget(frame, SOUNDCLOUD_PLAYLIST_URL);
       this.applyVolume();
       await this.shuffleAndPlay();
     } catch {
@@ -110,7 +120,8 @@ export class RadioWidget implements OnDestroy {
     }
   }
 
-  private waitForWidget(frame: HTMLIFrameElement): Promise<void> {
+  private waitForWidget(frame: HTMLIFrameElement, playlistUrl: string): Promise<void> {
+    frame.src = soundCloudPlayerSrc(playlistUrl);
     return new Promise((resolve, reject) => {
       const events = scEvents();
       const widget = scWidget(frame);

@@ -1,5 +1,5 @@
-@if (mounted()) {
-  <div class="radio-dock" [class.radio-dock--playing]="playing()">
+<div class="radio-dock" [class.radio-dock--playing]="playing()">
+  @if (mounted()) {
     <button
       type="button"
       class="radio-btn"
@@ -22,13 +22,15 @@
       </span>
       <span class="radio-btn__pulse" aria-hidden="true"></span>
     </button>
+  }
 
-    <iframe
-      #playerFrame
-      class="radio-frame visually-hidden"
-      title="Interchouette SoundCloud radio"
-      allow="autoplay"
-      tabindex="-1"
-    ></iframe>
-  </div>
-}
+  <iframe
+    #playerFrame
+    class="radio-frame"
+    title="Interchouette SoundCloud radio"
+    width="166"
+    height="166"
+    allow="autoplay"
+    tabindex="-1"
+  ></iframe>
+</div>

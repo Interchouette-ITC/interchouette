@@ -125,7 +125,14 @@
 }
 
 .radio-frame {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 166px;
+  height: 166px;
+  opacity: 0;
   pointer-events: none;
+  border: 0;
 }
 
 @keyframes radioSpin {

@@ -38,32 +38,53 @@ declare global {
 const SC_SCRIPT = 'https://w.soundcloud.com/player/api.js';
 let scriptPromise: Promise<void> | null = null;
 
+function scReady(): boolean {
+  return Boolean(window.SC?.Widget && window.SC?.Events);
+}
+
+function waitForScApi(): Promise<void> {
+  if (scReady()) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    let attempts = 0;
+    const tick = (): void => {
+      if (scReady()) {
+        resolve();
+        return;
+      }
+      attempts += 1;
+      if (attempts > 100) {
+        reject(new Error('SoundCloud widget API missing'));
+        return;
+      }
+      setTimeout(tick, 50);
+    };
+    tick();
+  });
+}
+
 export function loadSoundCloudWidgetApi(): Promise<void> {
   if (typeof window === 'undefined') {
     return Promise.resolve();
   }
-  if (window.SC?.Widget) {
+  if (scReady()) {
     return Promise.resolve();
   }
   if (!scriptPromise) {
     scriptPromise = new Promise((resolve, reject) => {
       const existing = document.querySelector<HTMLScriptElement>('script[data-ic-sc-widget]');
       if (existing) {
-        existing.addEventListener('load', () => resolve(), { once: true });
-        existing.addEventListener(
-          'error',
-          () => reject(new Error('SoundCloud widget script failed')),
-          {
-            once: true,
-          },
-        );
+        void waitForScApi().then(resolve).catch(reject);
         return;
       }
       const script = document.createElement('script');
       script.src = SC_SCRIPT;
       script.async = true;
       script.dataset['icScWidget'] = 'true';
-      script.onload = () => resolve();
+      script.onload = () => {
+        void waitForScApi().then(resolve).catch(reject);
+      };
       script.onerror = () => reject(new Error('SoundCloud widget script failed'));
       document.head.appendChild(script);
     });
@@ -86,7 +107,11 @@ export function pickRandomIndex(length: number, avoid?: number): number {
 }
 
 export function scWidget(iframe: HTMLIFrameElement): SoundCloudWidget | null {
-  return window.SC?.Widget(iframe) ?? null;
+  try {
+    return window.SC?.Widget(iframe) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function scEvents(): SoundCloudWidgetFactory['Events'] | null {
