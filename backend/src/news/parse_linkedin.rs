@@ -73,7 +73,7 @@ fn parse_linkedin_dom(document: &Html) -> Vec<NewsItem> {
             let text = text_selector_list
                 .iter()
                 .flat_map(|sel| node.select(sel))
-                .map(|el| el.text().collect::<String>())
+                .map(|el| element_markdown(el))
                 .map(|t| t.trim().to_string())
                 .find(|t| !t.is_empty())
                 .unwrap_or_default();
@@ -176,15 +176,21 @@ fn update_from_object(map: &serde_json::Map<String, Value>) -> Option<NewsItem> 
 }
 
 fn commentary_text(value: &Value) -> Option<String> {
-    if let Some(text) = value
-        .get("text")
-        .and_then(|inner| inner.get("text"))
-        .and_then(Value::as_str)
-    {
-        let trimmed = text.trim();
-        if !trimmed.is_empty() {
-            return Some(trimmed.to_string());
+    if let Some(attributed) = value.get("text").and_then(Value::as_object) {
+        let raw = attributed.get("text").and_then(Value::as_str)?;
+        let trimmed = raw.trim();
+        if trimmed.is_empty() {
+            return None;
         }
+        let attrs = match attributed
+            .get("attributesV2")
+            .or_else(|| attributed.get("attributes"))
+            .and_then(Value::as_array)
+        {
+            Some(list) => list.as_slice(),
+            None => &[],
+        };
+        return Some(apply_text_hyperlinks(trimmed, attrs));
     }
     if let Some(text) = value.as_str() {
         let trimmed = text.trim();
@@ -193,6 +199,114 @@ fn commentary_text(value: &Value) -> Option<String> {
         }
     }
     None
+}
+
+/// Rewrite `LinkedIn` attributed spans that carry a `hyperlink` as markdown links.
+///
+/// `LinkedIn` indexes `start` / `length` in UTF-16 code units. Duplicate attributes for the
+/// same span (company urn + hyperlink) are collapsed to the hyperlink URL.
+fn apply_text_hyperlinks(text: &str, attrs: &[Value]) -> String {
+    let mut spans: Vec<(usize, usize, String)> = Vec::new();
+    for attr in attrs {
+        let Some(start) = attr
+            .get("start")
+            .and_then(Value::as_u64)
+            .and_then(|n| usize::try_from(n).ok())
+        else {
+            continue;
+        };
+        let Some(length) = attr
+            .get("length")
+            .and_then(Value::as_u64)
+            .and_then(|n| usize::try_from(n).ok())
+        else {
+            continue;
+        };
+        if length == 0 {
+            continue;
+        }
+        let Some(href) = attribute_hyperlink(attr) else {
+            continue;
+        };
+        if let Some((_, _, existing)) = spans
+            .iter_mut()
+            .find(|(s, l, _)| *s == start && *l == length)
+        {
+            *existing = href;
+        } else {
+            spans.push((start, length, href));
+        }
+    }
+    if spans.is_empty() {
+        return text.to_string();
+    }
+    spans.sort_by(|a, b| b.0.cmp(&a.0).then(b.1.cmp(&a.1)));
+    let mut units: Vec<u16> = text.encode_utf16().collect();
+    for (start, length, href) in spans {
+        let end = match start.checked_add(length) {
+            Some(end) if end <= units.len() => end,
+            _ => continue,
+        };
+        let Ok(label) = String::from_utf16(&units[start..end]) else {
+            continue;
+        };
+        let markdown = format!("[{}]({})", escape_markdown_label(&label), href);
+        let replacement: Vec<u16> = markdown.encode_utf16().collect();
+        units.splice(start..end, replacement);
+    }
+    String::from_utf16_lossy(&units)
+}
+
+fn attribute_hyperlink(attr: &Value) -> Option<String> {
+    let detail = attr.get("detailData")?;
+    for key in ["hyperlink", "textLink", "hyperlinkOpenExternally"] {
+        if let Some(href) = detail.get(key).and_then(Value::as_str) {
+            let trimmed = href.trim();
+            if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
+                return Some(trimmed.to_string());
+            }
+        }
+    }
+    None
+}
+
+fn escape_markdown_label(label: &str) -> String {
+    label.replace('\\', "\\\\").replace(']', "\\]")
+}
+
+/// Collect visible text from a feed DOM node, preserving `<a href>` as markdown links.
+fn element_markdown(el: scraper::ElementRef<'_>) -> String {
+    let mut out = String::new();
+    append_node_markdown(el, &mut out);
+    out
+}
+
+fn append_node_markdown(el: scraper::ElementRef<'_>, out: &mut String) {
+    use std::fmt::Write as _;
+
+    for child in el.children() {
+        if let Some(elem) = scraper::ElementRef::wrap(child) {
+            if elem.value().name() == "a" {
+                let href = elem
+                    .value()
+                    .attr("href")
+                    .filter(|h| h.starts_with("http://") || h.starts_with("https://"));
+                let label = elem.text().collect::<String>();
+                let label = label.trim();
+                if let Some(href) = href {
+                    if label.is_empty() {
+                        out.push_str(href);
+                    } else {
+                        let _ = write!(out, "[{}]({})", escape_markdown_label(label), href);
+                    }
+                    continue;
+                }
+            }
+            append_node_markdown(elem, out);
+        } else if let Some(text) = child.value().as_text() {
+            out.push_str(text);
+        }
+    }
 }
 
 fn json_timestamp(value: &Value) -> Option<String> {
@@ -258,6 +372,39 @@ mod tests {
         assert_eq!(items.len(), 1);
         assert!(items[0].text.contains("ITCy"));
         assert!(items[0].url.contains("9001"));
+    }
+
+    #[test]
+    fn applies_company_mention_hyperlink_as_markdown() {
+        let html = r#"<html><body><code>{"metadata":{"actionsPosition":"ACTOR_COMPONENT","backendUrn":"urn:li:activity:7496"},"entityUrn":"urn:li:fsd_update:(urn:li:activity:7496,FEED,)","commentary":{"text":{"text":"WebMCP infancy. Interchouette - ITC has taken a step.","attributesV2":[{"start":16,"length":19,"detailData":{"*companyName":"urn:li:fsd_company:91634202","hyperlink":null}},{"start":16,"length":19,"detailData":{"hyperlink":"https://www.linkedin.com/company/interchouette-itc/"}}]}},"createdAt":1755600000000}</code></body></html>"#;
+        let items = parse_linkedin(html, "https://example.com", 8);
+        assert_eq!(items.len(), 1);
+        assert!(
+            items[0].text.contains(
+                "[Interchouette - ITC](https://www.linkedin.com/company/interchouette-itc/)"
+            ),
+            "got: {}",
+            items[0].text
+        );
+        assert!(!items[0].text.contains("](null)"));
+    }
+
+    #[test]
+    fn preserves_dom_anchor_as_markdown() {
+        let html = r#"<html><body>
+<div data-urn="urn:li:activity:1001">
+  <div class="update-components-text">Shipped with <a href="https://www.linkedin.com/company/interchouette-itc/">Interchouette - ITC</a> today.</div>
+</div>
+</body></html>"#;
+        let items = parse_linkedin(html, "https://example.com", 8);
+        assert_eq!(items.len(), 1);
+        assert!(
+            items[0].text.contains(
+                "[Interchouette - ITC](https://www.linkedin.com/company/interchouette-itc/)"
+            ),
+            "got: {}",
+            items[0].text
+        );
     }
 
     #[test]
