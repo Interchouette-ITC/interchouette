@@ -17,9 +17,31 @@ const EMPTY_NEWS = {
   },
 };
 
-/** Stub API `/v1/news` so e2e does not need a live API process. */
+const EMPTY_ARCHIVE = {
+  locale: 'en',
+  weeks: [] as { week_id: string; fetched_at: string }[],
+};
+
+/** Stub API `/v1/news` (and archive) so e2e does not need a live API process. */
 export async function mockNewsApi(page: Page): Promise<void> {
   await page.route('**/v1/news**', async (route) => {
+    const url = route.request().url();
+    if (url.includes('/v1/news/archive/')) {
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'not found' }),
+      });
+      return;
+    }
+    if (url.includes('/v1/news/archive')) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(EMPTY_ARCHIVE),
+      });
+      return;
+    }
     await route.fulfill({
       status: 200,
       contentType: 'application/json',

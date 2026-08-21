@@ -16,6 +16,7 @@ const routes = [
   '/privacy',
   '/terms',
   '/news',
+  '/archive',
   '/account',
   '/gis-signin',
   '/?lang=nl',
@@ -106,7 +107,7 @@ function isIgnorableConsoleError(text, path) {
     return true;
   }
   // News feed fetch when chat backend is not running in the static console gate.
-  if (path === '/news' && /Failed to load resource.*404/i.test(text)) {
+  if ((path === '/news' || path === '/archive') && /Failed to load resource.*404/i.test(text)) {
     return true;
   }
   return /\/v1\/news/i.test(text) && /404|Failed to load resource/i.test(text);

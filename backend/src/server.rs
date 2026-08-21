@@ -13,15 +13,15 @@ use crate::openapi::{health, openapi_router};
 pub const DEFAULT_HTTP_LISTEN: &str = "0.0.0.0:8080";
 
 /// Build the chat HTTP router.
-pub fn build_app(cors_origin: &str) -> Router {
-    build_app_parts(cors_origin).0
+pub async fn build_app(cors_origin: &str) -> Router {
+    build_app_parts(cors_origin).await.0
 }
 
 /// Build router + chat state (caller may spawn Slack inbound).
-pub fn build_app_parts(cors_origin: &str) -> (Router, ChatState) {
+pub async fn build_app_parts(cors_origin: &str) -> (Router, ChatState) {
     let cors = build_cors(cors_origin);
     let chat = ChatState::new(AwayBrain::from_env());
-    let news = NewsState::from_env();
+    let news = NewsState::from_env().await;
     news.clone().spawn_cache_warmup();
     let app = Router::new()
         .route("/health", get(health))
@@ -62,7 +62,7 @@ fn build_cors(cors_origin: &str) -> CorsLayer {
 /// # Errors
 /// Returns when bind or serve fails.
 pub async fn run_http(addr: &str, cors_origin: String) -> Result<()> {
-    let (app, chat) = build_app_parts(&cors_origin);
+    let (app, chat) = build_app_parts(&cors_origin).await;
     chat.spawn_background_tasks();
     let listener = tokio::net::TcpListener::bind(addr).await?;
     tracing::info!(%addr, "interchouette-chat listening");

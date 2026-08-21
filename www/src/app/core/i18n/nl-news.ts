@@ -12,4 +12,12 @@ export const NL_NEWS = {
   cacheNote: 'Wordt ongeveer elke 4 uur ververst.',
   profileItcLinkedIn: 'Interchouette op LinkedIn',
   profileItcX: '@interchouette op X',
+  archiveLink: 'Archief',
+  archiveTitle: 'Nieuwsarchief',
+  archiveLoading: 'Archief laden…',
+  archiveError: 'Archief kon nu niet worden geladen.',
+  archiveEmpty: 'Nog geen gearchiveerde weken.',
+  archiveSelectWeek: 'Kies een week',
+  archiveBackToNews: 'Terug naar nieuws',
+  archiveSnapshot: 'Snapshot van {time}',
 } as const;

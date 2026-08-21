@@ -2,7 +2,7 @@
 
 use std::time::Duration;
 
-use axum::extract::{Query, State};
+use axum::extract::{Path, Query, State};
 use axum::http::{header, HeaderValue, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::get;
@@ -11,6 +11,7 @@ use chrono::Utc;
 use serde::Deserialize;
 use tracing::warn;
 
+use super::archive::{NewsArchive, NewsArchiveIndex};
 use super::cache::NewsCache;
 use super::feed::{build_atom, build_rss};
 use super::fetch::NewsFetcher;
@@ -21,19 +22,13 @@ use super::types::{NewsFeeds, NewsResponse};
 pub struct NewsState {
     cache: NewsCache,
     fetcher: NewsFetcher,
+    archive: NewsArchive,
     cache_ttl_secs: u64,
 }
 
-impl Default for NewsState {
-    fn default() -> Self {
-        Self::from_env()
-    }
-}
-
 impl NewsState {
-    /// Build from environment (`NEWS_CACHE_TTL_SECS`).
-    #[must_use]
-    pub fn from_env() -> Self {
+    /// Build from environment (`NEWS_CACHE_TTL_SECS`, optional `DATABASE_URL`).
+    pub async fn from_env() -> Self {
         let cache_ttl_secs = std::env::var("NEWS_CACHE_TTL_SECS")
             .ok()
             .and_then(|v| v.parse().ok())
@@ -41,6 +36,7 @@ impl NewsState {
         Self {
             cache: NewsCache::default(),
             fetcher: NewsFetcher::from_env(),
+            archive: NewsArchive::from_env().await,
             cache_ttl_secs,
         }
     }
@@ -51,6 +47,8 @@ impl NewsState {
             .route("/v1/news", get(news_handler))
             .route("/v1/news/rss.xml", get(news_rss_handler))
             .route("/v1/news/atom.xml", get(news_atom_handler))
+            .route("/v1/news/archive", get(news_archive_list_handler))
+            .route("/v1/news/archive/{week_id}", get(news_archive_week_handler))
             .with_state(self)
     }
 
@@ -68,6 +66,10 @@ impl NewsState {
         let ttl = Duration::from_secs(self.cache_ttl_secs);
         if let Some(cached) = self.cache.get_fresh(locale, ttl).await {
             return cached;
+        }
+        if let Some(from_pg) = self.archive.load_latest_if_fresh(locale, ttl).await {
+            self.cache.put(locale, from_pg.clone()).await;
+            return from_pg;
         }
         match self.refresh(locale).await {
             Ok(response) => response,
@@ -94,6 +96,7 @@ impl NewsState {
             },
         };
         self.cache.put(locale, response.clone()).await;
+        self.archive.upsert_week(locale, &response).await;
         Ok(response)
     }
 }
@@ -157,6 +160,50 @@ pub async fn news_atom_handler(
     xml_response("application/atom+xml; charset=utf-8", body)
 }
 
+/// ISO-week news archive index (newest first). Empty when Postgres is unset.
+#[utoipa::path(
+    get,
+    path = "/v1/news/archive",
+    tag = "public",
+    params(NewsQuery),
+    responses(
+        (status = 200, description = "News archive week index", body = NewsArchiveIndex)
+    )
+)]
+pub async fn news_archive_list_handler(
+    State(state): State<NewsState>,
+    Query(q): Query<NewsQuery>,
+) -> Json<NewsArchiveIndex> {
+    let locale = normalize_locale(q.locale.as_deref());
+    Json(state.archive.list_weeks(&locale).await)
+}
+
+/// One archived ISO-week snapshot (`YYYY-Www`).
+#[utoipa::path(
+    get,
+    path = "/v1/news/archive/{week_id}",
+    tag = "public",
+    params(
+        ("week_id" = String, Path, description = "ISO week id, e.g. 2026-W34"),
+        NewsQuery
+    ),
+    responses(
+        (status = 200, description = "Archived news feeds payload", body = NewsResponse),
+        (status = 404, description = "Week not found")
+    )
+)]
+pub async fn news_archive_week_handler(
+    State(state): State<NewsState>,
+    Path(week_id): Path<String>,
+    Query(q): Query<NewsQuery>,
+) -> impl IntoResponse {
+    let locale = normalize_locale(q.locale.as_deref());
+    state.archive.get_week(&locale, &week_id).await.map_or_else(
+        || StatusCode::NOT_FOUND.into_response(),
+        |body| (StatusCode::OK, Json(body)).into_response(),
+    )
+}
+
 fn xml_response(content_type: &'static str, body: String) -> impl IntoResponse {
     (
         StatusCode::OK,
@@ -209,7 +256,7 @@ mod tests {
 
     #[tokio::test]
     async fn news_endpoint_returns_json_shape() {
-        let app = NewsState::from_env().router();
+        let app = NewsState::from_env().await.router();
         let response = app
             .oneshot(
                 Request::builder()
@@ -224,7 +271,7 @@ mod tests {
 
     #[tokio::test]
     async fn news_rss_endpoint_returns_xml() {
-        let app = NewsState::from_env().router();
+        let app = NewsState::from_env().await.router();
         let response = app
             .oneshot(
                 Request::builder()
@@ -241,5 +288,40 @@ mod tests {
             .and_then(|v| v.to_str().ok())
             .unwrap_or("");
         assert!(ctype.contains("rss+xml"));
+    }
+
+    #[tokio::test]
+    async fn archive_list_returns_empty_without_database() {
+        let app = NewsState::from_env().await.router();
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/v1/news/archive?locale=en")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        let index: NewsArchiveIndex = serde_json::from_slice(&body).unwrap();
+        assert_eq!(index.weeks.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn archive_week_returns_404_without_database() {
+        let app = NewsState::from_env().await.router();
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/v1/news/archive/2026-W34?locale=en")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::NOT_FOUND);
     }
 }

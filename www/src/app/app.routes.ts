@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 
 /**
  * URL convention (match live static hosting):
- * - `/`, `/about`, `/news`, `/privacy`, `/terms`, `/CV`: no trailing slash
+ * - `/`, `/about`, `/news`, `/archive`, `/privacy`, `/terms`, `/CV`: no trailing slash
  * - `/CV/` redirects to `/CV` on the host
  * - legacy `/CV - Gregory Roussac/` → `/CV`
  * Host: prefer Rewrite clean paths to prerendered `…/index.html` (never Redirect to
@@ -30,6 +30,16 @@ export const routes: Routes = [
       description: 'News from Interchouette ITC.',
       titleKey: 'titleNews',
       descriptionKey: 'descNews',
+    },
+  },
+  {
+    path: 'archive',
+    loadComponent: () => import('./pages/archive/archive').then((m) => m.ArchivePage),
+    title: 'News archive - Interchouette',
+    data: {
+      description: 'Weekly archived Interchouette news snapshots.',
+      titleKey: 'titleArchive',
+      descriptionKey: 'descArchive',
     },
   },
   {

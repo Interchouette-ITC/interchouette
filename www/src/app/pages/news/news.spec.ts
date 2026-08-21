@@ -26,6 +26,9 @@ describe('NewsPage', () => {
     expect(el.textContent).toContain(COPY.en.news.tabItcLinkedIn);
     expect(el.querySelector('.news-sources .fa-linkedin')).toBeTruthy();
     expect(el.querySelector('.news-sources .fa-twitter')).toBeTruthy();
+    expect(el.querySelector('a[routerlink="/archive"]')?.textContent?.trim()).toBe(
+      COPY.en.news.archiveLink,
+    );
     expect(loadSpy).toHaveBeenCalled();
   });
 });

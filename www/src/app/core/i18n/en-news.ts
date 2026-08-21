@@ -12,4 +12,12 @@ export const EN_NEWS = {
   cacheNote: 'Refreshes about every 4 hours.',
   profileItcLinkedIn: 'Interchouette on LinkedIn',
   profileItcX: '@interchouette on X',
+  archiveLink: 'Archive',
+  archiveTitle: 'News archive',
+  archiveLoading: 'Loading archive…',
+  archiveError: 'Could not load the archive right now.',
+  archiveEmpty: 'No archived weeks yet.',
+  archiveSelectWeek: 'Select a week',
+  archiveBackToNews: 'Back to news',
+  archiveSnapshot: 'Snapshot from {time}',
 } as const;

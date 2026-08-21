@@ -1,0 +1,31 @@
+# Local Postgres for news ISO-week archive (`DATABASE_URL`).
+# Not used by MCP; production archive uses Render Postgres.
+#
+#   make news-pg-up
+#   # then set in repo-root .env:
+#   DATABASE_URL=postgres://interchouette:interchouette_local@127.0.0.1:5432/interchouette?sslmode=disable
+
+name: interchouette-news
+
+services:
+  news-pg:
+    image: postgres:16-alpine
+    container_name: interchouette-news-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: interchouette
+      POSTGRES_PASSWORD: interchouette_local
+      POSTGRES_DB: interchouette
+    ports:
+      - "5432:5432"
+    volumes:
+      - news-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U interchouette -d interchouette"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  news-pg-data:
+    name: interchouette-news-pg

@@ -13,6 +13,7 @@ CLIPPY_FLAGS := -D warnings -D clippy::all -D clippy::pedantic -D clippy::nurser
 
 .PHONY: help run run-www mcp-lint mcp-test mcp-build \
 	chat-lint chat-test chat-build \
+	news-pg-up news-pg-down \
 	mcp-docker-build mcp-docker-push-hub \
 	mcp-docker-push-ghcr-personal mcp-docker-push-ghcr-itc \
 	mcp-docker-push
@@ -26,6 +27,7 @@ help:
 	@echo "Local"
 	@echo "  make run       chat API + WebSocket (http://127.0.0.1:8080)"
 	@echo "  make run-www   Angular dev server (http://127.0.0.1:4200)"
+	@echo "  make news-pg-up / news-pg-down   local Postgres for news archive"
 	@echo "Tags: :dev :latest only"
 	@echo "Images: $(MCP_HUB_IMAGE) | $(MCP_GHCR_ORG_IMAGE)"
 
@@ -46,6 +48,14 @@ chat-test:
 
 chat-build:
 	cd backend && cargo build --release
+
+# Local Postgres for news archive (docker/docker-compose.news-pg.yml).
+# After up, set DATABASE_URL in repo-root .env (see backend/README.md).
+news-pg-up:
+	docker compose -f docker/docker-compose.news-pg.yml up -d
+
+news-pg-down:
+	docker compose -f docker/docker-compose.news-pg.yml down
 
 # Build then exec the binary (do not leave cargo run holding the target lock).
 # Loads repo-root .env via backend/src/main.rs. Run www in another terminal: make run-www

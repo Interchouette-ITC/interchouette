@@ -16,6 +16,8 @@ Public hostname: **`https://api.interchouette.net`** (same Render web service; f
 - `GET /v1/news`
 - `GET /v1/news/rss.xml`
 - `GET /v1/news/atom.xml`
+- `GET /v1/news/archive`
+- `GET /v1/news/archive/{week_id}`
 
 Session, WebSocket, and `/v1/book` stay implemented but are omitted from the public document.
 
@@ -39,8 +41,23 @@ Session, WebSocket, and `/v1/book` stay implemented but are omitted from the pub
 | `LINKEDIN_LI_AT`       | LinkedIn `li_at` session cookie for `/v1/news` LinkedIn fetches (server-only)       |
 | `NEWS_CACHE_TTL_SECS`  | News feed cache lifetime in seconds (default `14400`, 4 hours)                      |
 | `NEWS_FETCH_LIMIT`     | Max posts per feed on `/v1/news` (default `8`)                                      |
+| `DATABASE_URL`         | Optional Postgres URL for durable ISO-week news archive (`/v1/news/archive`)        |
 
-`GET /v1/news` (and RSS/Atom siblings) share one in-memory cache (default 4 hours). The `/news` page, WebMCP `get_news`, and remote MCP `get_news` call the JSON route. Apex `/feed`, `/rss.xml`, and `/atom.xml` redirect to the API feed URLs. Set `LINKEDIN_LI_AT` from your browser LinkedIn cookies when the ITC LinkedIn feed should populate; rotate it when LinkedIn returns an authwall.
+`GET /v1/news` (and RSS/Atom siblings) share one in-memory cache (default 4 hours). Successful refreshes also upsert the current ISO week into Postgres when `DATABASE_URL` is set (last snapshot of the week; keep 52 weeks). Without `DATABASE_URL`, live news still works; archive list is empty and week GETs return 404. The `/news` page, WebMCP `get_news`, and remote MCP `get_news` call the JSON route. `/archive` reads the archive endpoints. Apex `/feed`, `/rss.xml`, and `/atom.xml` redirect to the API feed URLs. Set `LINKEDIN_LI_AT` from your browser LinkedIn cookies when the ITC LinkedIn feed should populate; rotate it when LinkedIn returns an authwall.
+
+### Local news Postgres
+
+```bash
+make news-pg-up
+```
+
+Then add to repo-root `.env` (gitignored):
+
+```bash
+DATABASE_URL=postgres://interchouette:interchouette_local@127.0.0.1:5432/interchouette?sslmode=disable
+```
+
+Compose file: `docker/docker-compose.news-pg.yml`. Stop with `make news-pg-down`.
 
 Bot OAuth scopes for DM + presence: `im:write`, `chat:write`, `users:read`, `dnd:read`, plus `im:history` for Socket Mode inbound.
 

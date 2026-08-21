@@ -21,6 +21,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://interchouette.net/archive</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://api.interchouette.net/v1/news/rss.xml</loc>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
