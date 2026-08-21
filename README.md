@@ -56,7 +56,7 @@ npm run ci
 
 CI (GitHub Actions on `dev` / PRs into `dev`): Prettier, `npm audit --audit-level=high`, production build + prerender, unit tests, and a static publish layout check (including MCP discovery files). Pin Node with `www/.nvmrc` (**24.19.0**). On push to `dev` after those steps succeed, CI calls the static-site Render deploy hook (`RENDER_DEPLOY_HOOK_URL` org secret). Keep Render Auto-Deploy **Off** so only that hook triggers production.
 
-Chat web service (`chat.interchouette.net`): Render Docker from `backend/Dockerfile` (context `.`), auto-deploy when CI checks pass and `backend/**` changes.
+Chat web service (`api.interchouette.net`): Render Docker from `backend/Dockerfile` (context `.`), auto-deploy when CI checks pass and `backend/**` changes.
 
 Interchouette MCP image CI (on `mcp/` / `db/` / Docker changes): builds and pushes `interchouette/interchouette-mcp` `:dev` and `:latest`, then calls the MCP Render deploy hook (`RENDER_DEPLOY_HOOK_URL_MCP` org secret).
 
@@ -66,19 +66,21 @@ E2E: Playwright specs in `www/e2e/` (`npm run e2e` from `www/`) with **desktop**
 
 Dashboard → Redirects/Rewrites must **not** Redirect `/*` to `/index.html` (that 301s `/terms` → `/index.html` and breaks clean URLs). Use:
 
-| Source                       | Destination               | Action                       |
-| ---------------------------- | ------------------------- | ---------------------------- |
-| `/CV/CV_Gregory_Roussac.pdf` | `/CV/Gregory_Roussac.pdf` | Redirect                     |
-| `/CV/CV_Roussac.pdf`         | `/CV/Gregory_Roussac.pdf` | Redirect                     |
-| `/CV/`                       | `/CV`                     | Redirect                     |
-| `/about`                     | `/about/index.html`       | **Rewrite**                  |
-| `/news`                      | `/news/index.html`        | **Rewrite**                  |
-| `/terms`                     | `/terms/index.html`       | **Rewrite**                  |
-| `/privacy`                   | `/privacy/index.html`     | **Rewrite**                  |
-| `/account`                   | `/account/index.html`     | **Rewrite**                  |
-| `/gis-signin`                | `/gis-signin/index.html`  | **Rewrite**                  |
-| `/CV`                        | `/CV/index.html`          | **Rewrite**                  |
-| `/feed`                      | `/rss.xml`                | Redirect                     |
-| `/*`                         | `/index.html`             | **Rewrite** (never Redirect) |
+| Source                       | Destination                                      | Action                       |
+| ---------------------------- | ------------------------------------------------ | ---------------------------- |
+| `/CV/CV_Gregory_Roussac.pdf` | `/CV/Gregory_Roussac.pdf`                        | Redirect                     |
+| `/CV/CV_Roussac.pdf`         | `/CV/Gregory_Roussac.pdf`                        | Redirect                     |
+| `/CV/`                       | `/CV`                                            | Redirect                     |
+| `/about`                     | `/about/index.html`                              | **Rewrite**                  |
+| `/news`                      | `/news/index.html`                               | **Rewrite**                  |
+| `/terms`                     | `/terms/index.html`                              | **Rewrite**                  |
+| `/privacy`                   | `/privacy/index.html`                            | **Rewrite**                  |
+| `/account`                   | `/account/index.html`                            | **Rewrite**                  |
+| `/gis-signin`                | `/gis-signin/index.html`                         | **Rewrite**                  |
+| `/CV`                        | `/CV/index.html`                                 | **Rewrite**                  |
+| `/feed`                      | `https://api.interchouette.net/v1/news/rss.xml`  | Redirect                     |
+| `/rss.xml`                   | `https://api.interchouette.net/v1/news/rss.xml`  | Redirect                     |
+| `/atom.xml`                  | `https://api.interchouette.net/v1/news/atom.xml` | Redirect                     |
+| `/*`                         | `/index.html`                                    | **Rewrite** (never Redirect) |
 
 Same rules live in `www/public/_redirects` for hosts that honor it. The static build also writes sibling files (`news.html`, `about.html`, …) so clean URLs still get prerendered HTML when the SPA catch-all would otherwise win.

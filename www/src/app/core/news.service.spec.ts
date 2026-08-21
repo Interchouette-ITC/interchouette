@@ -10,37 +10,35 @@ describe('NewsService', () => {
     vi.unstubAllGlobals();
   });
 
-  it('seeds feeds from news-snapshot.json on the server', async () => {
-    const snapshot = {
-      fetched_at: '2026-08-20T12:00:00.000Z',
+  it('loads feeds from API /v1/news', async () => {
+    const live = {
+      fetched_at: '2026-08-20T13:00:00.000Z',
       cache_ttl_secs: 14400,
       feeds: {
         itc_linkedin: {
-          items: [{ id: 'li1', text: 'LinkedIn snapshot post', url: 'https://example.com/li' }],
+          items: [{ id: 'li2', text: 'LinkedIn live post', url: 'https://example.com/li2' }],
           profile_url: 'https://www.linkedin.com/company/interchouette-itc/',
         },
         itc_x: {
-          items: [{ id: 'x1', text: 'X snapshot post', url: 'https://example.com/x' }],
+          items: [{ id: 'x2', text: 'X live post', url: 'https://example.com/x2' }],
           profile_url: 'https://x.com/interchouette',
         },
       },
     };
 
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (input: RequestInfo | URL) => {
-        const url = String(input);
-        if (url.includes('news-snapshot.json')) {
-          return new Response(JSON.stringify(snapshot), { status: 200 });
-        }
-        return new Response('not found', { status: 404 });
-      }),
-    );
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/v1/news')) {
+        return new Response(JSON.stringify(live), { status: 200 });
+      }
+      return new Response('not found', { status: 404 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
 
     TestBed.configureTestingModule({
       providers: [
         NewsService,
-        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: PLATFORM_ID, useValue: 'browser' },
         {
           provide: LocaleService,
           useValue: {
@@ -59,10 +57,9 @@ describe('NewsService', () => {
     const news = TestBed.inject(NewsService);
     news.load();
     await vi.waitFor(() => {
-      expect(news.feeds()?.itc_x.items[0]?.text).toBe('X snapshot post');
+      expect(news.feeds()?.itc_x.items[0]?.text).toBe('X live post');
     });
-
-    expect(news.feeds()?.itc_linkedin.items[0]?.text).toBe('LinkedIn snapshot post');
-    expect(news.loading()).toBe(false);
+    expect(news.feeds()?.itc_linkedin.items[0]?.text).toBe('LinkedIn live post');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('/v1/news');
   });
 });

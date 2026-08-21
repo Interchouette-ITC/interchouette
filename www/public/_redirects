@@ -18,8 +18,10 @@
 # CV canonical without trailing slash
 /CV/  /CV  301
 
-# Feed alias (apex RSS is the syndication file)
-/feed  /rss.xml  301
+# Feed aliases → live API (same 4h cache as GET /v1/news)
+/feed     https://api.interchouette.net/v1/news/rss.xml   301
+/rss.xml  https://api.interchouette.net/v1/news/rss.xml   301
+/atom.xml https://api.interchouette.net/v1/news/atom.xml  301
 
 # SPA fallback: unknown paths → Angular shell (client ** → home)
 /*  /index.html  200

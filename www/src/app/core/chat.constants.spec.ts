@@ -1,25 +1,21 @@
-import { describe, expect, it } from 'vitest';
+import { apiBase, chatWsUrl } from './chat.constants';
 
-import { chatApiBase, chatWsUrl } from './chat.constants';
-
-describe('chat.constants', () => {
-  it('uses localhost API on local hostnames', () => {
-    expect(chatApiBase('127.0.0.1')).toBe('http://127.0.0.1:8080');
-    expect(chatApiBase('localhost')).toBe('http://localhost:8080');
+describe('apiBase', () => {
+  it('uses local chat port on loopback hosts', () => {
+    expect(apiBase('127.0.0.1')).toBe('http://127.0.0.1:8080');
+    expect(apiBase('localhost')).toBe('http://localhost:8080');
   });
 
-  it('keeps chat on .net for every public TLD', () => {
-    expect(chatApiBase('interchouette.net')).toBe('https://chat.interchouette.net');
-    expect(chatApiBase('www.interchouette.net')).toBe('https://chat.interchouette.net');
-    expect(chatApiBase('interchouette.nl')).toBe('https://chat.interchouette.net');
-    expect(chatApiBase('www.interchouette.nl')).toBe('https://chat.interchouette.net');
-    expect(chatApiBase('interchouette.fr')).toBe('https://chat.interchouette.net');
-    expect(chatApiBase('www.interchouette.fr')).toBe('https://chat.interchouette.net');
+  it('uses api.interchouette.net on public site hosts', () => {
+    expect(apiBase('interchouette.net')).toBe('https://api.interchouette.net');
+    expect(apiBase('www.interchouette.net')).toBe('https://api.interchouette.net');
+    expect(apiBase('interchouette.nl')).toBe('https://api.interchouette.net');
+    expect(apiBase('www.interchouette.nl')).toBe('https://api.interchouette.net');
+    expect(apiBase('interchouette.fr')).toBe('https://api.interchouette.net');
+    expect(apiBase('www.interchouette.fr')).toBe('https://api.interchouette.net');
   });
 
-  it('builds a websocket session URL', () => {
-    const url = chatWsUrl('abc');
-    expect(url).toContain('/v1/sessions/abc/ws');
-    expect(url.startsWith('ws')).toBe(true);
+  it('builds a matching websocket URL', () => {
+    expect(chatWsUrl('abc')).toMatch(/\/v1\/sessions\/abc\/ws$/);
   });
 });

@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, PLATFORM_ID, PendingTasks, inject, signal } from '@angular/core';
 
-import { chatApiBase } from './chat.constants';
+import { apiBase } from './chat.constants';
 import { fillCopy } from './i18n/catalog';
 import { LocaleService } from './locale.service';
 import type { SiteLocale } from './site-locale';
@@ -47,9 +47,8 @@ export class NewsService {
   private liveLoaded = false;
 
   /**
-   * Load news for the active site locale.
-   * Prerender seeds from `/news-snapshot.json` (PendingTasks) so post text is in HTML.
-   * Browser refreshes from live `GET /v1/news` after hydrate.
+   * Load news from API `GET /v1/news` (4h server cache).
+   * No static snapshot: browser and future SSR both use the live API.
    */
   load(): void {
     const locale = this.locale.locale;
@@ -70,12 +69,7 @@ export class NewsService {
     }
     this.pendingTasks.run(async () => {
       try {
-        if (this.feeds() === null) {
-          await this.seedFromSnapshot();
-        }
-        if (isPlatformBrowser(this.platformId)) {
-          await this.fetchLive(locale);
-        }
+        await this.fetchLive(locale);
       } finally {
         this.loading.set(false);
         this.inFlight = false;
@@ -99,24 +93,9 @@ export class NewsService {
     this.loadedLocale = locale;
   }
 
-  private async seedFromSnapshot(): Promise<void> {
-    try {
-      const res = await fetch('/news-snapshot.json');
-      if (!res.ok) {
-        return;
-      }
-      const body = (await res.json()) as NewsResponse;
-      if (body?.feeds) {
-        this.applyResponse(body, this.locale.locale);
-      }
-    } catch {
-      /* soft: prerender/build still succeeds with empty list */
-    }
-  }
-
   private async fetchLive(locale: SiteLocale): Promise<void> {
     try {
-      const res = await fetch(`${chatApiBase()}/v1/news?locale=${locale}`);
+      const res = await fetch(`${apiBase()}/v1/news?locale=${locale}`);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }

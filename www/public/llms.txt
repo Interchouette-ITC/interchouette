@@ -9,8 +9,8 @@ Gregory Roussac is a Rust and Wasm freelance developer operating Interchouette I
 - [CV PDF](https://interchouette.net/CV/Gregory_Roussac.pdf): downloadable curriculum vitae
 - [About](https://interchouette.net/about): how the site is built
 - [News](https://interchouette.net/news)
-- [News RSS](https://interchouette.net/rss.xml)
-- [News Atom](https://interchouette.net/atom.xml)
+- [News RSS](https://api.interchouette.net/v1/news/rss.xml)
+- [News Atom](https://api.interchouette.net/v1/news/atom.xml)
 - [Privacy Policy](https://interchouette.net/privacy)
 - [Terms of Service](https://interchouette.net/terms)
 
@@ -39,6 +39,7 @@ When the browser supports WebMCP, this site registers tools via Angular (runtime
 - `list_public_pages` - public page list with absolute URLs
 - `open_public_page` - navigate this tab to a public page
 - `get_remote_mcp` - official Streamable HTTP MCP endpoint (not in-page WebMCP)
+- `get_news` - ITC LinkedIn and X posts from API `GET /v1/news` (JSON cached about every 4 hours)
 
 When the chat widget is enabled:
 
@@ -49,15 +50,17 @@ When the chat widget is enabled:
 `get_remote_mcp` returns the official Streamable HTTP MCP URL above.
 In-page WebMCP is not the remote MCP HTTP endpoint.
 
-## Chat HTTP (public OpenAPI)
+## HTTP API (public OpenAPI)
 
-Visitor chat and news API (`https://chat.interchouette.net`):
+Site API host (`https://api.interchouette.net`): chat HTTP, news, health.
 
-- Public OpenAPI document: https://chat.interchouette.net/openapi.json
-- Documented routes: `GET /health`, `GET /ready`, `GET /v1/presence`, `GET /v1/news`
+- Public OpenAPI document: https://api.interchouette.net/openapi.json
+- Documented routes: `GET /health`, `GET /ready`, `GET /v1/presence`, `GET /v1/news`, `GET /v1/news/rss.xml`, `GET /v1/news/atom.xml`
 - Session, WebSocket, and booking HTTP endpoints are private (not in the public OpenAPI)
 
-`GET /v1/news` is the JSON source used by the site and by build-time syndication. Apex feeds for readers and agents:
+News (JSON + RSS + Atom) uses the same in-memory cache (about every 4 hours):
 
-- RSS: https://interchouette.net/rss.xml
-- Atom: https://interchouette.net/atom.xml
+- JSON: https://api.interchouette.net/v1/news
+- RSS: https://api.interchouette.net/v1/news/rss.xml
+- Atom: https://api.interchouette.net/v1/news/atom.xml
+- Apex aliases: `/feed`, `/rss.xml`, `/atom.xml` redirect to the API feeds

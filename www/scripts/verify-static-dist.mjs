@@ -28,9 +28,6 @@ const required = [
   '_redirects',
   'sitemap.xml',
   'llms.txt',
-  'news-snapshot.json',
-  'rss.xml',
-  'atom.xml',
   '.well-known/mcp.json',
   'fonts/fontawesome-subset.woff2',
   'workers/cold-start.js',
@@ -93,20 +90,6 @@ async function mustBePacked(rel) {
 
 const MCP_ENDPOINT = 'https://mcp.interchouette.net/';
 
-async function mustBeXmlFeed(rel) {
-  const raw = await readFile(join(root, rel), 'utf8');
-  const trimmed = raw.trimStart();
-  if (trimmed.startsWith('<!DOCTYPE html') || trimmed.startsWith('<html')) {
-    console.error(`${rel} looks like SPA HTML, not XML`);
-    process.exitCode = 1;
-    return;
-  }
-  if (!trimmed.startsWith('<?xml') && !trimmed.startsWith('<rss') && !trimmed.startsWith('<feed')) {
-    console.error(`${rel} must start with XML (rss or atom)`);
-    process.exitCode = 1;
-  }
-}
-
 async function mustDiscoverMcp() {
   const card = JSON.parse(await readFile(join(root, '.well-known/mcp.json'), 'utf8'));
   if (card?.transport?.type !== 'streamable-http') {
@@ -145,8 +128,6 @@ async function mustDiscoverMcp() {
 
 await Promise.all(required.map(mustExist));
 await Promise.all(htmlPages.map(mustBePacked));
-await mustBeXmlFeed('rss.xml');
-await mustBeXmlFeed('atom.xml');
 await mustDiscoverMcp();
 if (process.exitCode) {
   console.error(`static publish check failed under ${root}`);
