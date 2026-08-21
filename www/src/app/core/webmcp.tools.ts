@@ -43,6 +43,8 @@ export function siteOverviewText(): string {
     `CV PDF: ${SITE_ORIGIN}/CV/Gregory_Roussac.pdf`,
     `About: ${SITE_ORIGIN}/about`,
     `News: ${SITE_ORIGIN}/news`,
+    `News RSS: ${SITE_ORIGIN}/rss.xml`,
+    `News Atom: ${SITE_ORIGIN}/atom.xml`,
     `Privacy: ${SITE_ORIGIN}/privacy`,
     `Terms: ${SITE_ORIGIN}/terms`,
     'Contact email: contact@interchouette.net',
@@ -61,9 +63,12 @@ export function contactText(): string {
 }
 
 export function listPagesText(): string {
-  return WEBMCP_PAGE_PATHS.map(
+  const pages = WEBMCP_PAGE_PATHS.map(
     (path) => `- ${path === '' ? 'home' : path}: ${absolutePageUrl(path)}`,
-  ).join('\n');
+  );
+  pages.push(`- news RSS: ${SITE_ORIGIN}/rss.xml`);
+  pages.push(`- news Atom: ${SITE_ORIGIN}/atom.xml`);
+  return pages.join('\n');
 }
 
 export function remoteMcpText(): string {

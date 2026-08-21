@@ -9,6 +9,8 @@ Gregory Roussac is a Rust and Wasm freelance developer operating Interchouette I
 - [CV PDF](https://interchouette.net/CV/Gregory_Roussac.pdf): downloadable curriculum vitae
 - [About](https://interchouette.net/about): how the site is built
 - [News](https://interchouette.net/news)
+- [News RSS](https://interchouette.net/rss.xml)
+- [News Atom](https://interchouette.net/atom.xml)
 - [Privacy Policy](https://interchouette.net/privacy)
 - [Terms of Service](https://interchouette.net/terms)
 
@@ -54,3 +56,8 @@ Visitor chat and news API (`https://chat.interchouette.net`):
 - Public OpenAPI document: https://chat.interchouette.net/openapi.json
 - Documented routes: `GET /health`, `GET /ready`, `GET /v1/presence`, `GET /v1/news`
 - Session, WebSocket, and booking HTTP endpoints are private (not in the public OpenAPI)
+
+`GET /v1/news` is the JSON source used by the site and by build-time syndication. Apex feeds for readers and agents:
+
+- RSS: https://interchouette.net/rss.xml
+- Atom: https://interchouette.net/atom.xml

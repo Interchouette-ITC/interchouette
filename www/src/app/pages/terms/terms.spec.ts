@@ -33,8 +33,12 @@ describe('TermsPage', () => {
     legalTab.click();
     fixture.detectChanges();
 
-    expect(el.querySelector('#terms-panel-legal')).toBeTruthy();
-    expect(el.querySelector('#terms-panel-intro')).toBeFalsy();
+    const legalPanel = el.querySelector('#terms-panel-legal') as HTMLElement;
+    const introPanel = el.querySelector('#terms-panel-intro') as HTMLElement;
+    expect(legalPanel).toBeTruthy();
+    expect(introPanel).toBeTruthy();
+    expect(legalPanel.hasAttribute('hidden')).toBe(false);
+    expect(introPanel.hasAttribute('hidden')).toBe(true);
     expect(legalTab.getAttribute('aria-selected')).toBe('true');
   });
 });

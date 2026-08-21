@@ -66,65 +66,64 @@
       </section>
     } @else {
       @for (tab of tabs; track tab) {
-        @if (isActive(tab)) {
-          <section
-            class="page-tabs__panel"
-            role="tabpanel"
-            [id]="'news-panel-' + tab"
-            [attr.aria-labelledby]="'news-tab-' + tab"
-          >
-            @if (showFeedNotice(activeFeed())) {
-              <p class="news-empty">{{ feedNotice(activeFeed()) }}</p>
-              @if (activeFeed()?.profile_url; as profileUrl) {
-                <p>
-                  <a [href]="profileUrl" target="_blank" rel="noopener noreferrer">{{
-                    profileLabel()
-                  }}</a>
-                </p>
-              }
-            } @else {
-              <ul class="news-list">
-                @for (item of activeFeed()?.items ?? []; track item.id) {
-                  <li class="news-item">
-                    @if (postDate(item)) {
-                      <time class="news-item__date" [attr.datetime]="item.published_at ?? null">{{
-                        postDate(item)
-                      }}</time>
-                    }
-                    <p class="news-item__text">
-                      @for (part of linkParts(item.text); track $index) {
-                        @if (part.href) {
-                          <a
-                            class="news-item__inline-link"
-                            [href]="part.href"
-                            [attr.target]="isHttpHref(part.href) ? '_blank' : null"
-                            [attr.rel]="isHttpHref(part.href) ? 'noopener noreferrer' : null"
-                            >{{ part.t }}</a
-                          >
-                        } @else {
-                          <span>{{ part.t }}</span>
-                        }
-                      }
-                    </p>
-                    <a
-                      class="news-item__link"
-                      [href]="item.url"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <i
-                        class="news-item__link-icon"
-                        [class]="tabIconClass(activeTab())"
-                        aria-hidden="true"
-                      ></i>
-                      <span>{{ viewOnLabel() }}</span>
-                    </a>
-                  </li>
-                }
-              </ul>
+        <section
+          class="page-tabs__panel"
+          role="tabpanel"
+          [id]="'news-panel-' + tab"
+          [attr.aria-labelledby]="'news-tab-' + tab"
+          [hidden]="!isActive(tab)"
+        >
+          @if (showFeedNotice(tab)) {
+            <p class="news-empty">{{ feedNotice(tab) }}</p>
+            @if (feedFor(tab)?.profile_url; as profileUrl) {
+              <p>
+                <a [href]="profileUrl" target="_blank" rel="noopener noreferrer">{{
+                  profileLabel(tab)
+                }}</a>
+              </p>
             }
-          </section>
-        }
+          } @else {
+            <ul class="news-list">
+              @for (item of feedFor(tab)?.items ?? []; track item.id) {
+                <li class="news-item">
+                  @if (postDate(item)) {
+                    <time class="news-item__date" [attr.datetime]="item.published_at ?? null">{{
+                      postDate(item)
+                    }}</time>
+                  }
+                  <p class="news-item__text">
+                    @for (part of linkParts(item.text); track $index) {
+                      @if (part.href) {
+                        <a
+                          class="news-item__inline-link"
+                          [href]="part.href"
+                          [attr.target]="isHttpHref(part.href) ? '_blank' : null"
+                          [attr.rel]="isHttpHref(part.href) ? 'noopener noreferrer' : null"
+                          >{{ part.t }}</a
+                        >
+                      } @else {
+                        <span>{{ part.t }}</span>
+                      }
+                    }
+                  </p>
+                  <a
+                    class="news-item__link"
+                    [href]="item.url"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <i
+                      class="news-item__link-icon"
+                      [class]="tabIconClass(tab)"
+                      aria-hidden="true"
+                    ></i>
+                    <span>{{ viewOnLabel(tab) }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </section>
       }
     }
   </div>

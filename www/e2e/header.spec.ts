@@ -30,7 +30,9 @@ test.describe('site header and locale', () => {
     await expect(page.getByRole('heading', { name: 'News' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Interchouette · LinkedIn' })).toBeVisible();
     await expect(page.getByRole('tab', { name: 'Interchouette · X' })).toBeVisible();
-    await expect(page.getByText('No posts yet.')).toBeVisible();
+    await expect(
+      page.getByRole('tabpanel').filter({ visible: true }).getByText('No posts yet.'),
+    ).toBeVisible();
   });
 
   test('header language dropdown switches locale on localhost', async ({ page }) => {

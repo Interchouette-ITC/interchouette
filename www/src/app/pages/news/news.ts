@@ -1,11 +1,4 @@
-import {
-  afterNextRender,
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  Injector,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { LocaleService } from '../../core/locale.service';
@@ -38,8 +31,7 @@ export class NewsPage {
   protected readonly xProfileUrl = 'https://x.com/interchouette';
 
   constructor() {
-    const injector = inject(Injector);
-    afterNextRender(() => this.news.load(), { injector });
+    this.news.load();
   }
 
   protected tabLabel(id: NewsTabId): string {
@@ -68,12 +60,12 @@ export class NewsPage {
     onPageTabKeydown(event, index, TAB_ORDER, (id) => this.activeTab.set(id));
   }
 
-  protected activeFeed(): NewsFeed | null {
+  protected feedFor(id: NewsTabId): NewsFeed | null {
     const feeds = this.news.feeds();
     if (!feeds) {
       return null;
     }
-    switch (this.activeTab()) {
+    switch (id) {
       case 'itcLinkedIn':
         return feeds.itc_linkedin;
       case 'itcX':
@@ -81,8 +73,8 @@ export class NewsPage {
     }
   }
 
-  protected profileLabel(): string {
-    switch (this.activeTab()) {
+  protected profileLabel(id: NewsTabId): string {
+    switch (id) {
       case 'itcLinkedIn':
         return this.copy.news.profileItcLinkedIn;
       case 'itcX':
@@ -90,8 +82,8 @@ export class NewsPage {
     }
   }
 
-  protected viewOnLabel(): string {
-    return this.activeTab() === 'itcX' ? this.copy.news.viewOnX : this.copy.news.viewOnLinkedIn;
+  protected viewOnLabel(id: NewsTabId): string {
+    return id === 'itcX' ? this.copy.news.viewOnX : this.copy.news.viewOnLinkedIn;
   }
 
   protected postDate(item: NewsItem): string {
@@ -110,21 +102,18 @@ export class NewsPage {
     return !this.news.loading() && this.news.error() !== null && this.news.feeds() === null;
   }
 
-  protected feedNotice(feed: NewsFeed | null): string | null {
+  protected feedNotice(id: NewsTabId): string | null {
+    const feed = this.feedFor(id);
     if (feed === null || feed.items.length > 0) {
       return null;
     }
     if (feed.error != null && feed.error.length > 0) {
       return feed.error;
     }
-    switch (this.activeTab()) {
-      case 'itcX':
-      case 'itcLinkedIn':
-        return this.copy.news.empty;
-    }
+    return this.copy.news.empty;
   }
 
-  protected showFeedNotice(feed: NewsFeed | null): boolean {
-    return !this.news.loading() && !this.showGlobalError() && this.feedNotice(feed) !== null;
+  protected showFeedNotice(id: NewsTabId): boolean {
+    return !this.news.loading() && !this.showGlobalError() && this.feedNotice(id) !== null;
   }
 }

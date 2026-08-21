@@ -15,9 +15,9 @@ describe('NewsPage', () => {
   });
 
   it('renders title and tab labels', () => {
-    const fixture = TestBed.createComponent(NewsPage);
     const news = TestBed.inject(NewsService);
     const loadSpy = vi.spyOn(news, 'load').mockImplementation(() => undefined);
+    const fixture = TestBed.createComponent(NewsPage);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
 
