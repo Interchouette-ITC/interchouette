@@ -307,7 +307,7 @@ mod tests {
         assert_eq!(index.weeks.len(), 0);
         assert!(archive.get_week("en", "2026-W34").await.is_none());
         assert!(archive
-            .load_latest_if_fresh("en", Duration::from_secs(60))
+            .load_latest_if_fresh("en", Duration::from_mins(1))
             .await
             .is_none());
     }
