@@ -17,8 +17,18 @@
   </url>
   <url>
     <loc>https://interchouette.net/news</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://api.interchouette.net/v1/news/rss.xml</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://api.interchouette.net/v1/news/atom.xml</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
   </url>
   <url>
     <loc>https://interchouette.net/CV/Gregory_Roussac.pdf</loc>
