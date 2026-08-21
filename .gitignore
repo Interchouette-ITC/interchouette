@@ -58,3 +58,8 @@ Thumbs.db
 # Local secrets
 .env
 .env.*
+
+# Build-time news syndication (scripts/generate-news-static.mjs)
+/www/public/news-snapshot.json
+/www/public/rss.xml
+/www/public/atom.xml

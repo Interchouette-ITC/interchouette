@@ -64,6 +64,7 @@ export class SeoService {
 
     this.setCanonical(canonical);
     this.setHreflang(path);
+    this.setFeedAlternates();
   }
 
   private leafRoute(): ActivatedRoute {
@@ -103,6 +104,28 @@ export class SeoService {
       link.setAttribute('hreflang', hreflang);
       link.setAttribute('href', href);
       head.appendChild(link);
+    }
+  }
+
+  /** Keep apex RSS/Atom discovery links present across client navigations. */
+  private setFeedAlternates(): void {
+    const head = this.doc.head;
+    const feeds: [string, string, string][] = [
+      ['application/rss+xml', 'Interchouette News RSS', `${SITE_ORIGIN}/rss.xml`],
+      ['application/atom+xml', 'Interchouette News Atom', `${SITE_ORIGIN}/atom.xml`],
+    ];
+    for (const [type, title, href] of feeds) {
+      let link = head.querySelector<HTMLLinkElement>(
+        `link[rel="alternate"][type="${type}"][href="${href}"]`,
+      );
+      if (!link) {
+        link = this.doc.createElement('link');
+        link.setAttribute('rel', 'alternate');
+        link.setAttribute('type', type);
+        link.setAttribute('title', title);
+        link.setAttribute('href', href);
+        head.appendChild(link);
+      }
     }
   }
 }

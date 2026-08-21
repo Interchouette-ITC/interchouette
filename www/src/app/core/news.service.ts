@@ -1,4 +1,5 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { Injectable, PLATFORM_ID, PendingTasks, inject, signal } from '@angular/core';
 
 import { chatApiBase } from './chat.constants';
 import { fillCopy } from './i18n/catalog';
@@ -32,6 +33,8 @@ export interface NewsResponse {
 @Injectable({ providedIn: 'root' })
 export class NewsService {
   private readonly locale = inject(LocaleService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly pendingTasks = inject(PendingTasks);
 
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
@@ -40,16 +43,44 @@ export class NewsService {
   readonly cacheTtlSecs = signal<number | null>(null);
 
   private loadedLocale: SiteLocale | null = null;
+  private inFlight = false;
+  private liveLoaded = false;
 
-  /** Load news for the active site locale (once per locale per page lifetime). */
+  /**
+   * Load news for the active site locale.
+   * Prerender seeds from `/news-snapshot.json` (PendingTasks) so post text is in HTML.
+   * Browser refreshes from live `GET /v1/news` after hydrate.
+   */
   load(): void {
     const locale = this.locale.locale;
-    if (this.loading() || (this.loadedLocale === locale && this.feeds() !== null)) {
+    if (this.inFlight) {
       return;
     }
-    this.loading.set(true);
+    if (
+      this.loadedLocale === locale &&
+      this.feeds() !== null &&
+      (!isPlatformBrowser(this.platformId) || this.liveLoaded)
+    ) {
+      return;
+    }
+    this.inFlight = true;
     this.error.set(null);
-    void this.fetch(locale);
+    if (this.feeds() === null) {
+      this.loading.set(true);
+    }
+    this.pendingTasks.run(async () => {
+      try {
+        if (this.feeds() === null) {
+          await this.seedFromSnapshot();
+        }
+        if (isPlatformBrowser(this.platformId)) {
+          await this.fetchLive(locale);
+        }
+      } finally {
+        this.loading.set(false);
+        this.inFlight = false;
+      }
+    });
   }
 
   updatedLabel(): string | null {
@@ -61,22 +92,42 @@ export class NewsService {
     return fillCopy(this.locale.copy.news.updated, { time });
   }
 
-  private async fetch(locale: SiteLocale): Promise<void> {
+  private applyResponse(body: NewsResponse, locale: SiteLocale): void {
+    this.feeds.set(body.feeds);
+    this.fetchedAt.set(body.fetched_at);
+    this.cacheTtlSecs.set(body.cache_ttl_secs);
+    this.loadedLocale = locale;
+  }
+
+  private async seedFromSnapshot(): Promise<void> {
+    try {
+      const res = await fetch('/news-snapshot.json');
+      if (!res.ok) {
+        return;
+      }
+      const body = (await res.json()) as NewsResponse;
+      if (body?.feeds) {
+        this.applyResponse(body, this.locale.locale);
+      }
+    } catch {
+      /* soft: prerender/build still succeeds with empty list */
+    }
+  }
+
+  private async fetchLive(locale: SiteLocale): Promise<void> {
     try {
       const res = await fetch(`${chatApiBase()}/v1/news?locale=${locale}`);
       if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
       const body = (await res.json()) as NewsResponse;
-      this.feeds.set(body.feeds);
-      this.fetchedAt.set(body.fetched_at);
-      this.cacheTtlSecs.set(body.cache_ttl_secs);
-      this.loadedLocale = locale;
+      this.applyResponse(body, locale);
+      this.liveLoaded = true;
+      this.error.set(null);
     } catch {
-      this.error.set(this.locale.copy.news.error);
-      this.feeds.set(null);
-    } finally {
-      this.loading.set(false);
+      if (this.feeds() === null) {
+        this.error.set(this.locale.copy.news.error);
+      }
     }
   }
 }

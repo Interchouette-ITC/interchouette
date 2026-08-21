@@ -25,11 +25,15 @@ describe('webmcp.tools helpers', () => {
   it('exposes overview, contact, and page list text', () => {
     expect(siteOverviewText()).toContain('contact@interchouette.net');
     expect(siteOverviewText()).toContain('https://interchouette.net/about');
+    expect(siteOverviewText()).toContain('https://interchouette.net/rss.xml');
+    expect(siteOverviewText()).toContain('https://interchouette.net/atom.xml');
     expect(siteOverviewText()).not.toContain('mcp.interchouette.net');
     expect(contactText()).toContain('GitHub org:');
     expect(contactText()).toContain('calendar.app.google');
     expect(listPagesText()).toContain('https://interchouette.net/about');
     expect(listPagesText()).toContain('https://interchouette.net/privacy');
+    expect(listPagesText()).toContain('https://interchouette.net/rss.xml');
+    expect(listPagesText()).toContain('https://interchouette.net/atom.xml');
   });
 
   it('exposes remote MCP discovery text', () => {

@@ -36,15 +36,19 @@ describe('AboutPage', () => {
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
 
-    expect(el.querySelector('#about-panel-about')).toBeTruthy();
-    expect(el.querySelector('#about-panel-work')).toBeFalsy();
+    const aboutPanel = el.querySelector('#about-panel-about') as HTMLElement;
+    const workPanel = el.querySelector('#about-panel-work') as HTMLElement;
+    expect(aboutPanel).toBeTruthy();
+    expect(workPanel).toBeTruthy();
+    expect(aboutPanel.hasAttribute('hidden')).toBe(false);
+    expect(workPanel.hasAttribute('hidden')).toBe(true);
 
     const workTab = el.querySelector('#about-tab-work') as HTMLButtonElement;
     workTab.click();
     fixture.detectChanges();
 
-    expect(el.querySelector('#about-panel-work')).toBeTruthy();
-    expect(el.querySelector('#about-panel-about')).toBeFalsy();
+    expect(workPanel.hasAttribute('hidden')).toBe(false);
+    expect(aboutPanel.hasAttribute('hidden')).toBe(true);
     expect(workTab.getAttribute('aria-selected')).toBe('true');
     expect(el.textContent).toContain('tvscreener-rs');
 
@@ -52,7 +56,8 @@ describe('AboutPage', () => {
     siteTab.click();
     fixture.detectChanges();
 
-    expect(el.querySelector('#about-panel-site')).toBeTruthy();
+    const sitePanel = el.querySelector('#about-panel-site') as HTMLElement;
+    expect(sitePanel.hasAttribute('hidden')).toBe(false);
     expect(el.textContent).toContain('Angular');
     expect(el.textContent).toContain('Docker');
     expect(el.querySelector('a[href="https://mcp.interchouette.net/"]')).toBeTruthy();

@@ -36,7 +36,7 @@ Session, WebSocket, and `/v1/book` stay implemented but are omitted from the pub
 | `NEWS_CACHE_TTL_SECS`  | News feed cache lifetime in seconds (default `14400`, 4 hours)                      |
 | `NEWS_FETCH_LIMIT`     | Max posts per feed on `/v1/news` (default `8`)                                      |
 
-`GET /v1/news?locale=en|nl|fr` serves cached ITC LinkedIn and ITC X posts for the public `/news` page. Set `LINKEDIN_LI_AT` from your browser LinkedIn cookies when the ITC LinkedIn feed should populate; rotate it when LinkedIn returns an authwall.
+`GET /v1/news?locale=en|nl|fr` serves cached ITC LinkedIn and ITC X posts as JSON for the public `/news` page (and for the static site build that writes apex RSS/Atom). Syndication for readers and agents is on the apex site: `https://interchouette.net/rss.xml` and `https://interchouette.net/atom.xml` (not duplicated on this chat service). Set `LINKEDIN_LI_AT` from your browser LinkedIn cookies when the ITC LinkedIn feed should populate; rotate it when LinkedIn returns an authwall.
 
 Bot OAuth scopes for DM + presence: `im:write`, `chat:write`, `users:read`, `dnd:read`, plus `im:history` for Socket Mode inbound.
 
