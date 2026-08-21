@@ -29,6 +29,9 @@
       />
     </button>
   </div>
+  @if (radioEnabled) {
+    <app-radio-widget ngSkipHydration />
+  }
   <div class="avatar">
     <img
       class="center animated rollIn"
@@ -100,9 +103,6 @@
       </a>
     </p>
   </section>
-  @if (radioEnabled) {
-    <app-radio-widget ngSkipHydration />
-  }
   <nav class="icons animated pulse" [attr.aria-label]="copy.home.socialNavAria">
     <a routerLink="/CV" [attr.title]="copy.home.cv" [attr.aria-label]="copy.home.cv">
       <span class="fa-stack fa-lg" aria-hidden="true">
