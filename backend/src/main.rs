@@ -43,6 +43,10 @@ fn load_dotenv() {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // reqwest (aws-lc) + other rustls consumers can both enable ring and aws-lc;
+    // pick one process-wide provider before any TLS client starts.
+    let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
+
     load_dotenv();
     init_logging();
     let mut cli = Cli::parse();
