@@ -6,9 +6,6 @@
 </main>
 @if (!bareChrome()) {
   <app-consent-banner />
-  @if (radioEnabled) {
-    <app-radio-widget ngSkipHydration />
-  }
   @if (chatEnabled) {
     <app-chat-widget ngSkipHydration />
   }

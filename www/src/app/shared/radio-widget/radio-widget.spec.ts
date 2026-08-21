@@ -19,8 +19,8 @@ describe('RadioWidget', () => {
 
   it('creates and exposes play label before boot', () => {
     expect(fixture.componentInstance).toBeTruthy();
-    const btn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.radio-btn');
+    const btn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.radio__toggle');
     expect(btn).toBeTruthy();
-    expect(btn?.getAttribute('aria-label')).toContain('radio');
+    expect(btn?.getAttribute('aria-label')?.toLowerCase()).toContain('radio');
   });
 });

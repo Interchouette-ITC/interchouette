@@ -26,6 +26,8 @@ import {
 } from '../../core/soundcloud-widget';
 
 const FRAME_ID = 'ic-radio-player';
+/** Playlist length hint for start_track; widget still works if shorter. */
+const PLAYLIST_TRACK_HINT = 24;
 
 @Component({
   selector: 'app-radio-widget',
@@ -42,12 +44,12 @@ export class RadioWidget implements OnDestroy {
 
   protected readonly mounted = signal(false);
   protected readonly loading = signal(false);
-  protected readonly ready = signal(false);
   protected readonly playing = signal(false);
   protected readonly error = signal(false);
 
   private widget: SoundCloudWidget | null = null;
   private wired = false;
+  private started = false;
   private prefs: RadioPrefs = readRadioPrefs();
   private lastIndex = -1;
   private apiLoaded = false;
@@ -80,9 +82,8 @@ export class RadioWidget implements OnDestroy {
       return;
     }
 
-    // Pause uses local state so we never wait on SC postMessage inside the click.
     if (this.playing()) {
-      icConsoleWrite({ ns: 'ic:radio', topic: 'click', kv: { intent: 'pause' } });
+      icConsoleWrite({ ns: 'ic:radio', topic: 'click', kv: { intent: 'off' } });
       this.widget?.pause();
       this.playing.set(false);
       return;
@@ -91,22 +92,31 @@ export class RadioWidget implements OnDestroy {
     icConsoleWrite({
       ns: 'ic:radio',
       topic: 'click',
-      kv: {
-        intent: 'play',
-        meaning: 'start Interchouette playlist audio (random track)',
-        volume: this.prefs.volume,
-      },
+      kv: { intent: 'on', volume: this.prefs.volume },
     });
 
-    // Set iframe src with auto_play during the click (keeps user gesture for audio).
+    if (this.started && this.widget) {
+      this.applyVolume();
+      this.widget.play();
+      this.playing.set(true);
+      return;
+    }
+
     const frame = document.getElementById(FRAME_ID) as HTMLIFrameElement | null;
     if (!frame) {
       this.error.set(true);
       return;
     }
+
     this.error.set(false);
     this.loading.set(true);
-    frame.src = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, true);
+    this.playing.set(true);
+    this.lastIndex = pickRandomIndex(PLAYLIST_TRACK_HINT);
+    // auto_play + start_track in the same click keeps the browser gesture
+    frame.src = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
+      autoPlay: true,
+      startTrack: this.lastIndex,
+    });
     void this.bindAfterLoad(frame);
   }
 
@@ -114,13 +124,8 @@ export class RadioWidget implements OnDestroy {
     try {
       await loadSoundCloudWidgetApi();
       this.apiLoaded = true;
-    } catch (err) {
-      icConsoleWrite({
-        ns: 'ic:radio',
-        topic: 'api',
-        level: 'warn',
-        kv: { err: err instanceof Error ? err.message : String(err) },
-      });
+    } catch {
+      /* first click will retry */
     }
   }
 
@@ -142,21 +147,18 @@ export class RadioWidget implements OnDestroy {
         this.wired = true;
       }
       await this.waitReady(widget, events.READY);
-      this.ready.set(true);
+      this.started = true;
       this.applyVolume();
-      // auto_play may already be going; still shuffle to a random track
-      this.shuffleCurrent();
-      // Nudge play again after READY (second click not required if auto_play worked)
-      widget.play();
-      this.playing.set(true);
+      // Do not skip/shuffle here: that breaks auto_play from the click gesture.
       icConsoleWrite({
         ns: 'ic:radio',
         topic: 'ready',
-        kv: { meaning: 'widget ready; play requested' },
+        kv: { startTrack: this.lastIndex, meaning: 'auto_play from first click' },
       });
     } catch (err) {
       this.error.set(true);
       this.playing.set(false);
+      this.started = false;
       icConsoleWrite({
         ns: 'ic:radio',
         topic: 'boot',
@@ -170,10 +172,6 @@ export class RadioWidget implements OnDestroy {
 
   private waitFrameLoad(frame: HTMLIFrameElement): Promise<void> {
     return new Promise((resolve) => {
-      if (frame.contentDocument?.readyState === 'complete' && frame.src.includes('soundcloud')) {
-        resolve();
-        return;
-      }
       frame.addEventListener('load', () => resolve(), { once: true });
     });
   }
@@ -221,28 +219,6 @@ export class RadioWidget implements OnDestroy {
           widget.play();
         });
       });
-    });
-  }
-
-  private shuffleCurrent(): void {
-    const widget = this.widget;
-    if (!widget) {
-      return;
-    }
-    widget.getSounds((sounds) => {
-      if (sounds.length <= 1) {
-        return;
-      }
-      const index = pickRandomIndex(sounds.length, this.lastIndex);
-      this.lastIndex = index;
-      icConsoleWrite({
-        ns: 'ic:radio',
-        topic: 'shuffle',
-        kv: { index, of: sounds.length, title: sounds[index]?.title ?? 'unknown' },
-      });
-      widget.skip(index);
-      widget.setVolume(this.prefs.muted ? 0 : this.prefs.volume);
-      widget.play();
     });
   }
 

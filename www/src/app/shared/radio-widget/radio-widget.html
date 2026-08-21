@@ -1,36 +1,29 @@
-<div class="radio-dock" [class.radio-dock--playing]="playing()">
-  @if (mounted()) {
+@if (mounted()) {
+  <div class="radio" [class.radio--on]="playing()" [class.radio--busy]="loading()">
     <button
       type="button"
-      class="radio-btn"
-      [class.radio-btn--playing]="playing()"
-      [class.radio-btn--busy]="loading()"
+      class="radio__toggle"
       [disabled]="loading()"
       (click)="onToggle()"
       [attr.aria-label]="buttonLabel()"
       [attr.title]="buttonLabel()"
       [attr.aria-pressed]="playing()"
     >
-      <span class="radio-btn__icon" aria-hidden="true">
-        @if (loading()) {
-          <span class="radio-btn__spinner"></span>
-        } @else if (playing()) {
-          <span class="radio-btn__pause"></span>
-        } @else {
-          <span class="radio-btn__play"></span>
-        }
+      <span class="radio__note" aria-hidden="true">♪</span>
+      <span class="radio__tri" aria-hidden="true"></span>
+      <span class="radio__bar" aria-hidden="true">
+        <span class="radio__knob"></span>
       </span>
-      <span class="radio-btn__pulse" aria-hidden="true"></span>
     </button>
-  }
+  </div>
+}
 
-  <iframe
-    [id]="frameId"
-    class="radio-frame"
-    title="Interchouette SoundCloud radio"
-    width="166"
-    height="166"
-    allow="autoplay; encrypted-media"
-    tabindex="-1"
-  ></iframe>
-</div>
+<iframe
+  [id]="frameId"
+  class="radio-frame"
+  title="Interchouette SoundCloud radio"
+  width="166"
+  height="166"
+  allow="autoplay; encrypted-media"
+  tabindex="-1"
+></iframe>

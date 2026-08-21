@@ -1,6 +1,6 @@
 export const NL_RADIO = {
-  play: 'Interchouette-radio afspelen',
-  pause: 'Radio pauzeren',
-  loading: 'Radio laden…',
+  play: 'Radio afspelen',
+  pause: 'Radio stoppen',
+  loading: 'Laden…',
   error: 'Radio niet beschikbaar',
 } as const;

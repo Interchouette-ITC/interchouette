@@ -16,7 +16,7 @@ function envFlag(raw: string | undefined, fallback: boolean): boolean {
 export const RADIO_WIDGET_ENABLED = envFlag(import.meta.env?.RADIO_WIDGET_ENABLED, true);
 
 /** Public SoundCloud playlist for site radio. */
-export const SOUNDCLOUD_PLAYLIST_URL = 'https://soundcloud.com/labonnevoile/sets/interchouette';
+export const SOUNDCLOUD_PLAYLIST_URL = 'https://soundcloud.com/labonnevoile/sets/playitc';
 
 export const RADIO_STORAGE_KEY = 'ic.radio.v1';
 
@@ -28,7 +28,10 @@ export type RadioPrefs = {
   volume: number;
 };
 
-export function soundCloudPlayerSrc(playlistUrl: string, autoPlay = false): string {
+export function soundCloudPlayerSrc(
+  playlistUrl: string,
+  options: { autoPlay?: boolean; startTrack?: number } = {},
+): string {
   const params = new URLSearchParams({
     url: playlistUrl,
     visual: 'false',
@@ -38,8 +41,11 @@ export function soundCloudPlayerSrc(playlistUrl: string, autoPlay = false): stri
     buying: 'false',
     download: 'false',
     hide_related: 'true',
-    auto_play: autoPlay ? 'true' : 'false',
+    auto_play: options.autoPlay ? 'true' : 'false',
   });
+  if (typeof options.startTrack === 'number' && options.startTrack >= 0) {
+    params.set('start_track', String(Math.floor(options.startTrack)));
+  }
   return `https://w.soundcloud.com/player/?${params.toString()}`;
 }
 
