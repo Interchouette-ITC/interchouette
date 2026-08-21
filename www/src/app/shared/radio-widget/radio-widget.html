@@ -1,21 +1,18 @@
 @if (mounted()) {
-  <div class="radio" [class.radio--on]="playing()" [class.radio--busy]="loading()">
-    <button
-      type="button"
-      class="radio__toggle"
-      [disabled]="loading()"
-      (click)="onToggle()"
-      [attr.aria-label]="buttonLabel()"
-      [attr.title]="buttonLabel()"
-      [attr.aria-pressed]="playing()"
-    >
-      <span class="radio__note" aria-hidden="true">♪</span>
-      <span class="radio__tri" aria-hidden="true"></span>
-      <span class="radio__bar" aria-hidden="true">
-        <span class="radio__knob"></span>
-      </span>
-    </button>
-  </div>
+  <button
+    type="button"
+    class="radio"
+    [class.radio--on]="playing()"
+    [class.radio--busy]="loading()"
+    [disabled]="loading()"
+    (click)="onToggle()"
+    [attr.aria-label]="buttonLabel()"
+    [attr.title]="buttonLabel()"
+    [attr.aria-pressed]="playing()"
+  >
+    <span class="radio__note" aria-hidden="true">♪</span>
+    <span class="radio__tri" aria-hidden="true"></span>
+  </button>
 }
 
 <iframe

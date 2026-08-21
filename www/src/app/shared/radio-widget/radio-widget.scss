@@ -1,114 +1,66 @@
 :host {
   position: absolute;
-  top: 0.55rem;
-  right: 0.55rem;
+  top: 0.45rem;
+  right: 0.45rem;
   z-index: 5;
   display: block;
   font-family: 'Montserrat', sans-serif;
 }
 
 .radio {
-  display: flex;
-  justify-content: flex-end;
-  margin: 0;
-}
-
-.radio__toggle {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   margin: 0;
-  padding: 0.2rem 0.45rem;
-  border: 1px solid #c8c4ce;
-  border-radius: 999px;
-  background: #f3f1f5;
-  color: #6a6570;
+  padding: 0.25rem 0.35rem;
+  border: 0;
+  background: transparent;
+  color: #8a8492;
   cursor: pointer;
   line-height: 1;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease;
+  transition: color 0.18s ease, opacity 0.18s ease;
 }
 
-.radio__toggle:hover:not(:disabled) {
-  background: #ebe8ef;
-  border-color: #b4afba;
-  color: #4f4a55;
+.radio:hover:not(:disabled) {
+  color: #5c5664;
 }
 
-.radio__toggle:focus-visible {
+.radio:focus-visible {
   outline: 2px solid #8a8492;
-  outline-offset: 2px;
+  outline-offset: 3px;
+  border-radius: 0.35rem;
 }
 
-.radio__toggle:disabled {
-  opacity: 0.55;
+.radio:disabled {
+  opacity: 0.5;
   cursor: wait;
 }
 
-.radio--on .radio__toggle {
-  background: #e8e6ea;
-  border-color: #9a95a0;
-  color: #3f3a45;
+.radio--on {
+  color: #4f4a55;
 }
 
 .radio__note {
-  font-size: 0.78rem;
+  font-size: 1.35rem;
   font-weight: 700;
-  opacity: 0.85;
+  line-height: 1;
 }
 
 .radio__tri {
   width: 0;
   height: 0;
-  margin-left: 0.05rem;
-  border-top: 0.28rem solid transparent;
-  border-bottom: 0.28rem solid transparent;
-  border-left: 0.42rem solid currentColor;
+  border-top: 0.48rem solid transparent;
+  border-bottom: 0.48rem solid transparent;
+  border-left: 0.72rem solid currentColor;
 }
 
 .radio--on .radio__tri {
-  width: 0.34rem;
-  height: 0.5rem;
-  margin: 0;
+  width: 0.55rem;
+  height: 0.85rem;
   border: 0;
   background:
-    linear-gradient(currentColor, currentColor) 0 0 / 0.12rem 100% no-repeat,
-    linear-gradient(currentColor, currentColor) 100% 0 / 0.12rem 100% no-repeat;
-}
-
-.radio__bar {
-  position: relative;
-  width: 1.55rem;
-  height: 0.72rem;
-  margin-left: 0.1rem;
-  border-radius: 999px;
-  background: #d4d0d8;
-  box-shadow: inset 0 1px 2px rgba(40, 30, 50, 0.12);
-}
-
-.radio__knob {
-  position: absolute;
-  top: 0.08rem;
-  left: 0.1rem;
-  width: 0.56rem;
-  height: 0.56rem;
-  border-radius: 50%;
-  background: #9a95a0;
-  box-shadow: 0 1px 2px rgba(40, 30, 50, 0.18);
-  transition:
-    transform 0.18s ease,
-    background 0.18s ease;
-}
-
-.radio--on .radio__bar {
-  background: #b8b3bc;
-}
-
-.radio--on .radio__knob {
-  transform: translateX(0.72rem);
-  background: #6a6570;
+    linear-gradient(currentColor, currentColor) 0 0 / 0.18rem 100% no-repeat,
+    linear-gradient(currentColor, currentColor) 100% 0 / 0.18rem 100% no-repeat;
 }
 
 .radio-frame {
@@ -124,7 +76,11 @@
 
 @media (max-width: 727px) {
   :host {
-    top: 0.4rem;
-    right: 0.4rem;
+    top: 0.35rem;
+    right: 0.35rem;
+  }
+
+  .radio__note {
+    font-size: 1.2rem;
   }
 }
