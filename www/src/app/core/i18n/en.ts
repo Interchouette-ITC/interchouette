@@ -36,8 +36,10 @@ export const EN = {
   descHome:
     'Gregory Roussac, Rust and Wasm freelance developer (Interchouette ITC). Contact, CV, and links.',
   titleNews: 'News - Interchouette',
+  titleArchive: 'News archive - Interchouette',
   titleSlack: 'Join the Interchouette Slack workspace (opens in a new tab)',
   descNews: 'News from Interchouette ITC.',
+  descArchive: 'Weekly archived Interchouette news snapshots.',
   titleLogin: 'Client login - Interchouette',
   descLogin: 'Sign in to Interchouette with Google. The session stays in this browser.',
   titleAccount: 'Account - Interchouette',

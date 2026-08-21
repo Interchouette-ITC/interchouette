@@ -9,6 +9,7 @@ const routes = [
   '/privacy',
   '/terms',
   '/news',
+  '/archive',
   '/account',
   '/gis-signin',
   '/?lang=nl',
@@ -25,7 +26,7 @@ test.describe('browser console', () => {
 });
 
 async function collectPageErrors(page: Page, path: string): Promise<string[]> {
-  if (path === '/news') {
+  if (path === '/news' || path === '/archive') {
     await mockNewsApi(page);
   }
   const errors: string[] = [];

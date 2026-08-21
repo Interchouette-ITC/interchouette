@@ -1,0 +1,135 @@
+<article class="card news archive animated fadeIn">
+  <app-page-brand-mark />
+  <a class="back" routerLink="/news">&larr; {{ copy.news.archiveBackToNews }}</a>
+  <h1>{{ copy.news.archiveTitle }}</h1>
+
+  @if (news.archiveLoading()) {
+    <p class="news-loading" aria-live="polite">{{ copy.news.archiveLoading }}</p>
+  } @else if (showListError()) {
+    <p class="news-error">{{ news.archiveError() }}</p>
+  } @else if (showEmptyWeeks()) {
+    <p class="news-empty">{{ copy.news.archiveEmpty }}</p>
+  } @else {
+    <div class="archive-layout">
+      <nav class="archive-weeks" [attr.aria-label]="copy.news.archiveSelectWeek">
+        <p class="archive-weeks__label">{{ copy.news.archiveSelectWeek }}</p>
+        <ul class="archive-weeks__list">
+          @for (week of news.archiveWeeks(); track week.week_id) {
+            <li>
+              <button
+                type="button"
+                class="archive-weeks__btn"
+                [class.is-selected]="isSelectedWeek(week.week_id)"
+                (click)="selectWeek(week)"
+              >
+                <span class="archive-weeks__id">{{ weekLabel(week) }}</span>
+                <span class="archive-weeks__date">{{ weekFetchedLabel(week) }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </nav>
+
+      <div class="archive-detail">
+        @if (news.archiveWeekLoading()) {
+          <p class="news-loading" aria-live="polite">{{ copy.news.loading }}</p>
+        } @else if (news.archiveWeekId(); as weekId) {
+          @if (news.archiveUpdatedLabel(); as updated) {
+            <p class="news-meta">{{ updated }}</p>
+          }
+
+          <div class="page-tabs">
+            <div class="page-tabs__scroll">
+              <div class="page-tabs__list" role="tablist" [attr.aria-label]="weekId">
+                @for (tab of tabs; track tab; let i = $index) {
+                  <button
+                    type="button"
+                    class="page-tabs__tab"
+                    role="tab"
+                    [id]="'archive-tab-' + tab"
+                    [attr.aria-selected]="isActive(tab)"
+                    [attr.aria-controls]="'archive-panel-' + tab"
+                    [attr.tabindex]="isActive(tab) ? 0 : -1"
+                    (click)="selectTab(tab)"
+                    (keydown)="onTabKeydown($event, i)"
+                  >
+                    <span class="news-tab__icon" aria-hidden="true">
+                      <i [class]="tabIconClass(tab)"></i>
+                    </span>
+                    <span class="news-tab__label">{{ tabLabel(tab) }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            @for (tab of tabs; track tab) {
+              <section
+                class="page-tabs__panel"
+                role="tabpanel"
+                [id]="'archive-panel-' + tab"
+                [attr.aria-labelledby]="'archive-tab-' + tab"
+                [hidden]="!isActive(tab)"
+              >
+                @if (showFeedNotice(tab)) {
+                  <p class="news-empty">{{ feedNotice(tab) }}</p>
+                  @if (feedFor(tab)?.profile_url; as profileUrl) {
+                    <p>
+                      <a [href]="profileUrl" target="_blank" rel="noopener noreferrer">{{
+                        profileLabel(tab)
+                      }}</a>
+                    </p>
+                  }
+                } @else {
+                  <ul class="news-list">
+                    @for (item of feedFor(tab)?.items ?? []; track item.id) {
+                      <li class="news-item">
+                        @if (postDate(item)) {
+                          <time
+                            class="news-item__date"
+                            [attr.datetime]="item.published_at ?? null"
+                            >{{ postDate(item) }}</time
+                          >
+                        }
+                        <p class="news-item__text">
+                          @for (part of linkParts(item.text); track $index) {
+                            @if (part.href) {
+                              <a
+                                class="news-item__inline-link"
+                                [href]="part.href"
+                                [attr.target]="isHttpHref(part.href) ? '_blank' : null"
+                                [attr.rel]="isHttpHref(part.href) ? 'noopener noreferrer' : null"
+                                >{{ part.t }}</a
+                              >
+                            } @else {
+                              <span>{{ part.t }}</span>
+                            }
+                          }
+                        </p>
+                        <a
+                          class="news-item__link"
+                          [href]="item.url"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <i
+                            class="news-item__link-icon"
+                            [class]="tabIconClass(tab)"
+                            aria-hidden="true"
+                          ></i>
+                          <span>{{ viewOnLabel(tab) }}</span>
+                        </a>
+                      </li>
+                    }
+                  </ul>
+                }
+              </section>
+            }
+          </div>
+        } @else {
+          <p class="news-empty">{{ copy.news.archiveSelectWeek }}</p>
+        }
+      </div>
+    </div>
+  }
+</article>
+<app-site-footer />

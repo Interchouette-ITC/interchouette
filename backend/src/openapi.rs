@@ -10,6 +10,7 @@ use utoipa::OpenApi;
 use crate::chat::PresenceMode;
 use crate::chat::PresenceSnapshot;
 use crate::news::types::{NewsFeed, NewsFeeds, NewsItem, NewsResponse};
+use crate::news::{NewsArchiveIndex, NewsArchiveWeek};
 
 /// Public `OpenAPI` 3 document (subset of the Interchouette API host).
 #[derive(OpenApi)]
@@ -29,7 +30,9 @@ For profile search and related agent tools, use remote MCP at https://mcp.interc
         crate::chat::api::get_presence,
         crate::news::api::news_handler,
         crate::news::api::news_rss_handler,
-        crate::news::api::news_atom_handler
+        crate::news::api::news_atom_handler,
+        crate::news::api::news_archive_list_handler,
+        crate::news::api::news_archive_week_handler
     ),
     components(schemas(
         HealthResponse,
@@ -39,7 +42,9 @@ For profile search and related agent tools, use remote MCP at https://mcp.interc
         NewsItem,
         NewsFeed,
         NewsFeeds,
-        NewsResponse
+        NewsResponse,
+        NewsArchiveWeek,
+        NewsArchiveIndex
     ))
 )]
 pub struct PublicApi;
@@ -130,6 +135,8 @@ mod tests {
         assert!(paths.contains_key("/v1/news"));
         assert!(paths.contains_key("/v1/news/rss.xml"));
         assert!(paths.contains_key("/v1/news/atom.xml"));
+        assert!(paths.contains_key("/v1/news/archive"));
+        assert!(paths.contains_key("/v1/news/archive/{week_id}"));
         assert!(!paths.contains_key("/v1/sessions"));
         assert!(!paths.contains_key("/v1/book"));
         assert!(!paths.keys().any(|k| k.contains("/ws")));

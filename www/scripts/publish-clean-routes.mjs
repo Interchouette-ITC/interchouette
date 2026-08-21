@@ -12,7 +12,7 @@ import { join } from 'node:path';
 
 const root = join(process.cwd(), 'dist', 'interchouette', 'browser');
 
-const routes = ['about', 'news', 'terms', 'privacy', 'account', 'gis-signin', 'CV'];
+const routes = ['about', 'news', 'archive', 'terms', 'privacy', 'account', 'gis-signin', 'CV'];
 
 let copied = 0;
 for (const route of routes) {

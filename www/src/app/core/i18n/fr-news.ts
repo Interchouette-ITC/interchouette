@@ -12,4 +12,12 @@ export const FR_NEWS = {
   cacheNote: 'Actualisation environ toutes les 4 heures.',
   profileItcLinkedIn: 'Interchouette sur LinkedIn',
   profileItcX: '@interchouette sur X',
+  archiveLink: 'Archives',
+  archiveTitle: 'Archives des actualités',
+  archiveLoading: 'Chargement des archives…',
+  archiveError: 'Impossible de charger les archives pour le moment.',
+  archiveEmpty: 'Aucune semaine archivée pour le moment.',
+  archiveSelectWeek: 'Choisir une semaine',
+  archiveBackToNews: 'Retour aux actualités',
+  archiveSnapshot: 'Instantané du {time}',
 } as const;

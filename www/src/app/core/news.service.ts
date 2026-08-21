@@ -30,6 +30,16 @@ export interface NewsResponse {
   feeds: NewsFeeds;
 }
 
+export interface NewsArchiveWeek {
+  week_id: string;
+  fetched_at: string;
+}
+
+export interface NewsArchiveIndex {
+  locale: string;
+  weeks: NewsArchiveWeek[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class NewsService {
   private readonly locale = inject(LocaleService);
@@ -42,9 +52,20 @@ export class NewsService {
   readonly fetchedAt = signal<string | null>(null);
   readonly cacheTtlSecs = signal<number | null>(null);
 
+  readonly archiveLoading = signal(false);
+  readonly archiveError = signal<string | null>(null);
+  readonly archiveWeeks = signal<NewsArchiveWeek[]>([]);
+  readonly archiveWeekId = signal<string | null>(null);
+  readonly archiveWeekLoading = signal(false);
+  readonly archiveFeeds = signal<NewsFeeds | null>(null);
+  readonly archiveFetchedAt = signal<string | null>(null);
+
   private loadedLocale: SiteLocale | null = null;
   private inFlight = false;
   private liveLoaded = false;
+  private archiveLoadedLocale: SiteLocale | null = null;
+  private archiveInFlight = false;
+  private archiveWeekInFlight: string | null = null;
 
   /**
    * Load news from API `GET /v1/news` (4h server cache).
@@ -77,6 +98,49 @@ export class NewsService {
     });
   }
 
+  /** Load ISO-week archive index from `GET /v1/news/archive`. */
+  loadArchive(): void {
+    const locale = this.locale.locale;
+    if (this.archiveInFlight || this.archiveLoadedLocale === locale) {
+      return;
+    }
+    this.archiveInFlight = true;
+    this.archiveError.set(null);
+    this.archiveLoading.set(true);
+    this.pendingTasks.run(async () => {
+      try {
+        await this.fetchArchiveIndex(locale);
+      } finally {
+        this.archiveLoading.set(false);
+        this.archiveInFlight = false;
+      }
+    });
+  }
+
+  /** Load one archived week into `archiveFeeds`. */
+  selectArchiveWeek(weekId: string): void {
+    const locale = this.locale.locale;
+    if (this.archiveWeekInFlight === weekId) {
+      return;
+    }
+    if (this.archiveWeekId() === weekId && this.archiveFeeds() !== null) {
+      return;
+    }
+    this.archiveWeekInFlight = weekId;
+    this.archiveWeekId.set(weekId);
+    this.archiveWeekLoading.set(true);
+    this.pendingTasks.run(async () => {
+      try {
+        await this.fetchArchiveWeek(locale, weekId);
+      } finally {
+        this.archiveWeekLoading.set(false);
+        if (this.archiveWeekInFlight === weekId) {
+          this.archiveWeekInFlight = null;
+        }
+      }
+    });
+  }
+
   updatedLabel(): string | null {
     const at = this.fetchedAt();
     if (!at) {
@@ -84,6 +148,15 @@ export class NewsService {
     }
     const time = formatNewsTime(at, this.locale.locale);
     return fillCopy(this.locale.copy.news.updated, { time });
+  }
+
+  archiveUpdatedLabel(): string | null {
+    const at = this.archiveFetchedAt();
+    if (!at) {
+      return null;
+    }
+    const time = formatNewsTime(at, this.locale.locale);
+    return fillCopy(this.locale.copy.news.archiveSnapshot, { time });
   }
 
   private applyResponse(body: NewsResponse, locale: SiteLocale): void {
@@ -106,6 +179,52 @@ export class NewsService {
     } catch {
       if (this.feeds() === null) {
         this.error.set(this.locale.copy.news.error);
+      }
+    }
+  }
+
+  private async fetchArchiveIndex(locale: SiteLocale): Promise<void> {
+    try {
+      const res = await fetch(`${apiBase()}/v1/news/archive?locale=${locale}`);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const body = (await res.json()) as NewsArchiveIndex;
+      this.archiveWeeks.set(body.weeks ?? []);
+      this.archiveLoadedLocale = locale;
+      this.archiveError.set(null);
+      const first = body.weeks?.[0];
+      if (first) {
+        this.selectArchiveWeek(first.week_id);
+      } else {
+        this.archiveWeekId.set(null);
+        this.archiveFeeds.set(null);
+        this.archiveFetchedAt.set(null);
+      }
+    } catch {
+      this.archiveError.set(this.locale.copy.news.archiveError);
+      this.archiveWeeks.set([]);
+    }
+  }
+
+  private async fetchArchiveWeek(locale: SiteLocale, weekId: string): Promise<void> {
+    try {
+      const res = await fetch(
+        `${apiBase()}/v1/news/archive/${encodeURIComponent(weekId)}?locale=${locale}`,
+      );
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      const body = (await res.json()) as NewsResponse;
+      if (this.archiveWeekId() !== weekId) {
+        return;
+      }
+      this.archiveFeeds.set(body.feeds);
+      this.archiveFetchedAt.set(body.fetched_at);
+    } catch {
+      if (this.archiveWeekId() === weekId) {
+        this.archiveFeeds.set(null);
+        this.archiveFetchedAt.set(null);
       }
     }
   }
