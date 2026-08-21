@@ -71,9 +71,14 @@ Dashboard → Redirects/Rewrites must **not** Redirect `/*` to `/index.html` (th
 | `/CV/CV_Gregory_Roussac.pdf` | `/CV/Gregory_Roussac.pdf` | Redirect                     |
 | `/CV/CV_Roussac.pdf`         | `/CV/Gregory_Roussac.pdf` | Redirect                     |
 | `/CV/`                       | `/CV`                     | Redirect                     |
+| `/about`                     | `/about/index.html`       | **Rewrite**                  |
+| `/news`                      | `/news/index.html`        | **Rewrite**                  |
 | `/terms`                     | `/terms/index.html`       | **Rewrite**                  |
 | `/privacy`                   | `/privacy/index.html`     | **Rewrite**                  |
+| `/account`                   | `/account/index.html`     | **Rewrite**                  |
+| `/gis-signin`                | `/gis-signin/index.html`  | **Rewrite**                  |
 | `/CV`                        | `/CV/index.html`          | **Rewrite**                  |
+| `/feed`                      | `/rss.xml`                | Redirect                     |
 | `/*`                         | `/index.html`             | **Rewrite** (never Redirect) |
 
-Same rules live in `www/public/_redirects` for hosts that honor it.
+Same rules live in `www/public/_redirects` for hosts that honor it. The static build also writes sibling files (`news.html`, `about.html`, …) so clean URLs still get prerendered HTML when the SPA catch-all would otherwise win.

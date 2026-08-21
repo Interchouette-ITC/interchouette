@@ -1,6 +1,8 @@
 # Static host URL rules (Render Static / Netlify-style).
 # Known prerendered routes MUST rewrite to their index.html BEFORE the SPA fallback.
-# On Render Dashboard → Redirects/Rewrites mirror these rules.
+# On Render Dashboard → Redirects/Rewrites mirror these rules when possible.
+# Build also emits sibling `news.html` (etc.) so clean URLs work even when the
+# SPA `/*` rewrite would otherwise serve the home shell for extensionless paths.
 # Critical: /* → /index.html must be Action Rewrite (200), NEVER Redirect (301).
 # A Redirect to /index.html breaks /terms /privacy /CV (clean URLs become /index.html).
 
@@ -15,6 +17,9 @@
 
 # CV canonical without trailing slash
 /CV/  /CV  301
+
+# Feed alias (apex RSS is the syndication file)
+/feed  /rss.xml  301
 
 # SPA fallback: unknown paths → Angular shell (client ** → home)
 /*  /index.html  200
