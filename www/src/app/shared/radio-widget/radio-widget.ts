@@ -42,6 +42,7 @@ export class RadioWidget implements OnDestroy {
 
   protected readonly mounted = signal(false);
   protected readonly loading = signal(false);
+  protected readonly ready = signal(false);
   protected readonly playing = signal(false);
   protected readonly error = signal(false);
 
@@ -49,6 +50,7 @@ export class RadioWidget implements OnDestroy {
   private wired = false;
   private prefs: RadioPrefs = readRadioPrefs();
   private lastIndex = -1;
+  private apiLoaded = false;
 
   protected readonly buttonLabel = computed(() => {
     const radio = this.copy.radio;
@@ -64,6 +66,7 @@ export class RadioWidget implements OnDestroy {
   constructor() {
     afterNextRender(() => {
       this.mounted.set(true);
+      void this.warmApi();
     });
   }
 
@@ -76,38 +79,84 @@ export class RadioWidget implements OnDestroy {
     if (this.loading()) {
       return;
     }
-    if (this.widget) {
-      this.widget.isPaused((paused) => {
-        if (paused) {
-          this.play();
-        } else {
-          this.widget?.pause();
-          this.playing.set(false);
-        }
-      });
+
+    // Pause uses local state so we never wait on SC postMessage inside the click.
+    if (this.playing()) {
+      icConsoleWrite({ ns: 'ic:radio', topic: 'click', kv: { intent: 'pause' } });
+      this.widget?.pause();
+      this.playing.set(false);
       return;
     }
-    void this.boot();
-  }
 
-  private frameElement(): HTMLIFrameElement | null {
-    return document.getElementById(FRAME_ID) as HTMLIFrameElement | null;
-  }
+    icConsoleWrite({
+      ns: 'ic:radio',
+      topic: 'click',
+      kv: {
+        intent: 'play',
+        meaning: 'start Interchouette playlist audio (random track)',
+        volume: this.prefs.volume,
+      },
+    });
 
-  private async boot(): Promise<void> {
+    // Set iframe src with auto_play during the click (keeps user gesture for audio).
+    const frame = document.getElementById(FRAME_ID) as HTMLIFrameElement | null;
+    if (!frame) {
+      this.error.set(true);
+      return;
+    }
     this.error.set(false);
     this.loading.set(true);
+    frame.src = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, true);
+    void this.bindAfterLoad(frame);
+  }
+
+  private async warmApi(): Promise<void> {
     try {
       await loadSoundCloudWidgetApi();
-      const frame = this.frameElement();
-      if (!frame) {
-        throw new Error('radio iframe missing');
+      this.apiLoaded = true;
+    } catch (err) {
+      icConsoleWrite({
+        ns: 'ic:radio',
+        topic: 'api',
+        level: 'warn',
+        kv: { err: err instanceof Error ? err.message : String(err) },
+      });
+    }
+  }
+
+  private async bindAfterLoad(frame: HTMLIFrameElement): Promise<void> {
+    try {
+      if (!this.apiLoaded) {
+        await loadSoundCloudWidgetApi();
+        this.apiLoaded = true;
       }
-      await this.ensureWidget(frame);
+      await this.waitFrameLoad(frame);
+      const events = scEvents();
+      const widget = scWidget(FRAME_ID) ?? scWidget(frame);
+      if (!widget) {
+        throw new Error('SoundCloud widget missing');
+      }
+      this.widget = widget;
+      if (!this.wired) {
+        this.wireWidget(widget, events);
+        this.wired = true;
+      }
+      await this.waitReady(widget, events.READY);
+      this.ready.set(true);
       this.applyVolume();
-      await this.shuffleAndPlay();
+      // auto_play may already be going; still shuffle to a random track
+      this.shuffleCurrent();
+      // Nudge play again after READY (second click not required if auto_play worked)
+      widget.play();
+      this.playing.set(true);
+      icConsoleWrite({
+        ns: 'ic:radio',
+        topic: 'ready',
+        kv: { meaning: 'widget ready; play requested' },
+      });
     } catch (err) {
       this.error.set(true);
+      this.playing.set(false);
       icConsoleWrite({
         ns: 'ic:radio',
         topic: 'boot',
@@ -119,60 +168,32 @@ export class RadioWidget implements OnDestroy {
     }
   }
 
-  private ensureWidget(frame: HTMLIFrameElement): Promise<void> {
-    const src = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL);
-    return new Promise((resolve, reject) => {
-      const attach = (): void => {
-        const events = scEvents();
-        const widget = scWidget(FRAME_ID) ?? scWidget(frame);
-        if (!events) {
-          reject(new Error('SoundCloud events missing'));
-          return;
-        }
-        if (!widget) {
-          reject(new Error('SoundCloud widget missing'));
-          return;
-        }
-        this.widget = widget;
-        if (!this.wired) {
-          this.wireWidget(widget, events);
-          this.wired = true;
-        }
-        let settled = false;
-        const timer = setTimeout(() => {
-          if (!settled) {
-            settled = true;
-            reject(new Error('SoundCloud widget timeout'));
-          }
-        }, 20000);
-        widget.bind(events.READY, () => {
-          if (!settled) {
-            settled = true;
-            clearTimeout(timer);
-            icConsoleWrite({
-              ns: 'ic:radio',
-              topic: 'ready',
-              kv: { meaning: 'click play again if you did not hear audio on first click' },
-            });
-            resolve();
-          }
-        });
-      };
-
-      if (!frame.src) {
-        frame.src = src;
-      }
-      if (frame.contentWindow && frame.src) {
-        attach();
+  private waitFrameLoad(frame: HTMLIFrameElement): Promise<void> {
+    return new Promise((resolve) => {
+      if (frame.contentDocument?.readyState === 'complete' && frame.src.includes('soundcloud')) {
+        resolve();
         return;
       }
-      frame.addEventListener(
-        'load',
-        () => {
-          attach();
-        },
-        { once: true },
-      );
+      frame.addEventListener('load', () => resolve(), { once: true });
+    });
+  }
+
+  private waitReady(widget: SoundCloudWidget, readyEvent: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          reject(new Error('SoundCloud widget timeout'));
+        }
+      }, 20000);
+      widget.bind(readyEvent, () => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timer);
+          resolve();
+        }
+      });
     });
   }
 
@@ -197,52 +218,32 @@ export class RadioWidget implements OnDestroy {
           const next = pickRandomIndex(sounds.length, current);
           this.lastIndex = next;
           widget.skip(next);
-          this.play();
+          widget.play();
         });
       });
     });
   }
 
-  private shuffleAndPlay(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const widget = this.widget;
-      if (!widget) {
-        reject(new Error('widget missing'));
-        return;
-      }
-      const tryShuffle = (attempt: number): void => {
-        widget.getSounds((sounds) => {
-          if (!sounds.length) {
-            if (attempt < 15) {
-              setTimeout(() => tryShuffle(attempt + 1), 200);
-              return;
-            }
-            reject(new Error('empty playlist'));
-            return;
-          }
-          const index = pickRandomIndex(sounds.length, this.lastIndex);
-          this.lastIndex = index;
-          icConsoleWrite({
-            ns: 'ic:radio',
-            topic: 'shuffle',
-            kv: { index, of: sounds.length, title: sounds[index]?.title ?? 'unknown' },
-          });
-          widget.skip(index);
-          this.play();
-          resolve();
-        });
-      };
-      tryShuffle(0);
-    });
-  }
-
-  private play(): void {
+  private shuffleCurrent(): void {
     const widget = this.widget;
-    if (!widget || this.prefs.muted) {
+    if (!widget) {
       return;
     }
-    this.applyVolume();
-    widget.play();
+    widget.getSounds((sounds) => {
+      if (sounds.length <= 1) {
+        return;
+      }
+      const index = pickRandomIndex(sounds.length, this.lastIndex);
+      this.lastIndex = index;
+      icConsoleWrite({
+        ns: 'ic:radio',
+        topic: 'shuffle',
+        kv: { index, of: sounds.length, title: sounds[index]?.title ?? 'unknown' },
+      });
+      widget.skip(index);
+      widget.setVolume(this.prefs.muted ? 0 : this.prefs.volume);
+      widget.play();
+    });
   }
 
   private applyVolume(): void {

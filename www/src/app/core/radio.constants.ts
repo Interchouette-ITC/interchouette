@@ -21,14 +21,14 @@ export const SOUNDCLOUD_PLAYLIST_URL = 'https://soundcloud.com/labonnevoile/sets
 export const RADIO_STORAGE_KEY = 'ic.radio.v1';
 
 /** Default playback volume (0-100) when not muted. */
-export const RADIO_DEFAULT_VOLUME = 35;
+export const RADIO_DEFAULT_VOLUME = 60;
 
 export type RadioPrefs = {
   muted: boolean;
   volume: number;
 };
 
-export function soundCloudPlayerSrc(playlistUrl: string): string {
+export function soundCloudPlayerSrc(playlistUrl: string, autoPlay = false): string {
   const params = new URLSearchParams({
     url: playlistUrl,
     visual: 'false',
@@ -38,6 +38,7 @@ export function soundCloudPlayerSrc(playlistUrl: string): string {
     buying: 'false',
     download: 'false',
     hide_related: 'true',
+    auto_play: autoPlay ? 'true' : 'false',
   });
   return `https://w.soundcloud.com/player/?${params.toString()}`;
 }
