@@ -7,7 +7,7 @@ import {
 describe('webmcp.chat.tools', () => {
   it('describes live and away chat plus remote MCP', () => {
     const text = chatCapabilitiesText();
-    expect(text).toContain('chat.interchouette.net');
+    expect(text).toContain('api.interchouette.net');
     expect(text).toContain('open_site_chat');
     expect(text).toContain('send_site_chat_message');
     expect(text).toContain('mcp.interchouette.net');

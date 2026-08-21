@@ -1,19 +1,26 @@
-/** Chat API base URL (chat backend; not the Interchouette MCP). */
-export function chatApiBase(hostname?: string): string {
+/** Interchouette HTTP API (chat, news, booking). Prod host: api.interchouette.net. */
+export const API_ORIGIN = 'https://api.interchouette.net';
+
+/** API base URL for the site (browser and SSR). */
+export function apiBase(hostname?: string): string {
   const host = hostname ?? (typeof window === 'undefined' ? undefined : window.location.hostname);
   // Same hostname as the page so Chromium does not treat localhost vs 127.0.0.1 as cross-site.
   if (host === 'localhost' || host === '127.0.0.1') {
     return `http://${host}:8080`;
   }
   if (!host) {
-    return 'http://127.0.0.1:8080';
+    // Node SSR / build without a Host header: talk to the public API.
+    return API_ORIGIN;
   }
-  // Locale TLDs (.nl / .fr) are the same Angular dist. Chat stays on .net.
-  return 'https://chat.interchouette.net';
+  // Locale TLDs (.nl / .fr) share this Angular dist. API stays on .net.
+  return API_ORIGIN;
 }
 
+/** @deprecated Use {@link apiBase}. */
+export const chatApiBase = apiBase;
+
 export function chatWsUrl(sessionId: string): string {
-  const base = chatApiBase().replace(/^http/, 'ws');
+  const base = apiBase().replace(/^http/, 'ws');
   return `${base}/v1/sessions/${sessionId}/ws`;
 }
 

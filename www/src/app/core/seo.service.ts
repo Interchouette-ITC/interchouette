@@ -6,6 +6,7 @@ import { filter } from 'rxjs/operators';
 
 import { LocaleService } from './locale.service';
 import { DEFAULT_OG_IMAGE, LOCALE_ORIGINS, SITE_ORIGIN, type SeoRouteData } from './seo.constants';
+import { API_ORIGIN } from './chat.constants';
 
 @Injectable({ providedIn: 'root' })
 export class SeoService {
@@ -107,12 +108,12 @@ export class SeoService {
     }
   }
 
-  /** Keep apex RSS/Atom discovery links present across client navigations. */
+  /** Keep API RSS/Atom discovery links present across client navigations. */
   private setFeedAlternates(): void {
     const head = this.doc.head;
     const feeds: [string, string, string][] = [
-      ['application/rss+xml', 'Interchouette News RSS', `${SITE_ORIGIN}/rss.xml`],
-      ['application/atom+xml', 'Interchouette News Atom', `${SITE_ORIGIN}/atom.xml`],
+      ['application/rss+xml', 'Interchouette News RSS', `${API_ORIGIN}/v1/news/rss.xml`],
+      ['application/atom+xml', 'Interchouette News Atom', `${API_ORIGIN}/v1/news/atom.xml`],
     ];
     for (const [type, title, href] of feeds) {
       let link = head.querySelector<HTMLLinkElement>(

@@ -1,8 +1,10 @@
-//! News HTTP route and refresh orchestration.
+//! News HTTP routes and refresh orchestration.
 
 use std::time::Duration;
 
 use axum::extract::{Query, State};
+use axum::http::{header, HeaderValue, StatusCode};
+use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{Json, Router};
 use chrono::Utc;
@@ -10,6 +12,7 @@ use serde::Deserialize;
 use tracing::warn;
 
 use super::cache::NewsCache;
+use super::feed::{build_atom, build_rss};
 use super::fetch::NewsFetcher;
 use super::types::{NewsFeeds, NewsResponse};
 
@@ -46,10 +49,12 @@ impl NewsState {
     pub fn router(self) -> Router {
         Router::new()
             .route("/v1/news", get(news_handler))
+            .route("/v1/news/rss.xml", get(news_rss_handler))
+            .route("/v1/news/atom.xml", get(news_atom_handler))
             .with_state(self)
     }
 
-    /// Prefetch feeds for all site locales when the chat process starts.
+    /// Prefetch feeds for all site locales when the process starts.
     pub fn spawn_cache_warmup(self) {
         tokio::spawn(async move {
             for locale in ["en", "nl", "fr"] {
@@ -118,6 +123,48 @@ pub async fn news_handler(
     Json(state.load(&locale).await)
 }
 
+/// RSS 2.0 from the same 4h news cache as `GET /v1/news`.
+#[utoipa::path(
+    get,
+    path = "/v1/news/rss.xml",
+    tag = "public",
+    params(NewsQuery),
+    responses((status = 200, description = "RSS 2.0 news feed"))
+)]
+pub async fn news_rss_handler(
+    State(state): State<NewsState>,
+    Query(q): Query<NewsQuery>,
+) -> impl IntoResponse {
+    let locale = normalize_locale(q.locale.as_deref());
+    let body = build_rss(&state.load(&locale).await);
+    xml_response("application/rss+xml; charset=utf-8", body)
+}
+
+/// Atom 1.0 from the same 4h news cache as `GET /v1/news`.
+#[utoipa::path(
+    get,
+    path = "/v1/news/atom.xml",
+    tag = "public",
+    params(NewsQuery),
+    responses((status = 200, description = "Atom 1.0 news feed"))
+)]
+pub async fn news_atom_handler(
+    State(state): State<NewsState>,
+    Query(q): Query<NewsQuery>,
+) -> impl IntoResponse {
+    let locale = normalize_locale(q.locale.as_deref());
+    let body = build_atom(&state.load(&locale).await);
+    xml_response("application/atom+xml; charset=utf-8", body)
+}
+
+fn xml_response(content_type: &'static str, body: String) -> impl IntoResponse {
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, HeaderValue::from_static(content_type))],
+        body,
+    )
+}
+
 fn normalize_locale(raw: Option<&str>) -> String {
     match raw.unwrap_or("en").trim().to_ascii_lowercase().as_str() {
         "nl" => "nl".into(),
@@ -173,5 +220,26 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn news_rss_endpoint_returns_xml() {
+        let app = NewsState::from_env().router();
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .uri("/v1/news/rss.xml")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::OK);
+        let ctype = response
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("");
+        assert!(ctype.contains("rss+xml"));
     }
 }

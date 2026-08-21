@@ -11,23 +11,25 @@ use crate::chat::PresenceMode;
 use crate::chat::PresenceSnapshot;
 use crate::news::types::{NewsFeed, NewsFeeds, NewsItem, NewsResponse};
 
-/// Public `OpenAPI` 3 document (subset of chat HTTP).
+/// Public `OpenAPI` 3 document (subset of the Interchouette API host).
 #[derive(OpenApi)]
 #[openapi(
     info(
-        title = "Interchouette Chat (public)",
+        title = "Interchouette API (public)",
         version = "0.1.0",
-        description = "Public read-oriented HTTP surface for Interchouette chat and news. \
+        description = "Public read-oriented HTTP surface for Interchouette API (chat, news, health). \
 Session creation, WebSocket chat, and booking proxies are private and omitted here. \
 For profile search and related agent tools, use remote MCP at https://mcp.interchouette.net/ \
 (see https://interchouette.net/.well-known/mcp.json and https://interchouette.net/llms.txt)."
     ),
-    servers((url = "https://chat.interchouette.net")),
+    servers((url = "https://api.interchouette.net")),
     paths(
         health,
         crate::chat::api::ready,
         crate::chat::api::get_presence,
-        crate::news::api::news_handler
+        crate::news::api::news_handler,
+        crate::news::api::news_rss_handler,
+        crate::news::api::news_atom_handler
     ),
     components(schemas(
         HealthResponse,
@@ -126,6 +128,8 @@ mod tests {
         assert!(paths.contains_key("/ready"));
         assert!(paths.contains_key("/v1/presence"));
         assert!(paths.contains_key("/v1/news"));
+        assert!(paths.contains_key("/v1/news/rss.xml"));
+        assert!(paths.contains_key("/v1/news/atom.xml"));
         assert!(!paths.contains_key("/v1/sessions"));
         assert!(!paths.contains_key("/v1/book"));
         assert!(!paths.keys().any(|k| k.contains("/ws")));

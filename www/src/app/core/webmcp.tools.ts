@@ -1,7 +1,7 @@
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { BOOKING_SCHEDULE_URL } from './chat.constants';
+import { BOOKING_SCHEDULE_URL, API_ORIGIN, apiBase } from './chat.constants';
 import { SITE_ORIGIN } from './seo.constants';
 
 /** Public pages agents may open (Angular paths, no leading slash except home). */
@@ -43,8 +43,8 @@ export function siteOverviewText(): string {
     `CV PDF: ${SITE_ORIGIN}/CV/Gregory_Roussac.pdf`,
     `About: ${SITE_ORIGIN}/about`,
     `News: ${SITE_ORIGIN}/news`,
-    `News RSS: ${SITE_ORIGIN}/rss.xml`,
-    `News Atom: ${SITE_ORIGIN}/atom.xml`,
+    `News RSS: ${API_ORIGIN}/v1/news/rss.xml`,
+    `News Atom: ${API_ORIGIN}/v1/news/atom.xml`,
     `Privacy: ${SITE_ORIGIN}/privacy`,
     `Terms: ${SITE_ORIGIN}/terms`,
     'Contact email: contact@interchouette.net',
@@ -66,9 +66,68 @@ export function listPagesText(): string {
   const pages = WEBMCP_PAGE_PATHS.map(
     (path) => `- ${path === '' ? 'home' : path}: ${absolutePageUrl(path)}`,
   );
-  pages.push(`- news RSS: ${SITE_ORIGIN}/rss.xml`);
-  pages.push(`- news Atom: ${SITE_ORIGIN}/atom.xml`);
+  pages.push(`- news RSS: ${API_ORIGIN}/v1/news/rss.xml`);
+  pages.push(`- news Atom: ${API_ORIGIN}/v1/news/atom.xml`);
   return pages.join('\n');
+}
+
+/** Format API `/v1/news` JSON for agents (4h server cache). */
+export function formatNewsSnapshotText(raw: unknown): string {
+  const body = raw as {
+    fetched_at?: string;
+    cache_ttl_secs?: number;
+    feeds?: {
+      itc_linkedin?: { items?: { text?: string; url?: string; published_at?: string | null }[] };
+      itc_x?: { items?: { text?: string; url?: string; published_at?: string | null }[] };
+    };
+  };
+  const lines: string[] = [
+    'Interchouette News (API cache, about every 4 hours)',
+    `Page: ${SITE_ORIGIN}/news`,
+    `JSON: ${API_ORIGIN}/v1/news`,
+    `RSS: ${API_ORIGIN}/v1/news/rss.xml`,
+    `Atom: ${API_ORIGIN}/v1/news/atom.xml`,
+  ];
+  if (body.fetched_at) {
+    lines.push(`Fetched at: ${body.fetched_at}`);
+  }
+  if (body.cache_ttl_secs != null) {
+    lines.push(`Cache TTL seconds: ${body.cache_ttl_secs}`);
+  }
+  lines.push('');
+  const sections: [
+    string,
+    { items?: { text?: string; url?: string; published_at?: string | null }[] } | undefined,
+  ][] = [
+    ['Interchouette on X', body.feeds?.itc_x],
+    ['Interchouette on LinkedIn', body.feeds?.itc_linkedin],
+  ];
+  for (const [label, feed] of sections) {
+    lines.push(`## ${label}`);
+    const items = feed?.items ?? [];
+    if (items.length === 0) {
+      lines.push('(no posts)');
+      lines.push('');
+      continue;
+    }
+    for (const item of items) {
+      const when = item.published_at ? ` (${item.published_at})` : '';
+      lines.push(`- ${item.text ?? ''}${when}`);
+      if (item.url) {
+        lines.push(`  ${item.url}`);
+      }
+    }
+    lines.push('');
+  }
+  return lines.join('\n').trimEnd();
+}
+
+export async function fetchNewsSnapshotText(): Promise<string> {
+  const res = await fetch(`${apiBase()}/v1/news?locale=en`);
+  if (!res.ok) {
+    throw new Error(`news API HTTP ${res.status}`);
+  }
+  return formatNewsSnapshotText(await res.json());
 }
 
 export function remoteMcpText(): string {
@@ -111,6 +170,13 @@ export function createSiteInfoWebMcpTools() {
         'Returns the official remote Streamable HTTP MCP endpoint for Interchouette MCP (not this in-page WebMCP).',
       inputSchema: EMPTY_INPUT_SCHEMA,
       execute: () => remoteMcpText(),
+    },
+    {
+      name: 'get_news',
+      description:
+        'Returns ITC LinkedIn and X posts from API GET /v1/news (JSON cached about every 4 hours).',
+      inputSchema: EMPTY_INPUT_SCHEMA,
+      execute: () => fetchNewsSnapshotText(),
     },
   ];
 }

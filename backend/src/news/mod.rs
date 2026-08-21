@@ -2,6 +2,7 @@
 
 pub(crate) mod api;
 mod cache;
+mod feed;
 mod fetch;
 mod parse_linkedin;
 mod parse_x;

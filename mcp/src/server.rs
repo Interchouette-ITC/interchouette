@@ -44,7 +44,7 @@ pub const DEFAULT_ALLOWED_HOSTS: &[&str] = &[
 pub struct InterchouetteMcp {
     store: Arc<Store>,
     chat: ChatRelay,
-    /// Base URL of the chat backend, from env `CHAT_BACKEND_URL`.
+    /// Base URL of the Interchouette API host (`api.interchouette.net`), from env `CHAT_BACKEND_URL`.
     chat_backend_url: Option<String>,
     http: reqwest::Client,
 }
@@ -208,6 +208,31 @@ impl InterchouetteMcp {
         Ok(text_ok(contact_text()))
     }
 
+    #[tool(description = "ITC LinkedIn and X posts from API GET /v1/news \
+                       (JSON cached about every 4 hours on api.interchouette.net).")]
+    async fn get_news(&self) -> Result<CallToolResult, McpError> {
+        let base = self
+            .chat_backend_url
+            .as_deref()
+            .unwrap_or("https://api.interchouette.net")
+            .trim_end_matches('/');
+        let url = format!("{base}/v1/news?locale=en");
+        let resp = self
+            .http
+            .get(&url)
+            .send()
+            .await
+            .map_err(|err| mcp_err(format!("news API unreachable: {err}")))?;
+        if !resp.status().is_success() {
+            return Err(mcp_err(format!("news API HTTP {}", resp.status().as_u16())));
+        }
+        let body: serde_json::Value = resp
+            .json()
+            .await
+            .map_err(|err| mcp_err(format!("news API invalid JSON: {err}")))?;
+        Ok(text_ok(format_news_snapshot(&body)))
+    }
+
     #[tool(
         description = "Lists chat-with-Greg capabilities on this MCP (token required for write tools)."
     )]
@@ -360,6 +385,60 @@ fn format_doc(title: &str, body: &str) -> String {
     } else {
         format!("# {title}\n\n{body}")
     }
+}
+
+fn format_news_snapshot(body: &serde_json::Value) -> String {
+    let mut out = String::from(
+        "Interchouette News (API cache, about every 4 hours)\n\
+         Page: https://interchouette.net/news\n\
+         JSON: https://api.interchouette.net/v1/news\n\
+         RSS: https://api.interchouette.net/v1/news/rss.xml\n\
+         Atom: https://api.interchouette.net/v1/news/atom.xml\n",
+    );
+    if let Some(at) = body.get("fetched_at").and_then(|v| v.as_str()) {
+        let _ = writeln!(out, "Fetched at: {at}");
+    }
+    if let Some(ttl) = body
+        .get("cache_ttl_secs")
+        .and_then(serde_json::Value::as_u64)
+    {
+        let _ = writeln!(out, "Cache TTL seconds: {ttl}");
+    }
+    out.push('\n');
+    let sections = [
+        ("Interchouette on X", "itc_x"),
+        ("Interchouette on LinkedIn", "itc_linkedin"),
+    ];
+    for (label, key) in sections {
+        let _ = writeln!(out, "## {label}");
+        let items = body
+            .pointer(&format!("/feeds/{key}/items"))
+            .and_then(|v| v.as_array())
+            .cloned()
+            .unwrap_or_default();
+        if items.is_empty() {
+            out.push_str("(no posts)\n\n");
+            continue;
+        }
+        for item in items {
+            let text = item.get("text").and_then(|v| v.as_str()).unwrap_or("");
+            let url = item.get("url").and_then(|v| v.as_str()).unwrap_or("");
+            let when = item
+                .get("published_at")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            if when.is_empty() {
+                let _ = writeln!(out, "- {text}");
+            } else {
+                let _ = writeln!(out, "- {text} ({when})");
+            }
+            if !url.is_empty() {
+                let _ = writeln!(out, "  {url}");
+            }
+        }
+        out.push('\n');
+    }
+    out.trim_end().to_string()
 }
 
 fn doc_or_err(store: &Store, slug: &str, lang: Option<&str>) -> Result<CallToolResult, McpError> {
@@ -711,6 +790,28 @@ mod tests {
     fn format_doc_skips_existing_heading() {
         assert_eq!(format_doc("T", "body"), "# T\n\nbody");
         assert_eq!(format_doc("T", "# T\n\nbody"), "# T\n\nbody");
+    }
+
+    #[test]
+    fn format_news_snapshot_lists_posts_and_feed_urls() {
+        let text = format_news_snapshot(&json!({
+            "fetched_at": "2026-08-20T12:00:00.000Z",
+            "feeds": {
+                "itc_x": {
+                    "items": [{
+                        "text": "Hello from X",
+                        "url": "https://x.com/interchouette/status/1",
+                        "published_at": "2026-08-19T00:00:00Z"
+                    }]
+                },
+                "itc_linkedin": { "items": [] }
+            }
+        }));
+        assert!(text.contains("Hello from X"));
+        assert!(text.contains("https://api.interchouette.net/v1/news"));
+        assert!(text.contains("https://api.interchouette.net/v1/news/rss.xml"));
+        assert!(text.contains("https://api.interchouette.net/v1/news/atom.xml"));
+        assert!(text.contains("(no posts)"));
     }
 
     fn none_lang() -> Parameters<LangArgs> {

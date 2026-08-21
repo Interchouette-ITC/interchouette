@@ -28,7 +28,7 @@ export function chatCapabilitiesText(): string {
     return 'Site chat widget is disabled in this build.';
   }
   return [
-    'Site chat widget (bottom-right FAB) talks to chat.interchouette.net.',
+    'Site chat widget (bottom-right FAB) talks to api.interchouette.net.',
     'Live: Greg replies via Slack DM into the panel.',
     'Away: ITCy answers using remote Interchouette MCP + OpenRouter.',
     'WebMCP tools: list_chat_capabilities, open_site_chat, send_site_chat_message.',

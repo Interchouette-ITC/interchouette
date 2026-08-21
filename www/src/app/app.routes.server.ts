@@ -1,6 +1,6 @@
 import { RenderMode, ServerRoute } from '@angular/ssr';
 
-/** Build-time prerender only (no runtime Node SSR on Render Static). */
+/** Build-time prerender for static host (CDN). Runtime SSR for /news is a follow-up deploy. */
 export const serverRoutes: ServerRoute[] = [
   { path: '', renderMode: RenderMode.Prerender },
   { path: 'news', renderMode: RenderMode.Prerender },
