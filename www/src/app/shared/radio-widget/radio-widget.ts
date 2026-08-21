@@ -26,7 +26,6 @@ import {
 } from '../../core/soundcloud-widget';
 
 const FRAME_ID = 'ic-radio-player';
-/** Playlist length hint for start_track; widget still works if shorter. */
 const PLAYLIST_TRACK_HINT = 24;
 
 @Component({
@@ -44,7 +43,6 @@ export class RadioWidget implements OnDestroy {
 
   protected readonly mounted = signal(false);
   protected readonly loading = signal(false);
-  protected readonly showFrame = signal(false);
   protected readonly playing = signal(false);
   protected readonly error = signal(false);
 
@@ -63,7 +61,7 @@ export class RadioWidget implements OnDestroy {
     if (this.error()) {
       return radio.error;
     }
-    return this.showFrame() ? radio.pause : radio.play;
+    return this.playing() ? radio.pause : radio.play;
   });
 
   constructor() {
@@ -83,22 +81,19 @@ export class RadioWidget implements OnDestroy {
       return;
     }
 
-    // Second click while "on" turns off (even if audio has not fired PLAY yet).
-    if (this.showFrame()) {
-      icConsoleWrite({ ns: 'ic:radio', topic: 'click', kv: { intent: 'off' } });
+    // Only pause when audio is actually playing (not while the frame is merely open).
+    if (this.playing()) {
+      icConsoleWrite({ ns: 'ic:radio', topic: 'click', kv: { intent: 'pause' } });
       this.widget?.pause();
       this.playing.set(false);
-      this.showFrame.set(false);
       return;
     }
 
     icConsoleWrite({
       ns: 'ic:radio',
       topic: 'click',
-      kv: { intent: 'on', volume: this.prefs.volume },
+      kv: { intent: 'play', volume: this.prefs.volume },
     });
-
-    this.showFrame.set(true);
     this.error.set(false);
 
     if (this.started && this.widget) {
@@ -111,13 +106,11 @@ export class RadioWidget implements OnDestroy {
     const frame = document.getElementById(FRAME_ID) as HTMLIFrameElement | null;
     if (!frame) {
       this.error.set(true);
-      this.showFrame.set(false);
       return;
     }
 
     this.loading.set(true);
     this.lastIndex = pickRandomIndex(PLAYLIST_TRACK_HINT);
-    // Real-size iframe (parked off-screen until .radio--on) + auto_play in the click.
     frame.src = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
       autoPlay: true,
       startTrack: this.lastIndex,
@@ -154,11 +147,13 @@ export class RadioWidget implements OnDestroy {
       await this.waitReady(widget, events.READY);
       this.started = true;
       this.applyVolume();
-      // Do not skip/shuffle here: that breaks auto_play from the click gesture.
+      // auto_play should already be running; nudge once without skip/shuffle
+      widget.play();
+      this.playing.set(true);
       icConsoleWrite({
         ns: 'ic:radio',
         topic: 'ready',
-        kv: { startTrack: this.lastIndex, meaning: 'auto_play from first click' },
+        kv: { startTrack: this.lastIndex },
       });
     } catch (err) {
       this.error.set(true);
