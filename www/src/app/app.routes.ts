@@ -2,10 +2,12 @@ import { Routes } from '@angular/router';
 
 /**
  * URL convention (match live static hosting):
- * - `/`, `/about`, `/privacy`, `/terms`, `/CV`: no trailing slash
+ * - `/`, `/about`, `/news`, `/privacy`, `/terms`, `/CV`: no trailing slash
  * - `/CV/` redirects to `/CV` on the host
  * - legacy `/CV - Gregory Roussac/` → `/CV`
- * Host must Rewrite clean paths to prerendered page HTML (never Redirect to root index).
+ * Host: prefer Rewrite clean paths to prerendered `…/index.html` (never Redirect to
+ * root index). Build also emits sibling `about.html` / `news.html` so extensionless
+ * URLs stay prerendered when an SPA `/*` rewrite would otherwise serve home.
  */
 export const routes: Routes = [
   {
