@@ -1,5 +1,10 @@
 @if (mounted()) {
-  <div class="radio" [class.radio--on]="playing()" [class.radio--busy]="loading()">
+  <div
+    class="radio"
+    [class.radio--on]="showFrame()"
+    [class.radio--busy]="loading()"
+    [class.radio--playing]="playing()"
+  >
     <button
       type="button"
       class="radio__toggle"
@@ -7,7 +12,7 @@
       (click)="onToggle()"
       [attr.aria-label]="buttonLabel()"
       [attr.title]="buttonLabel()"
-      [attr.aria-pressed]="playing()"
+      [attr.aria-pressed]="showFrame()"
     >
       <span class="radio__note" aria-hidden="true">♪</span>
       <span class="radio__tri" aria-hidden="true"></span>
@@ -19,12 +24,11 @@
     <iframe
       [id]="frameId"
       class="radio__frame"
-      [class.radio__frame--visible]="playing()"
       title="Interchouette SoundCloud radio"
-      width="300"
-      height="80"
+      width="320"
+      height="100"
       allow="autoplay; encrypted-media"
-      [attr.tabindex]="playing() ? 0 : -1"
+      [attr.tabindex]="showFrame() ? 0 : -1"
     ></iframe>
   </div>
 }
