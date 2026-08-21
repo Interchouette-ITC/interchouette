@@ -2,6 +2,9 @@
   <app-page-brand-mark />
   <a class="back" routerLink="/">&larr; Interchouette</a>
   <h1>{{ copy.news.title }}</h1>
+  <p class="news-archive-nav">
+    <a routerLink="/archive">{{ copy.news.archiveLink }}</a>
+  </p>
 
   <nav class="news-sources" [attr.aria-label]="copy.news.sourcesAria">
     <a
