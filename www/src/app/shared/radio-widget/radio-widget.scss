@@ -109,9 +109,15 @@
 }
 
 .radio__note {
-  font-size: 0.78rem;
+  font-size: 1.55rem;
   font-weight: 700;
   opacity: 0.85;
+  line-height: 1;
+}
+
+.radio__btn--frame {
+  width: 1.7rem;
+  height: 1.2rem;
 }
 
 .radio--frame .radio__note {
