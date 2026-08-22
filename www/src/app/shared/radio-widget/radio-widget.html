@@ -21,6 +21,17 @@
 
       <button
         type="button"
+        class="radio__btn radio__btn--next"
+        [disabled]="loading()"
+        (click)="onNext(); $event.stopPropagation()"
+        [attr.aria-label]="copy.radio.next"
+        [attr.title]="copy.radio.next"
+      >
+        <span class="radio__skip" aria-hidden="true"></span>
+      </button>
+
+      <button
+        type="button"
         class="radio__btn radio__btn--sound"
         (click)="onMuteToggle(); $event.stopPropagation()"
         [attr.aria-label]="soundLabel()"
@@ -50,7 +61,7 @@
         class="radio__frame"
         title="Interchouette SoundCloud radio"
         width="300"
-        height="90"
+        height="166"
         allow="autoplay; encrypted-media"
         [src]="frameSrc"
         (load)="onFrameLoad()"

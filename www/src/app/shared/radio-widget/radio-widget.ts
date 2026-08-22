@@ -9,7 +9,6 @@ import {
 } from '@angular/core';
 import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 
-import { icConsoleWrite } from '../../core/ic-console';
 import { LocaleService } from '../../core/locale.service';
 import {
   RADIO_DEFAULT_VOLUME,
@@ -116,6 +115,25 @@ export class RadioWidget implements OnDestroy {
     this.loading.set(true);
   }
 
+  protected onNext(): void {
+    if (!this.widget) {
+      return;
+    }
+    this.wantPlay = true;
+    this.applyVol();
+    const widget = this.widget;
+    widget.getCurrentSoundIndex((current) => {
+      widget.getSounds((sounds) => {
+        if (sounds.length === 0) {
+          return;
+        }
+        this.track = (current + 1) % sounds.length;
+        widget.skip(this.track);
+        widget.play();
+      });
+    });
+  }
+
   protected onFrameToggle(): void {
     this.frameOpen.update((v) => !v);
   }
@@ -153,23 +171,16 @@ export class RadioWidget implements OnDestroy {
       this.widget = widget;
       this.applyVol();
       this.loading.set(false);
-      icConsoleWrite({ ns: 'ic:radio', topic: 'ready', kv: { startTrack: this.track } });
 
       if (this.wantPlay) {
         widget.play();
       }
-    } catch (err) {
+    } catch {
       this.error.set(true);
       this.playing.set(false);
       this.widget = null;
       this.loading.set(false);
       this.bindPromise = null;
-      icConsoleWrite({
-        ns: 'ic:radio',
-        topic: 'boot',
-        level: 'error',
-        kv: { err: err instanceof Error ? err.message : String(err) },
-      });
     }
   }
 
@@ -195,10 +206,7 @@ export class RadioWidget implements OnDestroy {
     });
   }
 
-  private wire(
-    widget: SoundCloudWidget,
-    events: NonNullable<ReturnType<typeof scEvents>>,
-  ): void {
+  private wire(widget: SoundCloudWidget, events: NonNullable<ReturnType<typeof scEvents>>): void {
     widget.bind(events.PLAY, () => {
       this.playing.set(true);
       this.loading.set(false);

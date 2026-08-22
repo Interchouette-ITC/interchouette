@@ -10,6 +10,8 @@ export type SoundCloudWidget = {
   play: () => void;
   pause: () => void;
   toggle: () => void;
+  next: () => void;
+  prev: () => void;
   skip: (soundIndex: number) => void;
   setVolume: (volume: number) => void;
   getSounds: (callback: (sounds: SoundCloudSound[]) => void) => void;
