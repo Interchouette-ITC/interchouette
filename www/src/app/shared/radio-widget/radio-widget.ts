@@ -44,6 +44,8 @@ export class RadioWidget implements OnDestroy {
   protected readonly mounted = signal(false);
   protected readonly loading = signal(false);
   protected readonly playing = signal(false);
+  protected readonly muted = signal(false);
+  protected readonly frameOpen = signal(false);
   protected readonly error = signal(false);
 
   private widget: SoundCloudWidget | null = null;
@@ -52,7 +54,7 @@ export class RadioWidget implements OnDestroy {
   private lastIndex = -1;
   private apiLoaded = false;
 
-  protected readonly buttonLabel = computed(() => {
+  protected readonly playLabel = computed(() => {
     const radio = this.copy.radio;
     if (this.loading()) {
       return radio.loading;
@@ -63,9 +65,18 @@ export class RadioWidget implements OnDestroy {
     return this.playing() ? radio.pause : radio.play;
   });
 
+  protected readonly soundLabel = computed(() =>
+    this.muted() ? this.copy.radio.soundOn : this.copy.radio.soundOff,
+  );
+
+  protected readonly frameLabel = computed(() =>
+    this.frameOpen() ? this.copy.radio.closeFrame : this.copy.radio.openFrame,
+  );
+
   constructor() {
     afterNextRender(() => {
       this.mounted.set(true);
+      this.muted.set(this.prefs.muted);
       void this.warmApi();
     });
   }
@@ -75,14 +86,28 @@ export class RadioWidget implements OnDestroy {
     this.widget = null;
   }
 
-  /** Switch = play / pause only. Iframe stays outside the card. */
-  protected onToggle(): void {
+  /** 1) Sound on/off (mute). Does not play or open the frame. */
+  protected onSoundToggle(): void {
+    const next = !this.muted();
+    this.muted.set(next);
+    this.prefs = { ...this.prefs, muted: next };
+    writeRadioPrefs(this.prefs);
+    this.applyVolume();
+    icConsoleWrite({
+      ns: 'ic:radio',
+      topic: 'sound',
+      kv: { muted: next },
+    });
+  }
+
+  /** 2) Play / pause. Does not toggle mute or frame visibility. */
+  protected onPlayToggle(): void {
     if (this.loading()) {
       return;
     }
 
     if (this.playing()) {
-      icConsoleWrite({ ns: 'ic:radio', topic: 'click', kv: { intent: 'pause' } });
+      icConsoleWrite({ ns: 'ic:radio', topic: 'play', kv: { intent: 'pause' } });
       this.widget?.pause();
       this.playing.set(false);
       return;
@@ -90,12 +115,11 @@ export class RadioWidget implements OnDestroy {
 
     icConsoleWrite({
       ns: 'ic:radio',
-      topic: 'click',
-      kv: { intent: 'play', volume: this.prefs.volume },
+      topic: 'play',
+      kv: { intent: 'play', muted: this.muted(), volume: this.prefs.volume },
     });
     this.error.set(false);
 
-    // Resume after a pause: Widget API is enough once audio was unlocked.
     if (this.widget) {
       this.applyVolume();
       this.widget.play();
@@ -112,14 +136,22 @@ export class RadioWidget implements OnDestroy {
     this.loading.set(true);
     this.playing.set(true);
     this.lastIndex = pickRandomIndex(PLAYLIST_TRACK_HINT);
-
-    // Must set src with auto_play in the same click turn (browser gesture).
-    // Iframe is already full-size and visible outside the card.
     frame.src = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
       autoPlay: true,
       startTrack: this.lastIndex,
     });
     void this.bindAfterLoad(frame);
+  }
+
+  /** 3) Show / hide SoundCloud iframe outside the card. Does not play or mute. */
+  protected onFrameToggle(): void {
+    const next = !this.frameOpen();
+    this.frameOpen.set(next);
+    icConsoleWrite({
+      ns: 'ic:radio',
+      topic: 'frame',
+      kv: { open: next },
+    });
   }
 
   private async warmApi(): Promise<void> {
@@ -154,7 +186,7 @@ export class RadioWidget implements OnDestroy {
       icConsoleWrite({
         ns: 'ic:radio',
         topic: 'ready',
-        kv: { startTrack: this.lastIndex, meaning: 'play via auto_play + widget.play' },
+        kv: { startTrack: this.lastIndex },
       });
     } catch (err) {
       this.error.set(true);
@@ -217,19 +249,22 @@ export class RadioWidget implements OnDestroy {
           const next = pickRandomIndex(sounds.length, current);
           this.lastIndex = next;
           widget.skip(next);
-          widget.play();
+          if (!this.muted()) {
+            widget.play();
+          }
         });
       });
     });
   }
 
   private applyVolume(): void {
-    this.widget?.setVolume(this.prefs.muted ? 0 : this.prefs.volume);
+    this.widget?.setVolume(this.muted() ? 0 : this.prefs.volume);
   }
 
   /** Exposed for tests. */
   protected persistPrefs(prefs: RadioPrefs): void {
     this.prefs = prefs;
+    this.muted.set(prefs.muted);
     writeRadioPrefs(prefs);
     this.applyVolume();
   }
