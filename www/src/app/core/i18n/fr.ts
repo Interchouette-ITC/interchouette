@@ -3,6 +3,7 @@ import { FR_CHAT } from './fr-chat';
 import { FR_CONSENT } from './fr-consent';
 import { FR_HOME } from './fr-home';
 import { FR_NEWS } from './fr-news';
+import { FR_RADIO } from './fr-radio';
 import { FR_PRIVACY } from './fr-privacy';
 import { FR_TERMS } from './fr-terms';
 import type { SiteCopy } from './en';
@@ -62,6 +63,7 @@ export const FR: SiteCopy = {
     nudgeHooks: [...FR_CHAT.nudgeHooks],
     resumeNudgeHooks: [...FR_CHAT.resumeNudgeHooks],
   },
+  radio: FR_RADIO,
   about: FR_ABOUT,
   privacy: FR_PRIVACY,
   terms: FR_TERMS,

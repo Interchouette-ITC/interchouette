@@ -3,6 +3,7 @@ import { NL_CHAT } from './nl-chat';
 import { NL_CONSENT } from './nl-consent';
 import { NL_HOME } from './nl-home';
 import { NL_NEWS } from './nl-news';
+import { NL_RADIO } from './nl-radio';
 import { NL_PRIVACY } from './nl-privacy';
 import { NL_TERMS } from './nl-terms';
 import type { SiteCopy } from './en';
@@ -61,6 +62,7 @@ export const NL: SiteCopy = {
     nudgeHooks: [...NL_CHAT.nudgeHooks],
     resumeNudgeHooks: [...NL_CHAT.resumeNudgeHooks],
   },
+  radio: NL_RADIO,
   about: NL_ABOUT,
   privacy: NL_PRIVACY,
   terms: NL_TERMS,

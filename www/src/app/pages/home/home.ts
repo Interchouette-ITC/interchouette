@@ -13,11 +13,13 @@ import { CHAT_WIDGET_ENABLED, CONTACT_EMAIL } from '../../core/chat.constants';
 import { ChatService } from '../../core/chat.service';
 import { fillCopy } from '../../core/i18n/catalog';
 import { LocaleService } from '../../core/locale.service';
+import { RADIO_WIDGET_ENABLED } from '../../core/radio.constants';
+import { RadioWidget } from '../../shared/radio-widget/radio-widget';
 import { SiteFooter } from '../../shared/site-footer/site-footer';
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink, SiteFooter],
+  imports: [RouterLink, SiteFooter, RadioWidget],
   templateUrl: './home.html',
   styleUrl: './home.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,6 +32,7 @@ export class HomePage {
 
   /** Feature gate only (may still be warming). */
   protected readonly chatEnabled = CHAT_WIDGET_ENABLED;
+  protected readonly radioEnabled = RADIO_WIDGET_ENABLED;
   protected readonly email = CONTACT_EMAIL;
   protected readonly mailHref = `mailto:${CONTACT_EMAIL}`;
   protected readonly whatsappHref = 'https://wa.me/31620808454';

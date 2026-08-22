@@ -29,6 +29,9 @@
       />
     </button>
   </div>
+  @if (radioEnabled) {
+    <app-radio-widget ngSkipHydration />
+  }
   <div class="avatar">
     <img
       class="center animated rollIn"

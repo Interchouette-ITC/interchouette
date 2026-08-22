@@ -3,6 +3,7 @@ import { EN_CHAT } from './en-chat';
 import { EN_CONSENT } from './en-consent';
 import { EN_HOME } from './en-home';
 import { EN_NEWS } from './en-news';
+import { EN_RADIO } from './en-radio';
 import { EN_PRIVACY } from './en-privacy';
 import { EN_TERMS } from './en-terms';
 import type { DeepLoose, SiteCopyLeafKey } from './copy-types';
@@ -57,6 +58,7 @@ export const EN = {
   home: EN_HOME,
   consent: EN_CONSENT,
   chat: EN_CHAT,
+  radio: EN_RADIO,
   about: EN_ABOUT,
   privacy: EN_PRIVACY,
   terms: EN_TERMS,

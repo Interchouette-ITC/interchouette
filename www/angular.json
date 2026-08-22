@@ -35,7 +35,7 @@
             "outputMode": "static",
             "ngxEnv": {
               "root": "..",
-              "prefix": "^(CHAT_WIDGET_ENABLED|GIS_CLIENT_ID)$"
+              "prefix": "^(CHAT_WIDGET_ENABLED|GIS_CLIENT_ID|RADIO_WIDGET_ENABLED)$"
             },
             "security": {
               "allowedHosts": [

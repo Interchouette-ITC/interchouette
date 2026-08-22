@@ -1,0 +1,236 @@
+:host {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+  z-index: 30;
+  display: block;
+  overflow: visible;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.radio {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+.radio__controls {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.14rem;
+  margin: 0;
+  padding: 0.12rem 0.32rem;
+  border: 1px solid #c8c4ce;
+  border-radius: 999px;
+  background: #f3f1f5;
+  color: #6a6570;
+  line-height: 0;
+  min-height: 1.35rem;
+  height: auto;
+  box-sizing: border-box;
+}
+
+.radio__btn {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  line-height: 0;
+  width: 1.15rem;
+  height: 1rem;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.radio__btn:hover:not(:disabled) {
+  color: #3f3a45;
+}
+
+.radio__btn:focus-visible {
+  outline: 2px solid #8a8492;
+  outline-offset: 2px;
+  border-radius: 0.2rem;
+}
+
+.radio__btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.radio__btn--play {
+  z-index: 2;
+}
+
+.radio__tri {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0;
+  border-top: 0.42rem solid transparent;
+  border-bottom: 0.42rem solid transparent;
+  border-left: 0.64rem solid currentColor;
+  transform: translateX(0.05rem);
+  pointer-events: none;
+}
+
+.radio--playing .radio__tri {
+  width: 0.5rem;
+  height: 0.72rem;
+  margin: 0;
+  border: 0;
+  transform: none;
+  background:
+    linear-gradient(currentColor, currentColor) 0 0 / 0.15rem 100% no-repeat,
+    linear-gradient(currentColor, currentColor) 100% 0 / 0.15rem 100% no-repeat;
+}
+
+.radio__skip {
+  position: relative;
+  display: block;
+  width: 0.72rem;
+  height: 0.56rem;
+  pointer-events: none;
+}
+
+.radio__skip::before,
+.radio__skip::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 0.28rem solid transparent;
+  border-bottom: 0.28rem solid transparent;
+  border-left: 0.36rem solid currentColor;
+}
+
+.radio__skip::before {
+  left: 0;
+}
+
+.radio__skip::after {
+  left: 0.3rem;
+}
+
+.radio__btn--sound {
+  margin-left: -0.32rem;
+}
+
+.radio__note {
+  display: block;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.85;
+  transform: translateY(0.02rem);
+  pointer-events: none;
+  user-select: none;
+}
+
+.radio:not(.radio--muted) .radio__note {
+  opacity: 1;
+  color: #3f3a45;
+}
+
+.radio--muted .radio__note {
+  position: relative;
+  opacity: 0.55;
+  color: #6a6570;
+}
+
+.radio--muted .radio__note::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1.5rem;
+  height: 0.14rem;
+  background: currentColor;
+  border-radius: 1px;
+  transform: translate(-50%, -50%) rotate(-42deg);
+}
+
+.radio__btn--frame {
+  width: 1.7rem;
+}
+
+.radio__bar {
+  position: relative;
+  display: block;
+  width: 1.65rem;
+  height: 0.78rem;
+  border-radius: 999px;
+  background: #d4d0d8;
+  box-shadow: inset 0 1px 2px rgba(40, 30, 50, 0.12);
+  pointer-events: none;
+}
+
+.radio__knob {
+  position: absolute;
+  top: 0.07rem;
+  left: 0.08rem;
+  width: 0.64rem;
+  height: 0.64rem;
+  border-radius: 50%;
+  background: #9a95a0;
+  box-shadow: 0 1px 2px rgba(40, 30, 50, 0.18);
+  transition:
+    transform 0.18s ease,
+    background 0.18s ease;
+  pointer-events: none;
+}
+
+.radio--frame .radio__bar {
+  background: #b8b3bc;
+}
+
+.radio--frame .radio__knob {
+  transform: translateX(0.75rem);
+  background: #6a6570;
+}
+
+.radio__frame {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 300px;
+  height: 166px;
+  border: 0;
+  border-radius: 0.35rem;
+  background: #fff;
+  box-shadow: 0 4px 14px rgba(40, 30, 50, 0.12);
+  pointer-events: none;
+  z-index: 40;
+}
+
+.radio--frame .radio__frame {
+  position: absolute;
+  top: calc(100% + 0.1rem);
+  left: 0;
+  right: auto;
+  margin: 0;
+  pointer-events: auto;
+}
+
+@media (max-width: 727px) {
+  :host {
+    top: 0.35rem;
+    right: 0.35rem;
+  }
+
+  .radio--frame .radio__frame {
+    width: min(14rem, calc(100vw - 1.5rem));
+    height: 152px;
+  }
+}
