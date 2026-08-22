@@ -17,10 +17,10 @@ describe('RadioWidget', () => {
     fixture.detectChanges();
   });
 
-  it('exposes three separate controls', () => {
+  it('exposes the switch and side actions', () => {
     expect(fixture.componentInstance).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.radio__btn--sound')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.radio__btn--play')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('.radio__btn--frame')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.radio__toggle')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.radio__sound')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.radio__frame-btn')).toBeTruthy();
   });
 });
