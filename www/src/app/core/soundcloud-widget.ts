@@ -1,4 +1,3 @@
-/** Minimal SoundCloud Widget API surface used by the radio player. */
 export type SoundCloudSound = {
   title?: string;
   user?: { username?: string };

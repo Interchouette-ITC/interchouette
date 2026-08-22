@@ -2,7 +2,7 @@ export const NL_RADIO = {
   play: 'Afspelen',
   pause: 'Pauze',
   soundOn: 'Geluid aan',
-  soundOff: 'Geluid uit (dempen)',
+  soundOff: 'Geluid uit',
   openFrame: 'Speler tonen',
   closeFrame: 'Speler verbergen',
   loading: 'Laden…',

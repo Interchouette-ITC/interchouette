@@ -2,7 +2,7 @@ export const EN_RADIO = {
   play: 'Play',
   pause: 'Pause',
   soundOn: 'Sound on',
-  soundOff: 'Sound off (mute)',
+  soundOff: 'Sound off',
   openFrame: 'Show player',
   closeFrame: 'Hide player',
   loading: 'Loading…',

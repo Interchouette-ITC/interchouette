@@ -9,20 +9,9 @@
     <div class="radio__controls" role="group" [attr.aria-label]="copy.radio.play">
       <button
         type="button"
-        class="radio__btn radio__btn--frame"
-        (click)="onFrameToggle()"
-        [attr.aria-label]="frameLabel()"
-        [attr.title]="frameLabel()"
-        [attr.aria-pressed]="frameOpen()"
-      >
-        <span class="radio__note" aria-hidden="true">♪</span>
-      </button>
-
-      <button
-        type="button"
         class="radio__btn radio__btn--play"
         [disabled]="loading()"
-        (click)="onPlayToggle()"
+        (click)="onPlayToggle(); $event.stopPropagation()"
         [attr.aria-label]="playLabel()"
         [attr.title]="playLabel()"
         [attr.aria-pressed]="playing()"
@@ -33,10 +22,21 @@
       <button
         type="button"
         class="radio__btn radio__btn--sound"
-        (click)="onSoundToggle()"
+        (click)="onMuteToggle(); $event.stopPropagation()"
         [attr.aria-label]="soundLabel()"
         [attr.title]="soundLabel()"
         [attr.aria-pressed]="!muted()"
+      >
+        <span class="radio__note" aria-hidden="true">♪</span>
+      </button>
+
+      <button
+        type="button"
+        class="radio__btn radio__btn--frame"
+        (click)="onFrameToggle(); $event.stopPropagation()"
+        [attr.aria-label]="frameLabel()"
+        [attr.title]="frameLabel()"
+        [attr.aria-pressed]="frameOpen()"
       >
         <span class="radio__bar" aria-hidden="true">
           <span class="radio__knob"></span>
@@ -44,14 +44,18 @@
       </button>
     </div>
 
-    <iframe
-      [id]="frameId"
-      class="radio__frame"
-      title="Interchouette SoundCloud radio"
-      width="300"
-      height="90"
-      allow="autoplay; encrypted-media"
-      [attr.tabindex]="frameOpen() ? 0 : -1"
-    ></iframe>
+    @if (frameSrc) {
+      <iframe
+        [id]="frameId"
+        class="radio__frame"
+        title="Interchouette SoundCloud radio"
+        width="300"
+        height="90"
+        allow="autoplay; encrypted-media"
+        [src]="frameSrc"
+        (load)="onFrameLoad()"
+        [attr.tabindex]="frameOpen() ? 0 : -1"
+      ></iframe>
+    }
   </div>
 }
