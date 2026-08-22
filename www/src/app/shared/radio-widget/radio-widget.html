@@ -6,10 +6,10 @@
     [class.radio--frame]="frameOpen()"
     [class.radio--busy]="loading()"
   >
-    <div class="radio__row">
+    <div class="radio__controls" role="group" [attr.aria-label]="copy.radio.play">
       <button
         type="button"
-        class="radio__sound"
+        class="radio__btn radio__btn--sound"
         (click)="onSoundToggle()"
         [attr.aria-label]="soundLabel()"
         [attr.title]="soundLabel()"
@@ -20,23 +20,19 @@
 
       <button
         type="button"
-        class="radio__toggle"
+        class="radio__btn radio__btn--play"
         [disabled]="loading()"
         (click)="onPlayToggle()"
         [attr.aria-label]="playLabel()"
         [attr.title]="playLabel()"
         [attr.aria-pressed]="playing()"
       >
-        <span class="radio__note" aria-hidden="true">♪</span>
         <span class="radio__tri" aria-hidden="true"></span>
-        <span class="radio__bar" aria-hidden="true">
-          <span class="radio__knob"></span>
-        </span>
       </button>
 
       <button
         type="button"
-        class="radio__frame-btn"
+        class="radio__btn radio__btn--frame"
         (click)="onFrameToggle()"
         [attr.aria-label]="frameLabel()"
         [attr.title]="frameLabel()"

@@ -14,63 +14,65 @@
   gap: 0.35rem;
 }
 
-.radio__row {
+/* Same overall height as the old switch pill */
+.radio__controls {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-}
-
-/* Original switch height / look */
-.radio__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+  gap: 0.2rem;
   margin: 0;
   padding: 0.2rem 0.45rem;
   border: 1px solid #c8c4ce;
   border-radius: 999px;
   background: #f3f1f5;
   color: #6a6570;
-  cursor: pointer;
   line-height: 1;
-  transition:
-    background 0.18s ease,
-    border-color 0.18s ease,
-    color 0.18s ease;
 }
 
-.radio__toggle:hover:not(:disabled) {
-  background: #ebe8ef;
-  border-color: #b4afba;
-  color: #4f4a55;
+.radio__btn {
+  display: grid;
+  place-items: center;
+  width: 1.15rem;
+  height: 0.72rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
-.radio__toggle:focus-visible {
+.radio__btn:hover:not(:disabled) {
+  color: #3f3a45;
+}
+
+.radio__btn:focus-visible {
   outline: 2px solid #8a8492;
   outline-offset: 2px;
+  border-radius: 0.2rem;
 }
 
-.radio__toggle:disabled {
+.radio__btn:disabled {
   opacity: 0.55;
   cursor: wait;
 }
 
-.radio--playing .radio__toggle {
-  background: #e8e6ea;
-  border-color: #9a95a0;
+.radio--muted .radio__btn--sound {
+  opacity: 0.4;
+}
+
+.radio--playing .radio__btn--play,
+.radio--frame .radio__btn--frame {
   color: #3f3a45;
 }
 
-.radio__note {
-  font-size: 0.78rem;
-  font-weight: 700;
-  opacity: 0.85;
-}
-
 .radio__tri {
+  display: block;
   width: 0;
   height: 0;
-  margin-left: 0.05rem;
+  margin-left: 0.08rem;
   border-top: 0.28rem solid transparent;
   border-bottom: 0.28rem solid transparent;
   border-left: 0.42rem solid currentColor;
@@ -86,80 +88,8 @@
     linear-gradient(currentColor, currentColor) 100% 0 / 0.12rem 100% no-repeat;
 }
 
-.radio__bar {
-  position: relative;
-  width: 1.55rem;
-  height: 0.72rem;
-  margin-left: 0.1rem;
-  border-radius: 999px;
-  background: #d4d0d8;
-  box-shadow: inset 0 1px 2px rgba(40, 30, 50, 0.12);
-}
-
-.radio__knob {
-  position: absolute;
-  top: 0.08rem;
-  left: 0.1rem;
-  width: 0.56rem;
-  height: 0.56rem;
-  border-radius: 50%;
-  background: #9a95a0;
-  box-shadow: 0 1px 2px rgba(40, 30, 50, 0.18);
-  transition:
-    transform 0.18s ease,
-    background 0.18s ease;
-}
-
-.radio--playing .radio__bar {
-  background: #b8b3bc;
-}
-
-.radio--playing .radio__knob {
-  transform: translateX(0.72rem);
-  background: #6a6570;
-}
-
-/* Side actions: same height as the switch, not bigger */
-.radio__sound,
-.radio__frame-btn {
-  display: grid;
-  place-items: center;
-  width: 1.55rem;
-  height: 1.55rem;
-  margin: 0;
-  padding: 0;
-  border: 1px solid #c8c4ce;
-  border-radius: 999px;
-  background: #f3f1f5;
-  color: #6a6570;
-  cursor: pointer;
-  font-size: 0.78rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.radio__sound:hover,
-.radio__frame-btn:hover {
-  background: #ebe8ef;
-  color: #4f4a55;
-}
-
-.radio__sound:focus-visible,
-.radio__frame-btn:focus-visible {
-  outline: 2px solid #8a8492;
-  outline-offset: 2px;
-}
-
-.radio--muted .radio__sound {
-  opacity: 0.45;
-}
-
-.radio--frame .radio__frame-btn {
-  color: #3f3a45;
-  border-color: #9a95a0;
-}
-
 .radio__panel {
+  display: block;
   width: 0.62rem;
   height: 0.46rem;
   border: 1.5px solid currentColor;
