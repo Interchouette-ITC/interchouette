@@ -1,10 +1,7 @@
 :host {
   position: absolute;
-  top: 0.15rem;
-  right: 0;
-  width: 0;
-  height: 0;
-  overflow: visible;
+  top: 0.4rem;
+  right: 0.4rem;
   z-index: 8;
   display: block;
   font-family: 'Montserrat', sans-serif;
@@ -12,30 +9,27 @@
 
 .radio {
   position: relative;
-  width: 0;
-  height: 0;
-  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
 .radio__controls {
-  position: absolute;
-  top: 0.15rem;
-  right: 0.4rem;
-  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 0.15rem;
-  padding: 0.15rem 0.25rem;
+  padding: 0.2rem 0.3rem;
   border: 1px solid #c8c4ce;
   border-radius: 999px;
   background: #f3f1f5;
+  box-shadow: 0 2px 8px rgba(40, 30, 50, 0.08);
 }
 
 .radio__btn {
   display: grid;
   place-items: center;
-  width: 1.55rem;
-  height: 1.55rem;
+  width: 1.65rem;
+  height: 1.65rem;
   margin: 0;
   padding: 0;
   border: 0;
@@ -66,7 +60,7 @@
 
 .radio--muted .radio__btn--sound {
   color: #b0aab4;
-  text-decoration: line-through;
+  opacity: 0.7;
 }
 
 .radio--playing .radio__btn--play {
@@ -111,11 +105,11 @@
   box-sizing: border-box;
 }
 
-/* Full size always. Parked off-card when closed; outside right when open. */
+/* Full size always. Parked far left when closed; outside card to the right when open. */
 .radio__frame {
-  position: absolute;
-  top: 0;
+  position: fixed;
   left: -10000px;
+  top: 0;
   width: 320px;
   height: 100px;
   border: 0;
@@ -126,18 +120,32 @@
 }
 
 .radio--frame .radio__frame {
-  left: 0.7rem;
+  position: absolute;
+  left: calc(100% + 0.55rem);
+  top: 0;
+  right: auto;
   pointer-events: auto;
 }
 
+@media screen and (min-width: 728px) {
+  /* Sit at the card edge so the open frame clears the avatar. */
+  :host {
+    top: 0.35rem;
+    right: 0.25rem;
+  }
+}
+
 @media (max-width: 727px) {
-  .radio__controls {
+  :host {
+    top: 0.3rem;
     right: 0.3rem;
   }
 
   .radio--frame .radio__frame {
     width: min(14rem, 52vw);
     height: 90px;
-    left: 0.45rem;
+    left: auto;
+    right: 0;
+    top: calc(100% + 0.35rem);
   }
 }
