@@ -86,21 +86,17 @@ export class RadioWidget implements OnDestroy {
     this.widget = null;
   }
 
-  /** 1) Sound on/off (mute). Does not play or open the frame. */
+  /** Sound on/off only. */
   protected onSoundToggle(): void {
     const next = !this.muted();
     this.muted.set(next);
     this.prefs = { ...this.prefs, muted: next };
     writeRadioPrefs(this.prefs);
     this.applyVolume();
-    icConsoleWrite({
-      ns: 'ic:radio',
-      topic: 'sound',
-      kv: { muted: next },
-    });
+    icConsoleWrite({ ns: 'ic:radio', topic: 'sound', kv: { muted: next } });
   }
 
-  /** 2) Play / pause. Does not toggle mute or frame visibility. */
+  /** Play / pause only. Never flips mute or frame. */
   protected onPlayToggle(): void {
     if (this.loading()) {
       return;
@@ -123,7 +119,8 @@ export class RadioWidget implements OnDestroy {
     if (this.widget) {
       this.applyVolume();
       this.widget.play();
-      this.playing.set(true);
+      // PLAY event sets playing=true; keep false until then so a failed start
+      // is not treated as "on" (which caused click 2 = pause).
       return;
     }
 
@@ -134,24 +131,20 @@ export class RadioWidget implements OnDestroy {
     }
 
     this.loading.set(true);
-    this.playing.set(true);
     this.lastIndex = pickRandomIndex(PLAYLIST_TRACK_HINT);
+    // Sync in the click: unlock autoplay. Frame stays full-size off-screen until opened.
     frame.src = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
-      autoPlay: true,
+      autoPlay: !this.muted(),
       startTrack: this.lastIndex,
     });
     void this.bindAfterLoad(frame);
   }
 
-  /** 3) Show / hide SoundCloud iframe outside the card. Does not play or mute. */
+  /** Show / hide iframe below the controls (right side). */
   protected onFrameToggle(): void {
     const next = !this.frameOpen();
     this.frameOpen.set(next);
-    icConsoleWrite({
-      ns: 'ic:radio',
-      topic: 'frame',
-      kv: { open: next },
-    });
+    icConsoleWrite({ ns: 'ic:radio', topic: 'frame', kv: { open: next } });
   }
 
   private async warmApi(): Promise<void> {
@@ -182,7 +175,9 @@ export class RadioWidget implements OnDestroy {
       }
       await this.waitReady(widget, events.READY);
       this.applyVolume();
-      widget.play();
+      if (!this.muted()) {
+        widget.play();
+      }
       icConsoleWrite({
         ns: 'ic:radio',
         topic: 'ready',

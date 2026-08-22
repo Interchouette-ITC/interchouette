@@ -17,10 +17,10 @@ describe('RadioWidget', () => {
     fixture.detectChanges();
   });
 
-  it('creates and exposes play label before boot', () => {
+  it('exposes three separate controls', () => {
     expect(fixture.componentInstance).toBeTruthy();
-    const btn: HTMLButtonElement | null = fixture.nativeElement.querySelector('.radio__toggle');
-    expect(btn).toBeTruthy();
-    expect(btn?.getAttribute('aria-label')?.toLowerCase()).toContain('radio');
+    expect(fixture.nativeElement.querySelector('.radio__btn--sound')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.radio__btn--play')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.radio__btn--frame')).toBeTruthy();
   });
 });

@@ -1,50 +1,46 @@
 :host {
   position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
+  top: 0.45rem;
+  right: 0.45rem;
   z-index: 8;
   display: block;
   font-family: 'Montserrat', sans-serif;
 }
 
 .radio {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  gap: 0.35rem;
 }
 
 .radio__controls {
   display: inline-flex;
   align-items: center;
-  gap: 0.15rem;
-  padding: 0.2rem 0.3rem;
+  gap: 0.1rem;
+  padding: 0.15rem 0.28rem;
   border: 1px solid #c8c4ce;
   border-radius: 999px;
   background: #f3f1f5;
-  box-shadow: 0 2px 8px rgba(40, 30, 50, 0.08);
+  color: #6a6570;
 }
 
 .radio__btn {
   display: grid;
   place-items: center;
-  width: 1.65rem;
-  height: 1.65rem;
+  width: 1.35rem;
+  height: 1.35rem;
   margin: 0;
   padding: 0;
   border: 0;
   border-radius: 999px;
   background: transparent;
-  color: #6a6570;
+  color: inherit;
   cursor: pointer;
   line-height: 1;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
 }
 
 .radio__btn:hover:not(:disabled) {
-  background: #e5e1ea;
   color: #3f3a45;
 }
 
@@ -59,93 +55,75 @@
 }
 
 .radio--muted .radio__btn--sound {
-  color: #b0aab4;
-  opacity: 0.7;
+  opacity: 0.45;
 }
 
-.radio--playing .radio__btn--play {
-  color: #3f3a45;
-  background: #ddd8e2;
-}
-
+.radio--playing .radio__btn--play,
 .radio--frame .radio__btn--frame {
   color: #3f3a45;
-  background: #ddd8e2;
 }
 
 .radio__note {
-  font-size: 0.95rem;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
 .radio__tri {
   width: 0;
   height: 0;
-  margin-left: 0.12rem;
-  border-top: 0.32rem solid transparent;
-  border-bottom: 0.32rem solid transparent;
-  border-left: 0.5rem solid currentColor;
+  margin-left: 0.08rem;
+  border-top: 0.26rem solid transparent;
+  border-bottom: 0.26rem solid transparent;
+  border-left: 0.4rem solid currentColor;
 }
 
 .radio--playing .radio__tri {
-  width: 0.42rem;
-  height: 0.62rem;
+  width: 0.32rem;
+  height: 0.48rem;
   margin: 0;
   border: 0;
   background:
-    linear-gradient(currentColor, currentColor) 0 0 / 0.14rem 100% no-repeat,
-    linear-gradient(currentColor, currentColor) 100% 0 / 0.14rem 100% no-repeat;
+    linear-gradient(currentColor, currentColor) 0 0 / 0.11rem 100% no-repeat,
+    linear-gradient(currentColor, currentColor) 100% 0 / 0.11rem 100% no-repeat;
 }
 
 .radio__panel {
-  width: 0.72rem;
-  height: 0.55rem;
+  width: 0.62rem;
+  height: 0.46rem;
   border: 1.5px solid currentColor;
-  border-radius: 0.12rem;
+  border-radius: 0.1rem;
   box-sizing: border-box;
 }
 
-/* Full size always. Parked far left when closed; outside card to the right when open. */
+/* Always real size (autoplay needs it). Parked off-screen when closed. */
 .radio__frame {
   position: fixed;
   left: -10000px;
   top: 0;
-  width: 320px;
-  height: 100px;
+  width: 300px;
+  height: 90px;
   border: 0;
-  border-radius: 0.4rem;
+  border-radius: 0.35rem;
   background: #fff;
-  box-shadow: 0 6px 18px rgba(40, 30, 50, 0.14);
+  box-shadow: 0 4px 14px rgba(40, 30, 50, 0.12);
   pointer-events: none;
 }
 
+/* Below the buttons, aligned to the right. */
 .radio--frame .radio__frame {
-  position: absolute;
-  left: calc(100% + 0.55rem);
-  top: 0;
-  right: auto;
+  position: static;
+  left: auto;
   pointer-events: auto;
-}
-
-@media screen and (min-width: 728px) {
-  /* Sit at the card edge so the open frame clears the avatar. */
-  :host {
-    top: 0.35rem;
-    right: 0.25rem;
-  }
 }
 
 @media (max-width: 727px) {
   :host {
-    top: 0.3rem;
-    right: 0.3rem;
+    top: 0.35rem;
+    right: 0.35rem;
   }
 
   .radio--frame .radio__frame {
-    width: min(14rem, 52vw);
-    height: 90px;
-    left: auto;
-    right: 0;
-    top: calc(100% + 0.35rem);
+    width: min(14rem, 70vw);
+    height: 84px;
   }
 }
