@@ -86,7 +86,6 @@ export class RadioWidget implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.widget?.pause();
     this.widget = null;
   }
 
