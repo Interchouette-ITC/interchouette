@@ -1,7 +1,7 @@
-/* Anchor at the card's right edge so the player can sit outside the card. */
+/* Host glued to the card's right edge (width 0). Frame sits OUTSIDE to the right. */
 :host {
   position: absolute;
-  top: 0.2rem;
+  top: 0.15rem;
   right: 0;
   width: 0;
   height: 0;
@@ -22,6 +22,7 @@
   position: absolute;
   top: 0.15rem;
   right: 0.45rem;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -120,44 +121,27 @@
   background: #6a6570;
 }
 
-/*
- * Always full size. Host sits on the card's right edge (width: 0), so left: 0.65rem
- * places the player OUTSIDE the card to the right - never over the avatar.
- */
+/* Always painted outside the card - never 0x0, never visibility:hidden (breaks autoplay). */
 .radio__frame {
   position: absolute;
   top: 0;
-  left: 0.65rem;
+  left: 0.7rem;
   width: 320px;
   height: 100px;
   border: 0;
   border-radius: 0.4rem;
   background: #fff;
   box-shadow: 0 6px 18px rgba(40, 30, 50, 0.14);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.radio--on .radio__frame {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
 }
 
 @media (max-width: 727px) {
-  :host {
-    top: 0.15rem;
-  }
-
   .radio__toggle {
     right: 0.3rem;
   }
 
   .radio__frame {
-    /* Still outside to the right; shrink so it fits small screens. */
-    width: min(15rem, 55vw);
+    width: min(14rem, 52vw);
     height: 90px;
-    left: 0.4rem;
+    left: 0.45rem;
   }
 }

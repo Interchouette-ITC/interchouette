@@ -16,6 +16,7 @@
       </span>
     </button>
 
+    <!-- Always full-size and outside the card (right). Play/pause is the switch only. -->
     <iframe
       [id]="frameId"
       class="radio__frame"
@@ -23,7 +24,6 @@
       width="320"
       height="100"
       allow="autoplay; encrypted-media"
-      [attr.tabindex]="playing() ? 0 : -1"
     ></iframe>
   </div>
 }
