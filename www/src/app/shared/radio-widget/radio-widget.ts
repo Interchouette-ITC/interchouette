@@ -48,7 +48,6 @@ export class RadioWidget implements OnDestroy {
 
   private widget: SoundCloudWidget | null = null;
   private wired = false;
-  private started = false;
   private prefs: RadioPrefs = readRadioPrefs();
   private lastIndex = -1;
   private apiLoaded = false;
@@ -76,12 +75,12 @@ export class RadioWidget implements OnDestroy {
     this.widget = null;
   }
 
+  /** Switch = play / pause only. Iframe stays outside the card. */
   protected onToggle(): void {
     if (this.loading()) {
       return;
     }
 
-    // Only pause when audio is actually playing (not while the frame is merely open).
     if (this.playing()) {
       icConsoleWrite({ ns: 'ic:radio', topic: 'click', kv: { intent: 'pause' } });
       this.widget?.pause();
@@ -96,7 +95,8 @@ export class RadioWidget implements OnDestroy {
     });
     this.error.set(false);
 
-    if (this.started && this.widget) {
+    // Resume after a pause: Widget API is enough once audio was unlocked.
+    if (this.widget) {
       this.applyVolume();
       this.widget.play();
       this.playing.set(true);
@@ -110,7 +110,11 @@ export class RadioWidget implements OnDestroy {
     }
 
     this.loading.set(true);
+    this.playing.set(true);
     this.lastIndex = pickRandomIndex(PLAYLIST_TRACK_HINT);
+
+    // Must set src with auto_play in the same click turn (browser gesture).
+    // Iframe is already full-size and visible outside the card.
     frame.src = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
       autoPlay: true,
       startTrack: this.lastIndex,
@@ -123,7 +127,7 @@ export class RadioWidget implements OnDestroy {
       await loadSoundCloudWidgetApi();
       this.apiLoaded = true;
     } catch {
-      /* first click will retry */
+      /* first play will retry */
     }
   }
 
@@ -145,20 +149,17 @@ export class RadioWidget implements OnDestroy {
         this.wired = true;
       }
       await this.waitReady(widget, events.READY);
-      this.started = true;
       this.applyVolume();
-      // auto_play should already be running; nudge once without skip/shuffle
       widget.play();
-      this.playing.set(true);
       icConsoleWrite({
         ns: 'ic:radio',
         topic: 'ready',
-        kv: { startTrack: this.lastIndex },
+        kv: { startTrack: this.lastIndex, meaning: 'play via auto_play + widget.play' },
       });
     } catch (err) {
       this.error.set(true);
       this.playing.set(false);
-      this.started = false;
+      this.widget = null;
       icConsoleWrite({
         ns: 'ic:radio',
         topic: 'boot',
