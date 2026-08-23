@@ -273,6 +273,70 @@ pub struct BusyInterval {
     pub end: String,
 }
 
+/// Keywords that suggest the visitor wants to schedule a meeting.
+const SCHEDULING_NEEDLES: &[&str] = &[
+    "meet",
+    "meeting",
+    "book",
+    "booking",
+    "appointment",
+    "schedule",
+    "calend",
+    "call with",
+    "slot",
+    "afspraak",
+    "rendez-vous",
+    "rendezvous",
+    "disponib",
+    "availability",
+    "available",
+];
+
+/// True when the visitor message looks like a scheduling / booking request.
+#[must_use]
+pub fn looks_like_scheduling_intent(text: &str) -> bool {
+    let lower = text.to_ascii_lowercase();
+    SCHEDULING_NEEDLES.iter().any(|n| lower.contains(n))
+}
+
+/// Format busy intervals for LLM / MCP text (capped).
+#[must_use]
+pub fn format_busy_snippet(busy: &[BusyInterval], time_min: &str, time_max: &str) -> String {
+    use std::fmt::Write as _;
+    let tz = slot_timezone();
+    let mins = slot_minutes();
+    let mut out = format!(
+        "Calendar busy intervals ({tz}, slots {mins} min) from {time_min} to {time_max}:\n"
+    );
+    if busy.is_empty() {
+        out.push_str("(none listed - treat as mostly free; still confirm before booking)\n");
+        return out;
+    }
+    for it in busy.iter().take(40) {
+        let _ = writeln!(out, "- {} -> {}", it.start, it.end);
+    }
+    if busy.len() > 40 {
+        let _ = writeln!(out, "... and {} more busy blocks", busy.len() - 40);
+    }
+    out.push_str(
+        "Do not invent free slots that conflict with these busy blocks. \
+         Prefer proposing times outside them.\n",
+    );
+    out
+}
+
+/// RFC3339 UTC window covering the next `days` days from now (for away-mode hints).
+#[must_use]
+pub fn upcoming_freebusy_window(days: i64) -> (String, String) {
+    use chrono::{Duration, SecondsFormat, Utc};
+    let start = Utc::now();
+    let end = start + Duration::days(days.max(1));
+    (
+        start.to_rfc3339_opts(SecondsFormat::Secs, true),
+        end.to_rfc3339_opts(SecondsFormat::Secs, true),
+    )
+}
+
 #[derive(Debug, Deserialize)]
 struct TokenResponse {
     access_token: String,
@@ -481,5 +545,28 @@ mod tests {
             "2026-08-21T19:00:00",
             &busy,
         ));
+    }
+
+    #[test]
+    fn scheduling_intent_detects_booking_words() {
+        assert!(looks_like_scheduling_intent(
+            "Can we book a call next week?"
+        ));
+        assert!(looks_like_scheduling_intent("Ik wil een afspraak"));
+        assert!(!looks_like_scheduling_intent("Tell me about Rust Wasm"));
+    }
+
+    #[test]
+    fn busy_snippet_lists_intervals() {
+        let text = format_busy_snippet(
+            &[BusyInterval {
+                start: "2026-08-21T10:00:00Z".into(),
+                end: "2026-08-21T11:00:00Z".into(),
+            }],
+            "2026-08-21T00:00:00Z",
+            "2026-08-28T00:00:00Z",
+        );
+        assert!(text.contains("2026-08-21T10:00:00Z"));
+        assert!(text.contains("busy intervals"));
     }
 }

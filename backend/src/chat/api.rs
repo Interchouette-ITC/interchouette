@@ -12,7 +12,8 @@ use serde_json::json;
 use uuid::Uuid;
 
 use crate::chat::calendar::{
-    extract_booking_tag, strip_booking_tag, BookingRequest, CalendarClient, SLOT_TAKEN_ERROR_PREFIX,
+    extract_booking_tag, format_busy_snippet, looks_like_scheduling_intent, strip_booking_tag,
+    upcoming_freebusy_window, BookingRequest, CalendarClient, SLOT_TAKEN_ERROR_PREFIX,
 };
 use crate::chat::hub::{ChatEvent, Hub};
 use crate::chat::llm::AwayBrain;
@@ -136,6 +137,17 @@ struct BookPayload {
     start: String,
 }
 
+/// Request body for `POST /v1/calendar/freebusy` (MCP proxy).
+#[derive(Debug, Deserialize)]
+struct FreeBusyPayload {
+    /// Must match `MCP_CHAT_TOKEN` on this service.
+    token: String,
+    /// Window start (RFC3339 or naive ISO 8601, same style as booking start).
+    time_min: String,
+    /// Window end (exclusive).
+    time_max: String,
+}
+
 /// Mount chat routes under `/v1`.
 pub fn chat_router(state: ChatState) -> Router {
     Router::new()
@@ -143,6 +155,7 @@ pub fn chat_router(state: ChatState) -> Router {
         .route("/v1/sessions", post(create_session))
         .route("/v1/sessions/{id}/ws", get(ws_upgrade))
         .route("/v1/book", post(book_handler))
+        .route("/v1/calendar/freebusy", post(freebusy_handler))
         .route("/ready", get(ready))
         .with_state(state)
 }
@@ -266,6 +279,72 @@ async fn book_handler(
             (
                 axum::http::StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({ "error": "calendar insert failed" })),
+            )
+                .into_response()
+        }
+    }
+}
+
+/// `POST /v1/calendar/freebusy` - MCP proxy: list busy intervals on Greg's calendar.
+async fn freebusy_handler(
+    State(state): State<ChatState>,
+    Json(payload): Json<FreeBusyPayload>,
+) -> impl IntoResponse {
+    let expected = std::env::var("MCP_CHAT_TOKEN").unwrap_or_default();
+    if expected.is_empty() || payload.token != expected {
+        return (
+            axum::http::StatusCode::UNAUTHORIZED,
+            Json(json!({ "error": "invalid or missing token" })),
+        )
+            .into_response();
+    }
+    let time_min = payload.time_min.trim();
+    let time_max = payload.time_max.trim();
+    if time_min.is_empty() || time_max.is_empty() {
+        return (
+            axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({ "error": "time_min and time_max are required" })),
+        )
+            .into_response();
+    }
+    if time_min >= time_max {
+        return (
+            axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+            Json(json!({ "error": "time_min must be before time_max" })),
+        )
+            .into_response();
+    }
+    if !state.calendar.enabled() {
+        return (
+            axum::http::StatusCode::SERVICE_UNAVAILABLE,
+            Json(json!({ "error": "calendar not configured" })),
+        )
+            .into_response();
+    }
+    match state.calendar.busy_intervals(time_min, time_max).await {
+        Ok(busy) => {
+            tracing::info!(
+                busy_count = busy.len(),
+                %time_min,
+                %time_max,
+                "MCP /v1/calendar/freebusy"
+            );
+            (
+                axum::http::StatusCode::OK,
+                Json(json!({
+                    "time_min": time_min,
+                    "time_max": time_max,
+                    "busy": busy,
+                    "snippet": format_busy_snippet(&busy, time_min, time_max),
+                })),
+            )
+                .into_response()
+        }
+        Err(err) => {
+            tracing::warn!(error = %err, "MCP /v1/calendar/freebusy failed");
+            (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({ "error": "freebusy query failed" })),
             )
                 .into_response()
         }
@@ -592,6 +671,21 @@ async fn handle_live(state: &ChatState, session: &Session, text: &str) {
     let _ = post_to_session_thread(state, session, &format!("Prospect ({env}): {text}")).await;
 }
 
+/// When the visitor asks about booking and Calendar is configured, inject a busy snippet.
+async fn away_calendar_context(state: &ChatState, visitor_text: &str) -> Option<String> {
+    if !state.calendar.enabled() || !looks_like_scheduling_intent(visitor_text) {
+        return None;
+    }
+    let (time_min, time_max) = upcoming_freebusy_window(7);
+    match state.calendar.busy_intervals(&time_min, &time_max).await {
+        Ok(busy) => Some(format_busy_snippet(&busy, &time_min, &time_max)),
+        Err(err) => {
+            tracing::warn!(error = %err, "away freebusy hint failed");
+            None
+        }
+    }
+}
+
 async fn handle_away(state: &ChatState, session: &Session, session_id: &str, text: &str) {
     let env = crate::chat::chat_env_label();
     let _ = post_to_session_thread(state, session, &format!("Prospect ({env}): {text}")).await;
@@ -611,9 +705,16 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
         .get(session_id)
         .await
         .and_then(|s| s.visitor_email);
+    let calendar_context = away_calendar_context(state, text).await;
     let raw_reply = state
         .away
-        .reply(text, session.locale, &lines, email.as_deref())
+        .reply(
+            text,
+            session.locale,
+            &lines,
+            email.as_deref(),
+            calendar_context.as_deref(),
+        )
         .await;
     state
         .hub
@@ -926,6 +1027,61 @@ mod tests {
             .unwrap();
         // Either 503 (calendar not configured) or 401 (token env race) is acceptable,
         // but it must not be 200 or 500.
+        assert!(
+            response.status() == StatusCode::SERVICE_UNAVAILABLE
+                || response.status() == StatusCode::UNAUTHORIZED,
+        );
+        std::env::remove_var("MCP_CHAT_TOKEN");
+    }
+
+    #[tokio::test]
+    async fn freebusy_endpoint_rejects_missing_token() {
+        let state = test_state();
+        let app = chat_router(state);
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/v1/calendar/freebusy")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        serde_json::to_string(&json!({
+                            "token": "",
+                            "time_min": "2026-09-01T00:00:00Z",
+                            "time_max": "2026-09-08T00:00:00Z",
+                        }))
+                        .unwrap(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn freebusy_endpoint_requires_calendar_configured() {
+        std::env::set_var("MCP_CHAT_TOKEN", "test-token");
+        let state = test_state();
+        let app = chat_router(state);
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/v1/calendar/freebusy")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        serde_json::to_string(&json!({
+                            "token": "test-token",
+                            "time_min": "2026-09-01T00:00:00Z",
+                            "time_max": "2026-09-08T00:00:00Z",
+                        }))
+                        .unwrap(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
         assert!(
             response.status() == StatusCode::SERVICE_UNAVAILABLE
                 || response.status() == StatusCode::UNAUTHORIZED,
