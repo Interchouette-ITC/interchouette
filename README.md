@@ -17,9 +17,9 @@ Public site for [interchouette.net](https://interchouette.net/): Gregory Roussac
 | Path       | Role                                          |
 | ---------- | --------------------------------------------- |
 | `www/`     | Angular site (`package.json`, `node_modules`) |
-| `mcp/`     | Interchouette MCP crate (`interchouette-mcp`) |
+| `mcp/`     | Interchouette MCP crate (`interchouette-mcp`); see `mcp/README.md` |
 | `backend/` | Website chat crate (`interchouette-chat`)     |
-| `db/`      | Committed SQLite (`interchouette.db`)         |
+| `db/`      | Committed SQLite (`interchouette.db`) for MCP |
 
 ## Develop
 

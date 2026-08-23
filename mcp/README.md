@@ -2,7 +2,32 @@
 
 Read-only Streamable HTTP MCP over committed **`db/interchouette.db`**.
 
-Official MCP URL: `https://mcp.interchouette.net/` (alias `/interchouette` kept for old clients).
+Official MCP URL: **`https://mcp.interchouette.net/`** (alias `/interchouette` kept for old clients).
+
+Discovery on the public site:
+
+- Server card: `https://interchouette.net/.well-known/mcp.json`
+- Site map: `https://interchouette.net/llms.txt`
+
+## Use from any MCP client
+
+Point Streamable HTTP clients at the official URL. Do **not** copy catalog content into other repos; edit `mcp/catalog/` here and rebuild with `make mcp-db`.
+
+Cursor / compatible `mcp.json` example:
+
+```json
+{
+  "mcpServers": {
+    "interchouette-mcp": {
+      "url": "https://mcp.interchouette.net/"
+    }
+  }
+}
+```
+
+The `/interchouette` path alias is equivalent if a client already uses it.
+
+Browser agents on [interchouette.net](https://interchouette.net/) get a thin WebMCP layer (site overview, navigation, radio controls, `list_knowledge_topics`, `get_remote_mcp`). Full corpus search and document fetch stay on this remote MCP.
 
 ## Update content
 
@@ -48,4 +73,4 @@ cargo run --manifest-path mcp/Cargo.toml -- --db db/interchouette.db
 
 Env: `MCP_DB` (path to `.db`), `MCP_LISTEN`, `CORS_ORIGIN`, `MCP_ALLOWED_HOSTS`.
 
-Chat write tools (`send_message_to_greg`, `get_chat_relay_status`) require `MCP_CHAT_TOKEN` plus `SLACK_BOT_TOKEN` and `GREG_SLACK_USER_ID`. `list_chat_capabilities` needs no token.
+Chat write tools (`send_message_to_gregory_roussac`, `get_chat_relay_status`) require `MCP_CHAT_TOKEN` plus `SLACK_BOT_TOKEN` and `GREG_SLACK_USER_ID`. `list_chat_capabilities` needs no token.
