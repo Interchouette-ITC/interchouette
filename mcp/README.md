@@ -2,7 +2,7 @@
 
 Read-only Streamable HTTP MCP over committed **`db/interchouette.db`**.
 
-Official MCP URL: **`https://mcp.interchouette.net/`** (alias `/interchouette` kept for old clients).
+Official MCP URL: **`https://mcp.interchouette.net/`**
 
 Discovery on the public site:
 
@@ -24,8 +24,6 @@ Cursor / compatible `mcp.json` example:
   }
 }
 ```
-
-The `/interchouette` path alias is equivalent if a client already uses it.
 
 Browser agents on [interchouette.net](https://interchouette.net/) get a thin WebMCP layer (site overview, navigation, radio controls, `list_knowledge_topics`, `get_remote_mcp`). Full corpus search and document fetch stay on this remote MCP.
 
