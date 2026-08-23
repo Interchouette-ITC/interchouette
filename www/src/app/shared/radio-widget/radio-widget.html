@@ -55,7 +55,7 @@
       </button>
     </div>
 
-    @if (frameSrc) {
+    @if (frameSrc(); as src) {
       <iframe
         [id]="frameId"
         class="radio__frame"
@@ -63,7 +63,7 @@
         width="300"
         height="166"
         allow="autoplay; encrypted-media"
-        [src]="frameSrc"
+        [src]="src"
         (load)="onFrameLoad()"
         [attr.tabindex]="frameOpen() ? 0 : -1"
       ></iframe>

@@ -14,6 +14,7 @@ import { LocaleTitleStrategy } from './core/locale-title.strategy';
 import { SeoService } from './core/seo.service';
 import { siteLocale } from './core/site-locale';
 import { createChatInfoWebMcpTools, createChatSendWebMcpTools } from './core/webmcp.chat.tools';
+import { createRadioWebMcpTools } from './core/webmcp.radio.tools';
 import { createOpenPageWebMcpTools, createSiteInfoWebMcpTools } from './core/webmcp.tools';
 import { routes } from './app.routes';
 
@@ -37,12 +38,16 @@ export const appConfig: ApplicationConfig = {
     ...(() => {
       const info = createChatInfoWebMcpTools();
       const send = createChatSendWebMcpTools();
+      const radio = createRadioWebMcpTools();
       const out = [];
       if (info.length) {
         out.push(provideExperimentalWebMcpTools(info));
       }
       if (send.length) {
         out.push(provideExperimentalWebMcpTools(send));
+      }
+      if (radio.length) {
+        out.push(provideExperimentalWebMcpTools(radio));
       }
       return out;
     })(),

@@ -10,6 +10,7 @@ mod guard;
 mod hub;
 mod llm;
 mod locale;
+mod playlist;
 mod presence;
 mod reply_parse;
 mod sessions;

@@ -706,6 +706,7 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
         .await
         .and_then(|s| s.visitor_email);
     let calendar_context = away_calendar_context(state, text).await;
+    let playlist_nudge = crate::chat::playlist::playlist_nudge_note(&lines);
     let raw_reply = state
         .away
         .reply(
@@ -714,6 +715,7 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
             &lines,
             email.as_deref(),
             calendar_context.as_deref(),
+            playlist_nudge,
         )
         .await;
     state
@@ -735,10 +737,13 @@ async fn handle_away(state: &ChatState, session: &Session, session_id: &str, tex
         raw_reply.clone()
     };
 
+    // Keep [[PLAYLIST: …]] in the visitor WebSocket payload so the browser can start radio;
+    // strip it from the Slack mirror only.
     publish_role(state, session_id, "itcy", &reply).await;
+    let slack_reply = crate::chat::playlist::strip_playlist_tag(&reply);
     let mirror = email.map_or_else(
-        || format!("ITCy: {reply}"),
-        |e| format!("ITCy: {reply}\n(visitor email: {e})"),
+        || format!("ITCy: {slack_reply}"),
+        |e| format!("ITCy: {slack_reply}\n(visitor email: {e})"),
     );
     let _ = post_to_session_thread(state, session, &mirror).await;
 }

@@ -17,6 +17,7 @@ import {
   writeOriginBoundValue,
 } from './chat-store-vault';
 import { icConsoleWrite } from './ic-console';
+import { applyPlaylistTagsFromChat } from './playlist-tag';
 import { siteLocale } from './site-locale';
 
 const CHAT_OPENED_KEY = 'ic.chat.opened';
@@ -568,7 +569,13 @@ export class ChatService {
       case 'message': {
         const role = String(data['role'] ?? 'system') as ChatRole;
         const id = String(data['id'] ?? crypto.randomUUID());
-        const text = String(data['text'] ?? '').trim();
+        let text = String(data['text'] ?? '').trim();
+        if (role === 'itcy' || role === 'greg') {
+          text = applyPlaylistTagsFromChat(text);
+        }
+        if (!text) {
+          break;
+        }
         this.messages.update((list) => {
           if (list.some((m) => m.id === id)) {
             return list;
