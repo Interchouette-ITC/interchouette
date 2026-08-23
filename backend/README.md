@@ -36,6 +36,7 @@ Session, WebSocket, and `/v1/book` stay implemented but are omitted from the pub
 | `LLM_GUARD_ENABLED`    | Away LLM input/output scanners (default on; set `false` to disable)                 |
 | `LLM_GUARD_MODE`       | `log_only` scans and logs without blocking                                          |
 | `BOOKING_SCHEDULE_URL` | Public appointment page. When set, ITCy sends this link for meetings                |
+| `CHAT_PLAYLIST_AFTER_TURNS` | Away mode: after N visitor turns (default 3), ITCy may emit `[[PLAYLIST: play]]` once |
 | `MCP_URL`              | Interchouette MCP Streamable HTTP URL (default `https://mcp.interchouette.net/`)    |
 | `CORS_ORIGIN`          | Browser origin (default `https://interchouette.net`)                                |
 | `LINKEDIN_LI_AT`       | LinkedIn `li_at` session cookie for `/v1/news` LinkedIn fetches (server-only)       |

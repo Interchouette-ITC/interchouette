@@ -20,4 +20,11 @@ describe('RadioWidget', () => {
   it('creates', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
+
+  it('exposes radio control labels', () => {
+    const cmp = fixture.componentInstance as unknown as {
+      playLabel: () => string;
+    };
+    expect(cmp.playLabel().length).toBeGreaterThan(0);
+  });
 });

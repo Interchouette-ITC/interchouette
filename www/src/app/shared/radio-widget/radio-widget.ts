@@ -10,21 +10,7 @@ import {
 import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
 
 import { LocaleService } from '../../core/locale.service';
-import {
-  RADIO_DEFAULT_VOLUME,
-  SOUNDCLOUD_PLAYLIST_URL,
-  soundCloudPlayerSrc,
-} from '../../core/radio.constants';
-import {
-  loadSoundCloudWidgetApi,
-  pickRandomIndex,
-  scEvents,
-  scWidget,
-  type SoundCloudWidget,
-} from '../../core/soundcloud-widget';
-
-const FRAME_ID = 'ic-radio-player';
-const TRACK_HINT = 24;
+import { RADIO_FRAME_ID, RadioService } from '../../core/radio.service';
 
 @Component({
   selector: 'app-radio-widget',
@@ -35,23 +21,19 @@ const TRACK_HINT = 24;
 })
 export class RadioWidget implements OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly radio = inject(RadioService);
 
   protected readonly copy = inject(LocaleService).copy;
-  protected readonly frameId = FRAME_ID;
+  protected readonly frameId = RADIO_FRAME_ID;
 
-  protected readonly mounted = signal(false);
-  protected readonly loading = signal(false);
-  protected readonly playing = signal(false);
-  protected readonly muted = signal(true);
-  protected readonly frameOpen = signal(false);
-  protected readonly error = signal(false);
-  protected frameSrc: SafeResourceUrl | null = null;
+  protected readonly mounted = this.radio.mounted;
+  protected readonly loading = this.radio.loading;
+  protected readonly playing = this.radio.playing;
+  protected readonly muted = this.radio.muted;
+  protected readonly frameOpen = this.radio.frameOpen;
+  protected readonly error = this.radio.error;
 
-  private widget: SoundCloudWidget | null = null;
-  private track = 0;
-  private wantPlay = false;
-  private wired = false;
-  private unlocked = false;
+  protected readonly frameSrc = signal<SafeResourceUrl | null>(null);
 
   protected readonly playLabel = computed(() => {
     if (this.loading()) {
@@ -73,168 +55,39 @@ export class RadioWidget implements OnDestroy {
 
   constructor() {
     afterNextRender(() => {
-      this.track = pickRandomIndex(TRACK_HINT);
-      this.frameSrc = this.sanitizer.bypassSecurityTrustResourceUrl(
-        soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
-          autoPlay: false,
-          startTrack: this.track,
-        }),
-      );
-      this.mounted.set(true);
-      void loadSoundCloudWidgetApi().catch(() => undefined);
+      const url = this.radio.mountInitialFrame();
+      this.frameSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+      this.radio.markMounted();
     });
   }
 
   ngOnDestroy(): void {
-    this.widget = null;
+    this.radio.detach();
   }
 
   protected onMuteToggle(): void {
-    this.muted.update((m) => !m);
-    this.applyVol();
+    this.radio.toggleMute();
   }
 
   protected onPlayToggle(): void {
-    if (this.playing()) {
-      this.widget?.pause();
-      this.playing.set(false);
-      this.wantPlay = false;
-      return;
-    }
-
-    this.error.set(false);
-    this.wantPlay = true;
-
-    if (this.unlocked && this.widget) {
-      this.applyVol();
-      this.widget.play();
-      return;
-    }
-
-    const frame = document.getElementById(FRAME_ID) as HTMLIFrameElement | null;
-    if (!frame) {
-      this.error.set(true);
-      return;
-    }
-
-    this.loading.set(true);
-    this.widget = null;
-    this.wired = false;
-
-    const url = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
-      autoPlay: true,
-      startTrack: this.track,
-    });
-    this.frameSrc = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-    frame.src = url;
+    this.radio.togglePlay();
+    this.syncFrameSrc();
   }
 
   protected onNext(): void {
-    if (!this.widget) {
-      return;
-    }
-    this.wantPlay = true;
-    this.applyVol();
-    const widget = this.widget;
-    widget.getCurrentSoundIndex((current) => {
-      widget.getSounds((sounds) => {
-        if (sounds.length === 0) {
-          return;
-        }
-        this.track = (current + 1) % sounds.length;
-        widget.skip(this.track);
-        widget.play();
-      });
-    });
+    this.radio.next();
   }
 
   protected onFrameToggle(): void {
-    this.frameOpen.update((v) => !v);
+    this.radio.toggleFrame();
   }
 
   protected onFrameLoad(): void {
-    void this.bindWidget();
+    this.radio.onFrameLoad();
   }
 
-  private applyVol(): void {
-    this.widget?.setVolume(this.muted() ? 0 : RADIO_DEFAULT_VOLUME);
-  }
-
-  private async bindWidget(): Promise<void> {
-    if (this.widget) {
-      return;
-    }
-    const frame = document.getElementById(FRAME_ID) as HTMLIFrameElement | null;
-    if (!frame?.src) {
-      return;
-    }
-
-    try {
-      await loadSoundCloudWidgetApi();
-      const events = scEvents();
-      const widget = scWidget(FRAME_ID) ?? scWidget(frame);
-      if (!widget) {
-        throw new Error('SoundCloud widget missing');
-      }
-
-      if (!this.wired) {
-        this.wire(widget, events);
-        this.wired = true;
-      }
-      await this.waitReady(widget, events.READY);
-      this.widget = widget;
-      this.applyVol();
-      this.loading.set(false);
-
-      if (this.wantPlay) {
-        widget.play();
-      }
-    } catch {
-      this.error.set(true);
-      this.playing.set(false);
-      this.widget = null;
-      this.loading.set(false);
-    }
-  }
-
-  private waitReady(widget: SoundCloudWidget, readyEvent: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      let settled = false;
-      const done = (): void => {
-        if (settled) {
-          return;
-        }
-        settled = true;
-        clearTimeout(timer);
-        resolve();
-      };
-      const timer = setTimeout(() => {
-        if (!settled) {
-          settled = true;
-          reject(new Error('SoundCloud widget timeout'));
-        }
-      }, 20000);
-      widget.bind(readyEvent, done);
-      widget.getSounds(() => done());
-    });
-  }
-
-  private wire(widget: SoundCloudWidget, events: NonNullable<ReturnType<typeof scEvents>>): void {
-    widget.bind(events.PLAY, () => {
-      this.unlocked = true;
-      this.playing.set(true);
-      this.loading.set(false);
-      this.applyVol();
-    });
-    widget.bind(events.PAUSE, () => this.playing.set(false));
-    widget.bind(events.FINISH, () => {
-      widget.getCurrentSoundIndex((current) => {
-        widget.getSounds((sounds) => {
-          this.track = pickRandomIndex(sounds.length, current);
-          widget.skip(this.track);
-          widget.play();
-        });
-      });
-    });
+  private syncFrameSrc(): void {
+    const url = this.radio.frameSrcUrl();
+    this.frameSrc.set(url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null);
   }
 }
