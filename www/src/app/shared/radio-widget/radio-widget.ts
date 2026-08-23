@@ -52,6 +52,7 @@ export class RadioWidget implements OnDestroy {
   private wantPlay = false;
   private wired = false;
   private bindPromise: Promise<void> | null = null;
+  private unlocked = false;
 
   protected readonly playLabel = computed(() => {
     if (this.loading()) {
@@ -105,13 +106,29 @@ export class RadioWidget implements OnDestroy {
     this.error.set(false);
     this.wantPlay = true;
 
-    if (this.widget) {
+    if (this.unlocked && this.widget) {
       this.applyVol();
       this.widget.play();
       return;
     }
 
+    const frame = document.getElementById(FRAME_ID) as HTMLIFrameElement | null;
+    if (!frame) {
+      this.error.set(true);
+      return;
+    }
+
     this.loading.set(true);
+    this.widget = null;
+    this.wired = false;
+    this.bindPromise = null;
+
+    const url = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
+      autoPlay: true,
+      startTrack: this.track,
+    });
+    this.frameSrc = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    frame.src = url;
   }
 
   protected onNext(): void {
@@ -138,7 +155,7 @@ export class RadioWidget implements OnDestroy {
   }
 
   protected onFrameLoad(): void {
-    this.bindPromise ??= this.bindWidget();
+    this.bindPromise = this.bindWidget();
   }
 
   private applyVol(): void {
@@ -207,6 +224,7 @@ export class RadioWidget implements OnDestroy {
 
   private wire(widget: SoundCloudWidget, events: NonNullable<ReturnType<typeof scEvents>>): void {
     widget.bind(events.PLAY, () => {
+      this.unlocked = true;
       this.playing.set(true);
       this.loading.set(false);
       this.applyVol();
