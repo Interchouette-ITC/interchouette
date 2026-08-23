@@ -314,6 +314,7 @@ Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)
 X: https://twitter.com/interchouette
 Telegram: https://t.me/Interchouette
 Booking: https://calendar.app.google/tw9hhtJkmcssZQCY7
+Book via MCP (token required): use book_appointment on this server
 Chat widget: https://interchouette.net/ (open chat)
 Remote MCP: https://mcp.interchouette.net/
 """
@@ -334,6 +335,7 @@ Signal: https://signal.me/#u/interchouette.42
 X: https://twitter.com/interchouette
 Telegram: https://t.me/Interchouette
 Afspraak: https://calendar.app.google/tw9hhtJkmcssZQCY7
+Boeken via MCP (token vereist): book_appointment op deze server
 Chat: https://interchouette.net/
 MCP: https://mcp.interchouette.net/
 """
@@ -354,6 +356,7 @@ Signal : https://signal.me/#u/interchouette.42
 X : https://twitter.com/interchouette
 Telegram : https://t.me/Interchouette
 Rendez-vous : https://calendar.app.google/tw9hhtJkmcssZQCY7
+Reservation via MCP (jeton requis) : book_appointment sur ce serveur
 Chat : https://interchouette.net/
 MCP : https://mcp.interchouette.net/
 """
