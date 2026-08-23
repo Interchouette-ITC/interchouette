@@ -304,7 +304,7 @@ mod tests {
         let db = Path::new(env!("CARGO_MANIFEST_DIR")).join("../db/interchouette.db");
         let store = Store::open_readonly(&db).unwrap();
         let listed = store.list_docs().unwrap();
-        assert_eq!(listed.len(), 15);
+        assert_eq!(listed.len(), 30);
         let mut langs = listed
             .iter()
             .map(|(_, lang, _)| lang.as_str())
@@ -319,8 +319,13 @@ mod tests {
                     "overview"
                         | "gregory-roussac"
                         | "cv-summary"
-                        | "public-projects"
                         | "news-feeds"
+                        | "itcy"
+                        | "contact"
+                        | "radio"
+                        | "public-projects"
+                        | "products-shipped"
+                        | "products-wip"
                 ),
                 "unexpected slug {slug}"
             );

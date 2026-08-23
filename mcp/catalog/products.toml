@@ -1,0 +1,152 @@
+# Public ITC product catalog (shipped vs wip). Compiled into db/interchouette.db via make mcp-db.
+# Public-safe only. Operator secrets stay out of this file.
+
+[[product]]
+id = "interchouette"
+repo = "Interchouette-ITC/interchouette"
+status = "shipped"
+public = true
+url = "https://interchouette.net/"
+blurb_en = "Company site, visitor chat, and official Streamable HTTP MCP at mcp.interchouette.net."
+blurb_nl = "Bedrijfssite, bezoekerschat en officiële Streamable HTTP MCP op mcp.interchouette.net."
+blurb_fr = "Site entreprise, chat visiteur et MCP Streamable HTTP officiel sur mcp.interchouette.net."
+
+[[product]]
+id = "itcy"
+repo = "Interchouette-ITC/itcy"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/itcy"
+blurb_en = "AI mascot and disclosed LinkedIn/X operator for Interchouette ITC; Rust always-on service."
+blurb_nl = "AI-mascotte en bekendgemaakte LinkedIn/X-operator voor Interchouette ITC; Rust always-on service."
+blurb_fr = "Mascotte IA et opérateur LinkedIn/X déclaré pour Interchouette ITC ; service Rust always-on."
+
+[[product]]
+id = "itcy-tui"
+repo = "Interchouette-ITC/itcy-tui"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/itcy-tui"
+blurb_en = "Public ratatui status showcase for the ITCy operator."
+blurb_nl = "Publieke ratatui-statusshowcase voor de ITCy-operator."
+blurb_fr = "Vitrine de statut ratatui publique pour l'opérateur ITCy."
+
+[[product]]
+id = "tvscreener-rs"
+repo = "Interchouette-ITC/tvscreener-rs"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/tvscreener-rs"
+blurb_en = "Unofficial Rust TradingView Screener client (optional MCP, TUI)."
+blurb_nl = "Onofficiële Rust TradingView Screener-client (optionele MCP, TUI)."
+blurb_fr = "Client Rust non officiel TradingView Screener (MCP et TUI optionnels)."
+
+[[product]]
+id = "casper-rust-wasm-sdk"
+repo = "Interchouette-ITC/casper-rust-wasm-sdk"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/casper-rust-wasm-sdk"
+blurb_en = "Rust / Wasm / PyO3 Casper SDK."
+blurb_nl = "Rust / Wasm / PyO3 Casper SDK."
+blurb_fr = "SDK Casper Rust / Wasm / PyO3."
+
+[[product]]
+id = "ceps-rust-ts-client"
+repo = "Interchouette-ITC/ceps-rust-ts-client"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/ceps-rust-ts-client"
+blurb_en = "Unified Rust client for Casper CEP-18, CEP-78, CEP-85, and CEP-95."
+blurb_nl = "Uniforme Rust-client voor Casper CEP-18, CEP-78, CEP-85 en CEP-95."
+blurb_fr = "Client Rust unifié pour Casper CEP-18, CEP-78, CEP-85 et CEP-95."
+
+[[product]]
+id = "ceps-rust-api"
+repo = "Interchouette-ITC/ceps-rust-api"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/ceps-rust-api"
+blurb_en = "Rust API for Casper CEP standards with optional MCP HTTP surface."
+blurb_nl = "Rust API voor Casper CEP-standaarden met optionele MCP HTTP-interface."
+blurb_fr = "API Rust pour les standards Casper CEP avec surface MCP HTTP optionnelle."
+
+[[product]]
+id = "kms-secp256k1-api"
+repo = "Interchouette-ITC/kms-secp256k1-api"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/kms-secp256k1-api"
+blurb_en = "Custodial AWS KMS secp256k1 key generation and signing (Rust, optional MCP)."
+blurb_nl = "Custodial AWS KMS secp256k1-sleutelgeneratie en signing (Rust, optionele MCP)."
+blurb_fr = "Génération et signature de clés secp256k1 AWS KMS custodial (Rust, MCP optionnelle)."
+
+[[product]]
+id = "casper-deployer"
+repo = "Interchouette-ITC/casper-deployer"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/casper-deployer"
+blurb_en = "Casper Deployer UI and tooling. Demo: https://casper-deployer.interchouette.net"
+blurb_nl = "Casper Deployer UI en tooling. Demo: https://casper-deployer.interchouette.net"
+blurb_fr = "UI et outillage Casper Deployer. Démo : https://casper-deployer.interchouette.net"
+
+[[product]]
+id = "casper-nctl-2-docker"
+repo = "Interchouette-ITC/casper-nctl-2-docker"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/casper-nctl-2-docker"
+blurb_en = "NCTL 2.0 bundled in Docker for local Casper networks."
+blurb_nl = "NCTL 2.0 gebundeld in Docker voor lokale Casper-netwerken."
+blurb_fr = "NCTL 2.0 empaqueté dans Docker pour réseaux Casper locaux."
+
+[[product]]
+id = "evaluator"
+repo = "Interchouette-ITC/evaluator"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/evaluator"
+blurb_en = "JavaScript functions evaluator. Demo: https://evaluator.interchouette.net"
+blurb_nl = "JavaScript functions evaluator. Demo: https://evaluator.interchouette.net"
+blurb_fr = "Évaluateur de fonctions JavaScript. Démo : https://evaluator.interchouette.net"
+
+[[product]]
+id = "itcy-publications"
+repo = "Interchouette-ITC/itcy-publications"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/itcy-publications"
+blurb_en = "ITCy LinkedIn and X publication artefacts (drafts/posts/tweets branches; BAT before publish)."
+blurb_nl = "ITCy LinkedIn- en X-publicatieartefacten (drafts/posts/tweets branches; BAT vóór publicatie)."
+blurb_fr = "Artefacts de publication LinkedIn et X ITCy (branches drafts/posts/tweets ; BAT avant publication)."
+
+[[product]]
+id = "open-trading"
+repo = "Interchouette-ITC/open-trading"
+status = "wip"
+public = false
+url = "https://open-trading.com"
+blurb_en = "Trading and markets tooling (in progress)."
+blurb_nl = "Trading- en marktinstrumenten (in ontwikkeling)."
+blurb_fr = "Outillage trading et marchés (en cours)."
+
+[[product]]
+id = "interchouette-ai"
+repo = "Interchouette-ITC/interchouette-ai"
+status = "wip"
+public = false
+url = "https://github.com/Interchouette-ITC/interchouette-ai"
+blurb_en = "Always-on AI assistant stack (in progress)."
+blurb_nl = "Always-on AI-assistentstack (in ontwikkeling)."
+blurb_fr = "Stack assistant IA always-on (en cours)."
+
+[[product]]
+id = "mcpare"
+repo = "Interchouette-ITC/mcpare"
+status = "wip"
+public = false
+url = "https://mcpare.com"
+blurb_en = "MCP-related product work (in progress)."
+blurb_nl = "MCP-gerelateerd productwerk (in ontwikkeling)."
+blurb_fr = "Travail produit lié au MCP (en cours)."
