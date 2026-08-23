@@ -13,8 +13,13 @@ use axum::routing::get;
 use axum::{Json, Router};
 use rmcp::{
     handler::server::wrapper::Parameters,
-    model::{CallToolResult, ContentBlock, Implementation, ServerCapabilities, ServerInfo},
-    tool, tool_handler, tool_router, ErrorData as McpError, ServerHandler,
+    model::{
+        CallToolResult, ContentBlock, Implementation, ListResourcesResult,
+        ReadResourceRequestParams, ReadResourceResponse, ReadResourceResult, Resource,
+        ResourceContents, ServerCapabilities, ServerInfo,
+    },
+    service::RequestContext,
+    tool, tool_handler, tool_router, ErrorData as McpError, RoleServer, ServerHandler,
 };
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -23,12 +28,20 @@ use tower_http::cors::{Any, CorsLayer};
 
 use crate::chat_relay::ChatRelay;
 use crate::db::Store;
+use crate::publications::{self, PubsBranch};
 
 /// Default bind address (Render sets `PORT`).
 pub const DEFAULT_HTTP_LISTEN: &str = "0.0.0.0:8080";
 
 /// Public Google Calendar appointment schedule (same URL as the site chat widget).
 const BOOKING_SCHEDULE_URL: &str = "https://calendar.app.google/tw9hhtJkmcssZQCY7";
+
+/// Stable public resource URIs (HTTPS; read returns a short text pointer, not a binary download).
+const RESOURCE_CV_PDF: &str = "https://interchouette.net/CV/Gregory_Roussac.pdf";
+const RESOURCE_CV_HTML: &str = "https://interchouette.net/CV";
+const RESOURCE_NEWS_RSS: &str = "https://api.interchouette.net/v1/news/rss.xml";
+const RESOURCE_NEWS_ATOM: &str = "https://api.interchouette.net/v1/news/atom.xml";
+const RESOURCE_MCP_CARD: &str = "https://interchouette.net/.well-known/mcp.json";
 
 /// Hosts allowed by the Streamable HTTP transport by default.
 pub const DEFAULT_ALLOWED_HOSTS: &[&str] = &[
@@ -58,6 +71,11 @@ impl InterchouetteMcp {
             .filter(|s| !s.is_empty());
         let http = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(30))
+            .user_agent(concat!(
+                "interchouette-mcp/",
+                env!("CARGO_PKG_VERSION"),
+                " (+https://mcp.interchouette.net/)"
+            ))
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
         Self {
@@ -71,23 +89,6 @@ impl InterchouetteMcp {
 
 fn text_ok(text: impl Into<String>) -> CallToolResult {
     CallToolResult::success(vec![ContentBlock::text(text.into())])
-}
-
-fn contact_text() -> String {
-    format!(
-        "Email: contact@interchouette.net\n\
-         Personal: gregory@interchouette.net\n\
-         Site: https://interchouette.net/\n\
-         CV: https://interchouette.net/CV\n\
-         GitHub org: https://github.com/Interchouette-ITC\n\
-         LinkedIn: https://www.linkedin.com/in/gregoryroussac/\n\
-         Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)\n\
-         Twitter: https://twitter.com/interchouette\n\
-         Booking (self-serve): {BOOKING_SCHEDULE_URL}\n\
-         Book via MCP (token required): use book_appointment tool on this server\n\
-         Chat widget (no token): https://interchouette.net/ (open chat)\n\
-         WebMCP: https://mcp.interchouette.net/"
-    )
 }
 
 fn mcp_err(msg: impl Into<String>) -> McpError {
@@ -136,6 +137,30 @@ struct BookArgs {
     email: String,
     /// Requested start time: ISO 8601 without UTC offset, e.g. "2026-08-25T14:00:00".
     start: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct DocSlugArgs {
+    /// Document slug (e.g. `itcy`, `contact`, `products-shipped`).
+    slug: String,
+    /// Optional language: `en`, `nl`, or `fr` (default `en`).
+    lang: Option<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct PubsListArgs {
+    /// Branch: `posts` (default), `drafts`, `tweets`, or `drafts_tweet`.
+    branch: Option<String>,
+    /// Max artefacts to return (default 20, max 50).
+    limit: Option<u32>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct PubsGetArgs {
+    /// Artefact id (e.g. `POST-20260820-000001`).
+    id: String,
+    /// Branch: `posts` (default), `drafts`, `tweets`, or `drafts_tweet`.
+    branch: Option<String>,
 }
 
 #[tool_router]
@@ -193,7 +218,7 @@ impl InterchouetteMcp {
     }
 
     #[tool(
-        description = "Public Interchouette / Gregory Roussac project and image catalog blurbs."
+        description = "Public Interchouette / Gregory Roussac project blurbs (legacy stub). Prefer list_shipped_products and list_projects_in_progress."
     )]
     async fn list_public_projects(
         &self,
@@ -203,9 +228,166 @@ impl InterchouetteMcp {
         doc_or_err(&self.store, "public-projects", Some(&lang))
     }
 
-    #[tool(description = "Public contact channels for Gregory Roussac / Interchouette.")]
-    async fn get_contact(&self) -> Result<CallToolResult, McpError> {
-        Ok(text_ok(contact_text()))
+    #[tool(
+        description = "Public contact channels for Gregory Roussac / Interchouette (lang: en, nl, or fr)."
+    )]
+    async fn get_contact(
+        &self,
+        Parameters(LangArgs { lang }): Parameters<LangArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let lang = resolve_lang(lang.as_deref())?;
+        doc_or_err(&self.store, "contact", Some(&lang))
+    }
+
+    #[tool(
+        description = "ITCy persona: disclosed AI mascot / LinkedIn-X operator (lang: en, nl, or fr)."
+    )]
+    async fn get_itcy(
+        &self,
+        Parameters(LangArgs { lang }): Parameters<LangArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let lang = resolve_lang(lang.as_deref())?;
+        doc_or_err(&self.store, "itcy", Some(&lang))
+    }
+
+    #[tool(description = "Shipped and beta Interchouette ITC products (from public catalog).")]
+    async fn list_shipped_products(
+        &self,
+        Parameters(LangArgs { lang }): Parameters<LangArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let lang = resolve_lang(lang.as_deref())?;
+        doc_or_err(&self.store, "products-shipped", Some(&lang))
+    }
+
+    #[tool(description = "In-progress (wip) Interchouette ITC projects (from public catalog).")]
+    async fn list_projects_in_progress(
+        &self,
+        Parameters(LangArgs { lang }): Parameters<LangArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let lang = resolve_lang(lang.as_deref())?;
+        doc_or_err(&self.store, "products-wip", Some(&lang))
+    }
+
+    #[tool(
+        description = "SoundCloud Play ITC radio metadata and URLs only (playback is on the site / WebMCP)."
+    )]
+    async fn get_radio_info(
+        &self,
+        Parameters(LangArgs { lang }): Parameters<LangArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let lang = resolve_lang(lang.as_deref())?;
+        doc_or_err(&self.store, "radio", Some(&lang))
+    }
+
+    #[tool(
+        description = "Fetch one knowledge document by slug (e.g. itcy, contact, radio, products-shipped)."
+    )]
+    async fn get_doc_by_slug(
+        &self,
+        Parameters(DocSlugArgs { slug, lang }): Parameters<DocSlugArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let lang = resolve_lang(lang.as_deref())?;
+        let slug = slug.trim();
+        if slug.is_empty() {
+            return Err(mcp_err("slug is required"));
+        }
+        doc_or_err(&self.store, slug, Some(&lang))
+    }
+
+    #[tool(
+        description = "List knowledge document slugs, languages, and titles in interchouette.db."
+    )]
+    async fn list_knowledge_index(&self) -> Result<CallToolResult, McpError> {
+        match self.store.list_docs() {
+            Ok(rows) if rows.is_empty() => Ok(text_ok("No documents.")),
+            Ok(rows) => {
+                let mut out = String::from("slug\tlang\ttitle\n");
+                for (slug, lang, title) in rows {
+                    let _ = writeln!(out, "{slug}\t{lang}\t{title}");
+                }
+                Ok(text_ok(out))
+            }
+            Err(err) => Err(mcp_err(err.to_string())),
+        }
+    }
+
+    #[tool(
+        description = "List ITCy publication artefacts from GitHub itcy-publications (live; not in SQLite DB). Default branch: posts."
+    )]
+    async fn list_publications(
+        &self,
+        Parameters(PubsListArgs { branch, limit }): Parameters<PubsListArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let branch = resolve_pubs_branch(branch.as_deref())?;
+        let limit = limit.unwrap_or(20).clamp(1, 50) as usize;
+        let fetch = publications::fetch_branch_tree(&self.http, branch).await;
+        if let Some(err) = fetch.error {
+            return Err(mcp_err(format!("publications list failed: {err}")));
+        }
+        if fetch.artefacts.is_empty() {
+            return Ok(text_ok(format!(
+                "No artefacts on branch `{}` \
+                 (https://github.com/{}/{}/tree/{}).",
+                branch.git_name(),
+                publications::ORG_OWNER,
+                publications::PUBS_REPO,
+                branch.git_name()
+            )));
+        }
+        let mut out = format!(
+            "Publications on `{}/{}` branch `{}` (showing up to {limit}):\n",
+            publications::ORG_OWNER,
+            publications::PUBS_REPO,
+            branch.git_name()
+        );
+        for art in fetch.artefacts.into_iter().take(limit) {
+            let _ = writeln!(out, "- {} ({})", art.id, art.body_path);
+        }
+        Ok(text_ok(out))
+    }
+
+    #[tool(
+        description = "Fetch one ITCy publication body + subject from GitHub itcy-publications by artefact id."
+    )]
+    async fn get_publication(
+        &self,
+        Parameters(PubsGetArgs { id, branch }): Parameters<PubsGetArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let branch = resolve_pubs_branch(branch.as_deref())?;
+        let id = id.trim();
+        if id.is_empty() {
+            return Err(mcp_err("id is required"));
+        }
+        let fetch = publications::fetch_branch_tree(&self.http, branch).await;
+        if let Some(err) = fetch.error {
+            return Err(mcp_err(format!("publications tree failed: {err}")));
+        }
+        let Some(art) = publications::find_artefact(&fetch.artefacts, id) else {
+            return Err(mcp_err(format!(
+                "artefact `{id}` not found on branch `{}`",
+                branch.git_name()
+            )));
+        };
+        let body = publications::fetch_file_text(&self.http, branch, &art.body_path)
+            .await
+            .map_err(mcp_err)?;
+        let subject = publications::fetch_file_text(&self.http, branch, &art.meta_path)
+            .await
+            .ok()
+            .map(|m| publications::subject_from_meta(&m))
+            .unwrap_or_default();
+        let mut out = format!(
+            "# {}\n\nbranch: {}\npath: {}\n",
+            art.id,
+            branch.git_name(),
+            art.body_path
+        );
+        if !subject.is_empty() {
+            let _ = writeln!(out, "subject: {subject}");
+        }
+        out.push('\n');
+        out.push_str(&body);
+        Ok(text_ok(out))
     }
 
     #[tool(description = "ITC LinkedIn and X posts from API GET /v1/news \
@@ -378,6 +560,59 @@ fn resolve_lang(lang: Option<&str>) -> Result<String, McpError> {
     }
 }
 
+fn resolve_pubs_branch(branch: Option<&str>) -> Result<PubsBranch, McpError> {
+    branch
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .map_or(Ok(PubsBranch::Posts), |name| {
+            PubsBranch::parse(name).ok_or_else(|| {
+                mcp_err(format!(
+                    "unsupported branch `{name}` (use posts, drafts, tweets, or drafts_tweet)"
+                ))
+            })
+        })
+}
+
+fn public_resources() -> Vec<Resource> {
+    vec![
+        Resource::new(RESOURCE_CV_PDF, "cv-pdf")
+            .with_title("Gregory Roussac CV (PDF)")
+            .with_description("Public CV PDF on interchouette.net")
+            .with_mime_type("application/pdf"),
+        Resource::new(RESOURCE_CV_HTML, "cv-html")
+            .with_title("Gregory Roussac CV (HTML)")
+            .with_description("Public CV page on interchouette.net")
+            .with_mime_type("text/html"),
+        Resource::new(RESOURCE_NEWS_RSS, "news-rss")
+            .with_title("ITC news RSS")
+            .with_description("LinkedIn and X posts RSS feed")
+            .with_mime_type("application/rss+xml"),
+        Resource::new(RESOURCE_NEWS_ATOM, "news-atom")
+            .with_title("ITC news Atom")
+            .with_description("LinkedIn and X posts Atom feed")
+            .with_mime_type("application/atom+xml"),
+        Resource::new(RESOURCE_MCP_CARD, "mcp-server-card")
+            .with_title("Remote MCP server card")
+            .with_description("Well-known MCP discovery document")
+            .with_mime_type("application/json"),
+    ]
+}
+
+fn read_public_resource(uri: &str) -> Result<ReadResourceResult, McpError> {
+    let known = public_resources();
+    let Some(res) = known.iter().find(|r| r.uri == uri) else {
+        return Err(mcp_err(format!("unknown resource URI: {uri}")));
+    };
+    let title = res.title.as_deref().unwrap_or(res.name.as_str());
+    let desc = res.description.as_deref().unwrap_or("");
+    let text = format!("{title}\n{desc}\n\nOpen this public URL directly:\n{uri}\n");
+    let mime = res.mime_type.clone().unwrap_or_else(|| "text/plain".into());
+    Ok(ReadResourceResult::new(vec![ResourceContents::text(
+        text, uri,
+    )
+    .with_mime_type(mime)]))
+}
+
 fn format_doc(title: &str, body: &str) -> String {
     let body = body.trim();
     if body.starts_with('#') {
@@ -452,18 +687,42 @@ fn doc_or_err(store: &Store, slug: &str, lang: Option<&str>) -> Result<CallToolR
 #[tool_handler]
 impl ServerHandler for InterchouetteMcp {
     fn get_info(&self) -> ServerInfo {
-        ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
-            .with_server_info(Implementation::new(
-                "interchouette-mcp",
-                env!("CARGO_PKG_VERSION"),
-            ))
-            .with_instructions(
-                "Interchouette MCP for Gregory Roussac and Interchouette ITC. \
-                 Search with full name Gregory Roussac, Interchouette, Rust MCP, Rust API, Wasm. \
-                 Chat tools: list_chat_capabilities, send_message_to_gregory_roussac, get_chat_relay_status \
-                 (write tools need token matching MCP_CHAT_TOKEN). \
-                 Official URL: https://mcp.interchouette.net/",
-            )
+        ServerInfo::new(
+            ServerCapabilities::builder()
+                .enable_tools()
+                .enable_resources()
+                .build(),
+        )
+        .with_server_info(Implementation::new(
+            "interchouette-mcp",
+            env!("CARGO_PKG_VERSION"),
+        ))
+        .with_instructions(
+            "Interchouette MCP for Gregory Roussac and Interchouette ITC. \
+             Search with full name Gregory Roussac, Interchouette, Rust MCP, Rust API, Wasm. \
+             Knowledge: search, get_doc_by_slug, list_knowledge_index, get_itcy, \
+             list_shipped_products, list_projects_in_progress, get_radio_info, get_contact. \
+             Publications (live GitHub): list_publications, get_publication. \
+             Chat tools: list_chat_capabilities, send_message_to_gregory_roussac, get_chat_relay_status \
+             (write tools need token matching MCP_CHAT_TOKEN). \
+             Official URL: https://mcp.interchouette.net/",
+        )
+    }
+
+    async fn list_resources(
+        &self,
+        _request: Option<rmcp::model::PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ListResourcesResult, McpError> {
+        Ok(ListResourcesResult::with_all_items(public_resources()))
+    }
+
+    async fn read_resource(
+        &self,
+        request: ReadResourceRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ReadResourceResponse, McpError> {
+        read_public_resource(&request.uri).map(ReadResourceResponse::from)
     }
 }
 
@@ -587,6 +846,36 @@ mod tests {
                     lang: "en".into(),
                     title: "Projects".into(),
                     body: "Public projects body.".into(),
+                },
+                Document {
+                    slug: "contact".into(),
+                    lang: "en".into(),
+                    title: "Contact".into(),
+                    body: "Email: contact@interchouette.net\nBooking: https://calendar.app.google/tw9hhtJkmcssZQCY7".into(),
+                },
+                Document {
+                    slug: "itcy".into(),
+                    lang: "en".into(),
+                    title: "ITCy".into(),
+                    body: "ITCy is the disclosed AI mascot.".into(),
+                },
+                Document {
+                    slug: "radio".into(),
+                    lang: "en".into(),
+                    title: "Radio".into(),
+                    body: "Playlist: https://soundcloud.com/labonnevoile/sets/playitc".into(),
+                },
+                Document {
+                    slug: "products-shipped".into(),
+                    lang: "en".into(),
+                    title: "Shipped".into(),
+                    body: "- itcy: shipped".into(),
+                },
+                Document {
+                    slug: "products-wip".into(),
+                    lang: "en".into(),
+                    title: "WIP".into(),
+                    body: "- open-trading: wip".into(),
                 },
             ])
             .unwrap();
@@ -717,9 +1006,27 @@ mod tests {
 
         let profile = mcp.get_gregory_roussac_profile(none_lang()).await.unwrap();
         assert!(!profile.is_error.unwrap_or(false));
-        let contact = mcp.get_contact().await.unwrap();
+        let contact = mcp.get_contact(none_lang()).await.unwrap();
         assert!(!contact.is_error.unwrap_or(false));
         assert!(tool_text(&contact).contains("calendar.app.google"));
+        let itcy = mcp.get_itcy(none_lang()).await.unwrap();
+        assert!(tool_text(&itcy).contains("ITCy"));
+        let shipped = mcp.list_shipped_products(none_lang()).await.unwrap();
+        assert!(tool_text(&shipped).contains("itcy"));
+        let radio = mcp.get_radio_info(none_lang()).await.unwrap();
+        assert!(tool_text(&radio).contains("soundcloud.com"));
+        let by_slug = mcp
+            .get_doc_by_slug(Parameters(DocSlugArgs {
+                slug: "contact".into(),
+                lang: None,
+            }))
+            .await
+            .unwrap();
+        assert!(tool_text(&by_slug).contains("contact@interchouette.net"));
+        let index = mcp.list_knowledge_index().await.unwrap();
+        let index_text = tool_text(&index);
+        assert!(index_text.contains("itcy"));
+        assert!(index_text.contains("products-shipped"));
         let overview = mcp
             .get_interchouette_overview(Parameters(LangArgs {
                 lang: Some("en".into()),
@@ -746,6 +1053,24 @@ mod tests {
         let overview_text = tool_text(&overview);
         assert!(overview_text.starts_with("# Overview\n"));
         assert!(!overview_text.starts_with("# Overview\n\n# Overview"));
+    }
+
+    #[test]
+    fn public_resources_cover_cv_and_feeds() {
+        let uris: Vec<_> = public_resources().into_iter().map(|r| r.uri).collect();
+        assert!(uris.contains(&RESOURCE_CV_PDF.to_string()));
+        assert!(uris.contains(&RESOURCE_NEWS_RSS.to_string()));
+        assert!(uris.contains(&RESOURCE_MCP_CARD.to_string()));
+        let read = read_public_resource(RESOURCE_CV_PDF).unwrap();
+        assert_eq!(read.contents.len(), 1);
+        let err = read_public_resource("https://example.com/missing");
+        assert!(err.is_err());
+    }
+
+    #[test]
+    fn resolve_pubs_branch_defaults_to_posts() {
+        assert_eq!(resolve_pubs_branch(None).unwrap(), PubsBranch::Posts);
+        assert!(resolve_pubs_branch(Some("nope")).is_err());
     }
 
     #[tokio::test]
