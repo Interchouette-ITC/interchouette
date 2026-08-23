@@ -86,6 +86,7 @@ test.describe('site header and locale', () => {
 
     await page.goto('/CV?lang=nl');
     await expect(page).toHaveTitle('Gregory Roussac - CV');
+    await expect(page.locator('app-site-header')).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Professional Summary' })).toBeVisible();
     await expect(page.getByRole('link', { name: /Download PDF/i })).toBeVisible();
   });

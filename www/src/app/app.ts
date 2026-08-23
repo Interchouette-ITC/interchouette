@@ -10,7 +10,7 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
 import { CHAT_WIDGET_ENABLED } from './core/chat.constants';
-import { isGisCallbackPath } from './core/gis-oauth';
+import { isBareChromePath } from './core/bare-chrome';
 import { GisOneTapService } from './core/gis-onetap.service';
 import { ChatWidget } from './shared/chat-widget/chat-widget';
 import { ConsentBanner } from './shared/consent-banner/consent-banner';
@@ -31,11 +31,11 @@ export class App {
     const doc = inject(DOCUMENT);
     const gis = inject(GisOneTapService);
     const router = inject(Router);
-    this.bareChrome.set(isGisCallbackPath(router.url));
+    this.bareChrome.set(isBareChromePath(router.url));
     router.events
       .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event) => {
-        this.bareChrome.set(isGisCallbackPath(event.urlAfterRedirects));
+        this.bareChrome.set(isBareChromePath(event.urlAfterRedirects));
       });
     afterNextRender(() => {
       doc.documentElement.classList.add('app-ready');
