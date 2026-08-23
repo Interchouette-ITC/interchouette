@@ -35,6 +35,11 @@ fn main() -> anyhow::Result<()> {
     };
     build_db::build(&db, &catalog).with_context(|| format!("build {}", db.display()))?;
     let store = interchouette_mcp::db::Store::open_readonly(&db)?;
-    eprintln!("wrote {} documents to {}", store.doc_count()?, db.display());
+    eprintln!(
+        "wrote {} documents ({} embeddings, model hash-bow-v1) to {}",
+        store.doc_count()?,
+        store.vec_count()?,
+        db.display()
+    );
     Ok(())
 }

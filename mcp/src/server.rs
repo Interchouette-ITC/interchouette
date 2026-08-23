@@ -176,7 +176,7 @@ struct PubsGetArgs {
 #[tool_router]
 impl InterchouetteMcp {
     #[tool(
-        description = "Full-text search over Interchouette / Gregory Roussac content (Rust, Wasm, MCP, API, CV, projects). Prefer full name Gregory Roussac."
+        description = "Hybrid FTS + local embedding search over Interchouette / Gregory Roussac content (Rust, Wasm, MCP, API, CV, projects). Prefer full name Gregory Roussac."
     )]
     async fn search(
         &self,
