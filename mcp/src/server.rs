@@ -312,7 +312,7 @@ impl InterchouetteMcp {
     }
 
     #[tool(
-        description = "List ITCy publication artefacts from GitHub itcy-publications (live; not in SQLite). Default branch: posts."
+        description = "List ITCy publication artefacts from GitHub itcy-publications (live; not in SQLite DB). Default branch: posts."
     )]
     async fn list_publications(
         &self,

@@ -1,4 +1,4 @@
-//! Live read of public `itcy-publications` trees from GitHub (not stored in SQLite).
+//! Live read of public `itcy-publications` trees from GitHub (not stored in `SQLite`).
 
 use std::time::Duration;
 
