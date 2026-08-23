@@ -51,7 +51,6 @@ export class RadioWidget implements OnDestroy {
   private track = 0;
   private wantPlay = false;
   private wired = false;
-  private bindPromise: Promise<void> | null = null;
   private unlocked = false;
 
   protected readonly playLabel = computed(() => {
@@ -121,7 +120,6 @@ export class RadioWidget implements OnDestroy {
     this.loading.set(true);
     this.widget = null;
     this.wired = false;
-    this.bindPromise = null;
 
     const url = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
       autoPlay: true,
@@ -155,7 +153,7 @@ export class RadioWidget implements OnDestroy {
   }
 
   protected onFrameLoad(): void {
-    this.bindPromise = this.bindWidget();
+    void this.bindWidget();
   }
 
   private applyVol(): void {
@@ -196,7 +194,6 @@ export class RadioWidget implements OnDestroy {
       this.playing.set(false);
       this.widget = null;
       this.loading.set(false);
-      this.bindPromise = null;
     }
   }
 
