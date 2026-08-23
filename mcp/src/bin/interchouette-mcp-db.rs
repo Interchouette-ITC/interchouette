@@ -13,7 +13,7 @@ use interchouette_mcp::build_db;
     about = "Compile MCP catalog into interchouette.db"
 )]
 struct Args {
-    /// Output SQLite path (default: repo db/interchouette.db).
+    /// Output `SQLite` path (default: repo db/interchouette.db).
     #[arg(default_value = "../db/interchouette.db")]
     db: PathBuf,
     /// Catalog directory (default: mcp/catalog).
