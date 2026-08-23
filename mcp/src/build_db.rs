@@ -48,7 +48,7 @@ struct ProductsFile {
     product: Vec<CatalogProduct>,
 }
 
-/// Rebuild committed MCP SQLite from catalog inputs.
+/// Rebuild committed MCP `SQLite` from catalog inputs.
 ///
 /// # Errors
 /// Returns when catalog files are missing or invalid, or the DB write fails.
