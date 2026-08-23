@@ -15,6 +15,10 @@ path = "src/main.rs"
 name = "interchouette-mcp-db"
 path = "src/bin/interchouette-mcp-db.rs"
 
+[[bin]]
+name = "interchouette-mcp-news-snapshot"
+path = "src/bin/interchouette-mcp-news-snapshot.rs"
+
 [dependencies]
 anyhow = "1"
 axum = { version = "0.8", default-features = false, features = [
@@ -22,6 +26,7 @@ axum = { version = "0.8", default-features = false, features = [
     "tokio",
     "json",
 ] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 clap = { version = "4", features = ["derive", "env"] }
 rmcp = { version = "3.1", default-features = false, features = [
     "server",
