@@ -1,4 +1,4 @@
-//! MCP tools + HTTP listener (`/`, `/interchouette` alias, `/health`).
+//! MCP tools + HTTP listener (`/`, `/health`).
 
 #![allow(unknown_lints)]
 #![allow(clippy::unused_async)]
@@ -788,7 +788,7 @@ impl ServerHandler for InterchouetteMcp {
     }
 }
 
-/// Build the HTTP router (health + Streamable HTTP MCP at `/`, alias `/interchouette`).
+/// Build the HTTP router (health + Streamable HTTP MCP at `/`).
 ///
 /// # Errors
 /// Returns when the committed DB cannot be opened.
@@ -817,9 +817,7 @@ pub fn build_app(
     let cors = build_cors(cors_origin);
     Ok(Router::new()
         .route("/health", get(|| async { Json(json!({ "ok": true })) }))
-        .route("/", mcp_router.clone())
-        .route("/interchouette", mcp_router.clone())
-        .route("/interchouette/", mcp_router)
+        .route("/", mcp_router)
         .layer(cors))
 }
 
@@ -1025,7 +1023,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn root_and_alias_accept_post() {
+    async fn root_accepts_post() {
         let dir = tempdir().unwrap();
         let db = seed_store(&dir);
         let hosts: Vec<String> = DEFAULT_ALLOWED_HOSTS
@@ -1034,29 +1032,26 @@ mod tests {
             .collect();
         let app = build_app(&db, "https://interchouette.net", hosts).unwrap();
 
-        for uri in ["/", "/interchouette", "/interchouette/"] {
-            let response = app
-                .clone()
-                .oneshot(
-                    Request::builder()
-                        .method("POST")
-                        .uri(uri)
-                        .header("content-type", "application/json")
-                        .header("accept", "application/json, text/event-stream")
-                        .header("host", "localhost")
-                        .body(Body::from(
-                            r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}"#,
-                        ))
-                        .unwrap(),
-                )
-                .await
-                .unwrap();
-            assert_ne!(
-                response.status(),
-                StatusCode::NOT_FOUND,
-                "expected MCP route at {uri}"
-            );
-        }
+        let response = app
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/")
+                    .header("content-type", "application/json")
+                    .header("accept", "application/json, text/event-stream")
+                    .header("host", "localhost")
+                    .body(Body::from(
+                        r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"t","version":"0"}}}"#,
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_ne!(
+            response.status(),
+            StatusCode::NOT_FOUND,
+            "expected MCP route at /"
+        );
     }
 
     #[tokio::test]
