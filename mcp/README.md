@@ -6,12 +6,13 @@ Official MCP URL: `https://mcp.interchouette.net/` (alias `/interchouette` kept 
 
 ## Update content
 
-1. Edit sources under **`mcp/catalog/`** (`docs.toml`, `products.toml`)
-2. Rebuild the committed database: **`make mcp-db`**
-3. Commit `db/interchouette.db` + catalog changes, push to `dev`
-4. CI publishes `interchouette/interchouette-mcp:latest`
+1. Edit sources under **`mcp/catalog/`** (`docs.toml`, `products.toml`, optional `news/*.json`)
+2. Optional news week: **`make mcp-news-snapshot`** (prefers `GET /v1/news/archive/{week}`, else live `GET /v1/news`)
+3. Rebuild the committed database: **`make mcp-db`**
+4. Commit `db/interchouette.db` + catalog changes, push to `dev`
+5. CI publishes `interchouette/interchouette-mcp:latest`
 
-No Postgres. No runtime admin upsert API. Public catalog lives in this repo (not itc-cursor). Embeddings are built only from `mcp/catalog/` (never from private ops trees).
+No Postgres for MCP. The chat API may keep a Postgres news archive (`DATABASE_URL`); MCP ships selected weeks as committed JSON under `mcp/catalog/news/`. Embeddings are built only from `mcp/catalog/` (never from private ops trees).
 
 ## Tools (knowledge)
 
@@ -21,6 +22,7 @@ No Postgres. No runtime admin upsert API. Public catalog lives in this repo (not
 | `get_doc_by_slug`, `list_knowledge_index` | DB |
 | `get_itcy`, `get_contact`, `get_radio_info` | DB slugs |
 | `list_shipped_products`, `list_projects_in_progress` | DB (from `products.toml`) |
+| `list_news_archive`, `get_news_week` | DB (`catalog/news/YYYY-Www.json` → `news-week-*`) |
 | `list_publications`, `get_publication` | Live GitHub `itcy-publications` (optional `GITHUB_TOKEN` for rate limits) |
 | `get_news` | Live API `GET /v1/news` |
 | `check_availability`, `book_appointment` | Chat backend calendar proxy (`CHAT_BACKEND_URL` + `MCP_CHAT_TOKEN`) |

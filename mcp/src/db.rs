@@ -173,6 +173,30 @@ impl Store {
         Ok(doc)
     }
 
+    /// List archived news weeks (newest first).
+    ///
+    /// # Errors
+    /// Returns when the query fails.
+    pub fn list_news_archive(&self) -> Result<Vec<(String, String)>> {
+        let conn = lock(&self.conn, "store")?;
+        let mut stmt = conn.prepare(
+            "SELECT slug, title FROM documents
+             WHERE lang = 'en' AND slug LIKE 'news-week-%'
+             ORDER BY slug DESC",
+        )?;
+        let rows = stmt.query_map([], |row| Ok((row.get::<_, String>(0)?, row.get(1)?)))?;
+        let mut out = Vec::new();
+        for row in rows {
+            let (slug, title) = row?;
+            if crate::news_format::week_id_from_slug(&slug).is_some() {
+                out.push((slug, title));
+            }
+        }
+        drop(stmt);
+        drop(conn);
+        Ok(out)
+    }
+
     /// List slugs and titles.
     ///
     /// # Errors
@@ -474,8 +498,15 @@ mod tests {
         let db = Path::new(env!("CARGO_MANIFEST_DIR")).join("../db/interchouette.db");
         let store = Store::open_readonly(&db).unwrap();
         let listed = store.list_docs().unwrap();
-        assert_eq!(listed.len(), 30);
-        assert_eq!(store.vec_count().unwrap(), 30);
+        let base_count = listed
+            .iter()
+            .filter(|(slug, _, _)| !slug.starts_with("news-week-"))
+            .count();
+        assert_eq!(base_count, 30);
+        assert_eq!(
+            store.vec_count().unwrap(),
+            i64::try_from(listed.len()).unwrap()
+        );
         let mut langs = listed
             .iter()
             .map(|(_, lang, _)| lang.as_str())
@@ -484,24 +515,15 @@ mod tests {
         langs.dedup();
         assert_eq!(langs, ["en", "fr", "nl"]);
         for (slug, _, _) in &listed {
-            assert!(
-                matches!(
-                    slug.as_str(),
-                    "overview"
-                        | "gregory-roussac"
-                        | "cv-summary"
-                        | "news-feeds"
-                        | "itcy"
-                        | "contact"
-                        | "radio"
-                        | "public-projects"
-                        | "products-shipped"
-                        | "products-wip"
-                ),
-                "unexpected slug {slug}"
-            );
+            assert!(is_public_knowledge_slug(slug), "unexpected slug {slug}");
             assert!(!slug.contains('/'), "slug still has lang prefix: {slug}");
         }
+        assert!(
+            listed
+                .iter()
+                .any(|(s, l, _)| s.starts_with("news-week-") && l == "en"),
+            "expected at least one news-week snapshot"
+        );
         let hits = store.search("Gregory Roussac", None, 8).unwrap();
         assert!(!hits.is_empty());
         assert!(hits.iter().all(|h| h.lang == "en"));
@@ -538,5 +560,21 @@ mod tests {
             "\"Gregory\" OR \"Roussac\""
         );
         assert_eq!(sanitize_fts_query("Rust-MCP"), "\"Rust-MCP\"");
+    }
+
+    fn is_public_knowledge_slug(slug: &str) -> bool {
+        matches!(
+            slug,
+            "overview"
+                | "gregory-roussac"
+                | "cv-summary"
+                | "news-feeds"
+                | "itcy"
+                | "contact"
+                | "radio"
+                | "public-projects"
+                | "products-shipped"
+                | "products-wip"
+        ) || crate::news_format::week_id_from_slug(slug).is_some()
     }
 }

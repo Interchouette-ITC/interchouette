@@ -28,6 +28,9 @@ use tower_http::cors::{Any, CorsLayer};
 
 use crate::chat_relay::ChatRelay;
 use crate::db::Store;
+use crate::news_format::{
+    format_news_snapshot, is_valid_week_id, news_week_slug, week_id_from_slug,
+};
 use crate::publications::{self, PubsBranch};
 
 /// Default bind address (Render sets `PORT`).
@@ -155,6 +158,12 @@ struct DocSlugArgs {
     slug: String,
     /// Optional language: `en`, `nl`, or `fr` (default `en`).
     lang: Option<String>,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+struct NewsWeekArgs {
+    /// ISO week id, e.g. `2026-W34`.
+    week_id: String,
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -426,6 +435,46 @@ impl InterchouetteMcp {
     }
 
     #[tool(
+        description = "List committed ISO-week news archive snapshots in interchouette.db (newest first)."
+    )]
+    async fn list_news_archive(&self) -> Result<CallToolResult, McpError> {
+        match self.store.list_news_archive() {
+            Ok(rows) if rows.is_empty() => Ok(text_ok(
+                "No news-week snapshots in the committed MCP database. Live feed: get_news.",
+            )),
+            Ok(rows) => {
+                let mut out = String::from("week_id\tslug\ttitle\n");
+                for (slug, title) in rows {
+                    let week = week_id_from_slug(&slug).unwrap_or("?");
+                    let _ = writeln!(out, "{week}\t{slug}\t{title}");
+                }
+                out.push_str(
+                    "\nFetch one week with get_news_week. Live feed remains get_news. \
+                     API Postgres archive: GET /v1/news/archive (when DATABASE_URL is set).",
+                );
+                Ok(text_ok(out))
+            }
+            Err(err) => Err(mcp_err(err.to_string())),
+        }
+    }
+
+    #[tool(
+        description = "Fetch one committed news-week snapshot by ISO week id (e.g. 2026-W34). Live posts: get_news."
+    )]
+    async fn get_news_week(
+        &self,
+        Parameters(NewsWeekArgs { week_id }): Parameters<NewsWeekArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        let week_id = week_id.trim();
+        if !is_valid_week_id(week_id) {
+            return Err(mcp_err(
+                "week_id must look like YYYY-Www (example: 2026-W34)",
+            ));
+        }
+        doc_or_err(&self.store, &news_week_slug(week_id), Some("en"))
+    }
+
+    #[tool(
         description = "Lists chat-with-Greg capabilities on this MCP (token required for write tools)."
     )]
     async fn list_chat_capabilities(&self) -> Result<CallToolResult, McpError> {
@@ -687,60 +736,6 @@ fn format_doc(title: &str, body: &str) -> String {
     }
 }
 
-fn format_news_snapshot(body: &serde_json::Value) -> String {
-    let mut out = String::from(
-        "Interchouette News (API cache, about every 4 hours)\n\
-         Page: https://interchouette.net/news\n\
-         JSON: https://api.interchouette.net/v1/news\n\
-         RSS: https://api.interchouette.net/v1/news/rss.xml\n\
-         Atom: https://api.interchouette.net/v1/news/atom.xml\n",
-    );
-    if let Some(at) = body.get("fetched_at").and_then(|v| v.as_str()) {
-        let _ = writeln!(out, "Fetched at: {at}");
-    }
-    if let Some(ttl) = body
-        .get("cache_ttl_secs")
-        .and_then(serde_json::Value::as_u64)
-    {
-        let _ = writeln!(out, "Cache TTL seconds: {ttl}");
-    }
-    out.push('\n');
-    let sections = [
-        ("Interchouette on X", "itc_x"),
-        ("Interchouette on LinkedIn", "itc_linkedin"),
-    ];
-    for (label, key) in sections {
-        let _ = writeln!(out, "## {label}");
-        let items = body
-            .pointer(&format!("/feeds/{key}/items"))
-            .and_then(|v| v.as_array())
-            .cloned()
-            .unwrap_or_default();
-        if items.is_empty() {
-            out.push_str("(no posts)\n\n");
-            continue;
-        }
-        for item in items {
-            let text = item.get("text").and_then(|v| v.as_str()).unwrap_or("");
-            let url = item.get("url").and_then(|v| v.as_str()).unwrap_or("");
-            let when = item
-                .get("published_at")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
-            if when.is_empty() {
-                let _ = writeln!(out, "- {text}");
-            } else {
-                let _ = writeln!(out, "- {text} ({when})");
-            }
-            if !url.is_empty() {
-                let _ = writeln!(out, "  {url}");
-            }
-        }
-        out.push('\n');
-    }
-    out.trim_end().to_string()
-}
-
 fn doc_or_err(store: &Store, slug: &str, lang: Option<&str>) -> Result<CallToolResult, McpError> {
     match store.get_by_slug(slug, lang) {
         Ok(Some(doc)) => Ok(text_ok(format_doc(&doc.title, &doc.body))),
@@ -767,6 +762,7 @@ impl ServerHandler for InterchouetteMcp {
              Search with full name Gregory Roussac, Interchouette, Rust MCP, Rust API, Wasm. \
              Knowledge: search, get_doc_by_slug, list_knowledge_index, get_itcy, \
              list_shipped_products, list_projects_in_progress, get_radio_info, get_contact. \
+             News: get_news (live), list_news_archive, get_news_week (committed snapshots). \
              Publications (live GitHub): list_publications, get_publication. \
              Calendar (token): check_availability, book_appointment. \
              Chat tools: list_chat_capabilities, send_message_to_gregory_roussac, get_chat_relay_status \
@@ -1185,7 +1181,7 @@ mod tests {
 
     #[test]
     fn format_news_snapshot_lists_posts_and_feed_urls() {
-        let text = format_news_snapshot(&json!({
+        let text = crate::news_format::format_news_snapshot(&json!({
             "fetched_at": "2026-08-20T12:00:00.000Z",
             "feeds": {
                 "itc_x": {

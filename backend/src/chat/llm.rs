@@ -2,7 +2,7 @@
 //!
 //! Chat does not open `interchouette.db`. Context comes from the MCP HTTP API
 //! via capped multi-tool RAG (`search` → `get_doc_by_slug` → optional `get_news`
-//! or `list_publications`).
+//! / `get_news_week` / `list_news_archive` or `list_publications`).
 
 use std::collections::BTreeSet;
 
@@ -17,6 +17,8 @@ const DEFAULT_MCP_URL: &str = "https://mcp.interchouette.net/";
 const MCP_SEARCH_TOOL: &str = "search";
 const MCP_GET_DOC_TOOL: &str = "get_doc_by_slug";
 const MCP_GET_NEWS_TOOL: &str = "get_news";
+const MCP_GET_NEWS_WEEK_TOOL: &str = "get_news_week";
+const MCP_LIST_NEWS_ARCHIVE_TOOL: &str = "list_news_archive";
 const MCP_LIST_PUBLICATIONS_TOOL: &str = "list_publications";
 /// Hard cap on remote MCP `tools/call` requests per visitor turn.
 const MAX_MCP_TOOL_CALLS: usize = 4;
@@ -32,6 +34,14 @@ const NEWS_NEEDLES: &[&str] = &[
     "nieuws",
     "x.com",
     "posts on x",
+];
+
+const NEWS_ARCHIVE_NEEDLES: &[&str] = &[
+    "news archive",
+    "archived news",
+    "news week",
+    "news-week",
+    "iso week",
 ];
 
 const PUBLICATION_NEEDLES: &[&str] = &[
@@ -161,8 +171,8 @@ impl AwayBrain {
         }
     }
 
-    /// `search` then up to two `get_doc_by_slug`, then optional `get_news` or
-    /// `list_publications`, capped at [`MAX_MCP_TOOL_CALLS`].
+    /// `search` then up to two `get_doc_by_slug`, then optional news or
+    /// publications tools, capped at [`MAX_MCP_TOOL_CALLS`].
     async fn mcp_multi_tool_rag(&self, query: &str, locale: ChatLocale) -> anyhow::Result<String> {
         let session_id = self.mcp_initialize().await?;
         self.mcp_notify_initialized(&session_id).await;
@@ -204,7 +214,35 @@ impl AwayBrain {
             }
         }
 
-        if calls < MAX_MCP_TOOL_CALLS && wants_news(query) {
+        if calls < MAX_MCP_TOOL_CALLS && wants_news_archive(query) {
+            if let Some(week_id) = extract_week_id(query) {
+                match self
+                    .mcp_tool_call(
+                        &session_id,
+                        MCP_GET_NEWS_WEEK_TOOL,
+                        json!({ "week_id": week_id }),
+                    )
+                    .await
+                {
+                    Ok(news) if !news.trim().is_empty() => {
+                        parts.push(format!("## News week `{week_id}`\n{news}"));
+                    }
+                    Ok(_) => {}
+                    Err(err) => tracing::warn!(error = %err, "MCP get_news_week failed"),
+                }
+            } else {
+                match self
+                    .mcp_tool_call(&session_id, MCP_LIST_NEWS_ARCHIVE_TOOL, json!({}))
+                    .await
+                {
+                    Ok(index) if !index.trim().is_empty() => {
+                        parts.push(format!("## News archive\n{index}"));
+                    }
+                    Ok(_) => {}
+                    Err(err) => tracing::warn!(error = %err, "MCP list_news_archive failed"),
+                }
+            }
+        } else if calls < MAX_MCP_TOOL_CALLS && wants_news(query) {
             match self
                 .mcp_tool_call(&session_id, MCP_GET_NEWS_TOOL, json!({}))
                 .await
@@ -585,6 +623,34 @@ fn wants_news(query: &str) -> bool {
     NEWS_NEEDLES.iter().any(|n| lower.contains(n))
 }
 
+fn wants_news_archive(query: &str) -> bool {
+    extract_week_id(query).is_some()
+        || NEWS_ARCHIVE_NEEDLES
+            .iter()
+            .any(|n| query.to_ascii_lowercase().contains(n))
+}
+
+fn extract_week_id(query: &str) -> Option<String> {
+    let bytes = query.as_bytes();
+    let mut i = 0usize;
+    while i + 8 <= bytes.len() {
+        let slice = &bytes[i..i + 8];
+        if slice[0].is_ascii_digit()
+            && slice[1].is_ascii_digit()
+            && slice[2].is_ascii_digit()
+            && slice[3].is_ascii_digit()
+            && slice[4] == b'-'
+            && slice[5] == b'W'
+            && slice[6].is_ascii_digit()
+            && slice[7].is_ascii_digit()
+        {
+            return Some(String::from_utf8_lossy(slice).into_owned());
+        }
+        i += 1;
+    }
+    None
+}
+
 fn wants_publications(query: &str) -> bool {
     let lower = query.to_ascii_lowercase();
     PUBLICATION_NEEDLES.iter().any(|n| lower.contains(n))
@@ -777,6 +843,13 @@ mod tests {
         assert!(wants_publications("list publications"));
         assert!(wants_publications("BAT for the draft"));
         assert!(!wants_publications("book a meeting"));
+        assert!(wants_news_archive("news archive index"));
+        assert!(wants_news_archive("posts from 2026-W34"));
+        assert!(!wants_news_archive("latest linkedin news"));
+        assert_eq!(
+            extract_week_id("show news for 2026-W34 please").as_deref(),
+            Some("2026-W34")
+        );
     }
 
     #[test]

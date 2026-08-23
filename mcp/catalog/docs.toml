@@ -180,7 +180,8 @@ Live API (about every 4 hours):
 
 Apex aliases /feed /rss.xml /atom.xml redirect to the API feeds.
 
-MCP/WebMCP tool: get_news
+MCP/WebMCP tool: get_news. Committed week snapshots: list_news_archive, get_news_week.
+API archive (Postgres when configured): GET /v1/news/archive and GET /v1/news/archive/{week_id}.
 """
 
 [[doc]]
@@ -195,7 +196,7 @@ Live API (ongeveer elke 4 uur):
 - RSS: https://api.interchouette.net/v1/news/rss.xml
 - Atom: https://api.interchouette.net/v1/news/atom.xml
 
-MCP/WebMCP-tool: get_news
+MCP/WebMCP-tool: get_news. Week-snapshots: list_news_archive, get_news_week.
 """
 
 [[doc]]
@@ -210,7 +211,7 @@ API live (environ toutes les 4 heures) :
 - RSS : https://api.interchouette.net/v1/news/rss.xml
 - Atom : https://api.interchouette.net/v1/news/atom.xml
 
-Outil MCP/WebMCP : get_news
+Outil MCP/WebMCP : get_news. Instantanes de semaine : list_news_archive, get_news_week.
 """
 
 [[doc]]
