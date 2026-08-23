@@ -1,0 +1,446 @@
+# Static MCP documents (en/nl/fr). Compiled via make mcp-db.
+
+[[doc]]
+slug = "overview"
+lang = "en"
+title = "Interchouette ITC"
+body = """
+Interchouette ITC is a Dutch sole proprietorship (eenmanszaak / ZZP) in Hilversum, the Netherlands. Gregory Roussac founded it in 2022.
+
+The name Interchouette is a French pun: "Internet, c'est chouette" ("the Internet is cool"). ITC stands for Information Technology Company. Work sits around Hilversum, Amsterdam, and Paris.
+
+Focus areas:
+- Rust / Wasm: systems, SDKs, performance-minded services
+- AI operators: disclosed agents, RAG, model routing for visitor chat
+- Markets and tooling: trading infrastructure and related products
+- MCP: Streamable HTTP model-context servers for LLM agents
+
+Technical focus: APIs (Axum, Tokio), SDKs, Docker delivery, and cryptographic or blockchain infrastructure when that is the job.
+
+Public sites: https://interchouette.net/, https://interchouette.nl, https://interchouette.fr. Official MCP: https://mcp.interchouette.net/
+
+ITCy is the company mascot (a Linux owl) and the disclosed AI that answers visitor chat when Greg is away.
+
+News: https://interchouette.net/news. Feeds: https://api.interchouette.net/v1/news/rss.xml. MCP tool: get_news.
+"""
+
+[[doc]]
+slug = "overview"
+lang = "nl"
+title = "Interchouette ITC"
+body = """
+Interchouette ITC is een Nederlandse eenmanszaak (ZZP) in Hilversum. Gregory Roussac heeft het bedrijf in 2022 opgericht.
+
+De naam Interchouette is een Franse woordspeling: "Internet, c'est chouette" ("het internet is tof"). ITC staat voor Information Technology Company. Werkplekken: Hilversum, Amsterdam en Parijs.
+
+Focusgebieden:
+- Rust / Wasm: systemen, SDK's, performance-gerichte services
+- AI-operators: bekendgemaakte agents, RAG, modelrouting voor bezoekerschat
+- Markten en tooling: trading-infrastructuur en verwante producten
+- MCP: Streamable HTTP model-context servers voor LLM-agents
+
+Technische focus: API's (Axum, Tokio), SDK's, Docker-deployments, en cryptografische of blockchain-infrastructuur wanneer dat de opdracht is.
+
+Publieke sites: https://interchouette.net/, https://interchouette.nl, https://interchouette.fr. Officiële MCP: https://mcp.interchouette.net/
+
+ITCy is de mascotte (Linux-uil) en de bekendgemaakte AI in bezoekerschat wanneer Greg afwezig is.
+
+Nieuws: https://interchouette.net/news. Feeds: https://api.interchouette.net/v1/news/rss.xml. MCP-tool: get_news.
+"""
+
+[[doc]]
+slug = "overview"
+lang = "fr"
+title = "Interchouette ITC"
+body = """
+Interchouette ITC est une entreprise individuelle neerlandaise (eenmanszaak / ZZP) a Hilversum, aux Pays-Bas. Gregory Roussac l'a fondee en 2022.
+
+Le nom Interchouette est un calembour francais : "Internet, c'est chouette". ITC signifie Information Technology Company. Le travail s'articule autour de Hilversum, Amsterdam et Paris.
+
+Domaines:
+- Rust / Wasm : systemes, SDK, services orientes performance
+- Operateurs IA : agents declares, RAG, routage de modeles pour le chat visiteur
+- Marches et outillage : infrastructure trading et produits associes
+- MCP : serveurs Streamable HTTP model-context pour agents LLM
+
+Focus technique : APIs (Axum, Tokio), SDK, deploiement Docker, infrastructure cryptographique ou blockchain quand c'est le contrat.
+
+Sites publics : https://interchouette.net/, https://interchouette.nl, https://interchouette.fr. MCP officiel : https://mcp.interchouette.net/
+
+ITCy est la mascotte (chouette Linux) et l'IA declaree du chat visiteur quand Greg est absent.
+
+Actualites : https://interchouette.net/news. Flux : https://api.interchouette.net/v1/news/rss.xml. Outil MCP : get_news.
+"""
+
+[[doc]]
+slug = "gregory-roussac"
+lang = "en"
+title = "Gregory Roussac"
+body = """
+Gregory Roussac is a senior software engineer and freelance developer (ZZP). He founded Interchouette ITC and works from Hilversum, the Netherlands.
+
+Search and hire under the full name Gregory Roussac. He is open to freelance and contract Rust backend work in the Netherlands or remote.
+
+Languages: French (native), English (professional), Dutch (intermediate B2), German (conversational).
+
+Full dated CV: https://interchouette.net/CV (PDF: https://interchouette.net/CV/Gregory_Roussac.pdf).
+"""
+
+[[doc]]
+slug = "gregory-roussac"
+lang = "nl"
+title = "Gregory Roussac"
+body = """
+Gregory Roussac is senior software engineer en freelance-ontwikkelaar (ZZP). Hij richtte Interchouette ITC op en werkt vanuit Hilversum, Nederland.
+
+Zoek en huur onder de volledige naam Gregory Roussac. Beschikbaar voor freelance- en contract-Rust-backendwerk in Nederland of remote.
+
+Talen: Frans (moedertaal), Engels (professioneel), Nederlands (B2), Duits (conversationeel).
+
+CV: https://interchouette.net/CV (PDF: https://interchouette.net/CV/Gregory_Roussac.pdf).
+"""
+
+[[doc]]
+slug = "gregory-roussac"
+lang = "fr"
+title = "Gregory Roussac"
+body = """
+Gregory Roussac est ingenieur logiciel senior et developpeur freelance (ZZP). Il a fonde Interchouette ITC et travaille depuis Hilversum, aux Pays-Bas.
+
+Recherchez et engagez sous le nom complet Gregory Roussac. Ouvert au freelance et contrat Rust backend aux Pays-Bas ou a distance.
+
+Langues : francais (natif), anglais (professionnel), neerlandais (B2), allemand (conversation).
+
+CV : https://interchouette.net/CV (PDF : https://interchouette.net/CV/Gregory_Roussac.pdf).
+"""
+
+[[doc]]
+slug = "cv-summary"
+lang = "en"
+title = "Gregory Roussac - CV summary"
+body = """
+Title: Senior Software Engineer | Rust Backend, Angular Frontend and Distributed Systems. Location: Hilversum, NL.
+
+Senior software engineer with 20+ years building full stack applications, distributed systems, APIs, and developer tooling. Recent focus: Rust services, APIs, SDKs, Wasm, Docker on VPS and AWS. Earlier: Angular frontends and PHP e-commerce.
+
+Roles:
+- Nov 2022 - Present: Senior Rust/Wasm Software Engineer, Interchouette (ITC), Hilversum, NL (freelance ZZP). Engagements include Casper Labs, Casper Association, and confidential enterprise platforms.
+- Nov 2022 - Dec 2024: Software Engineer, Rust smart contracts, Casper Labs (remote via Interchouette).
+- Apr 2017 - Apr 2022: Front End Developer, Independer, Hilversum, NL.
+- Jul 2016 - Feb 2017: Python / JavaScript Developer, Byte B.V. (Hypernode), Amsterdam, NL.
+- Dec 2012 - Feb 2016: Lead Core PHP / MySQL Developer, PrestaShop, Paris, FR.
+- Nov 2009 - Oct 2012: Owner / Managing Director, Interchouette (ITC), Paris, FR.
+- Jun 2008 - Nov 2009: Project Manager, PHP / MySQL, PrestaShop, Paris, FR.
+- Feb 2007 - May 2008: Web Project Manager, Come&Stay, Paris, FR.
+- Jan 2005 - Jan 2007: Owner, So Many Wines Ltd, Guildford, GB.
+- Sep 2003 - Aug 2004: PHP / MySQL Developer, Cedelia, Tremblay, FR.
+
+Education: Master's (DESS) IT Applications for Economic and Social Management, Universite Paris VII (2003-2004); BA International Business, ESCE (1999-2003); Erasmus, HTW Berlin (2001).
+
+HTML CV: https://interchouette.net/CV
+"""
+
+[[doc]]
+slug = "cv-summary"
+lang = "nl"
+title = "Gregory Roussac - CV-samenvatting"
+body = """
+Functie: Senior Software Engineer | Rust backend, Angular frontend en distributed systems. Locatie: Hilversum, NL.
+
+Senior software engineer met 20+ jaar ervaring in full stack, distributed systems, API's en developer tooling. Recente focus: Rust, API's, SDK's, Wasm, Docker. Eerder: Angular en PHP e-commerce.
+
+HTML CV: https://interchouette.net/CV
+PDF: https://interchouette.net/CV/Gregory_Roussac.pdf
+"""
+
+[[doc]]
+slug = "cv-summary"
+lang = "fr"
+title = "Gregory Roussac - resume du CV"
+body = """
+Titre : Senior Software Engineer | Rust backend, Angular frontend et systemes distribues. Lieu : Hilversum, NL.
+
+Ingenieur senior avec 20+ ans en full stack, systemes distribues, APIs et outillage developpeur. Focus recent : Rust, APIs, SDK, Wasm, Docker.
+
+CV HTML : https://interchouette.net/CV
+PDF : https://interchouette.net/CV/Gregory_Roussac.pdf
+"""
+
+[[doc]]
+slug = "news-feeds"
+lang = "en"
+title = "News RSS and Atom feeds"
+body = """
+Interchouette publishes ITC LinkedIn and X posts on https://interchouette.net/news.
+
+Live API (about every 4 hours):
+- JSON: https://api.interchouette.net/v1/news
+- RSS: https://api.interchouette.net/v1/news/rss.xml
+- Atom: https://api.interchouette.net/v1/news/atom.xml
+
+Apex aliases /feed /rss.xml /atom.xml redirect to the API feeds.
+
+MCP/WebMCP tool: get_news
+"""
+
+[[doc]]
+slug = "news-feeds"
+lang = "nl"
+title = "Nieuws RSS- en Atom-feeds"
+body = """
+Interchouette publiceert ITC LinkedIn- en X-posts op https://interchouette.net/news.
+
+Live API (ongeveer elke 4 uur):
+- JSON: https://api.interchouette.net/v1/news
+- RSS: https://api.interchouette.net/v1/news/rss.xml
+- Atom: https://api.interchouette.net/v1/news/atom.xml
+
+MCP/WebMCP-tool: get_news
+"""
+
+[[doc]]
+slug = "news-feeds"
+lang = "fr"
+title = "Flux news RSS et Atom"
+body = """
+Interchouette publie les posts LinkedIn et X ITC sur https://interchouette.net/news.
+
+API live (environ toutes les 4 heures) :
+- JSON : https://api.interchouette.net/v1/news
+- RSS : https://api.interchouette.net/v1/news/rss.xml
+- Atom : https://api.interchouette.net/v1/news/atom.xml
+
+Outil MCP/WebMCP : get_news
+"""
+
+[[doc]]
+slug = "itcy"
+lang = "en"
+title = "ITCy"
+body = """
+ITCy is the Interchouette ITC mascot: a little Linux owl who likes IT, humour, and wordplay.
+
+ITCy is a disclosed AI experience:
+- Operates the company LinkedIn page: https://linkedin.com/company/interchouette-itc
+- Operates the company X account: https://x.com/interchouette
+- Runs away-mode visitor chat on https://interchouette.net/ (when Greg is offline)
+
+Disclosure on public posts:
+Written by AI - ITCy - model <provider/id> - tokens in:<n> out:<n>
+
+Public principles:
+- BAT (publications PR approval) before any public LinkedIn or X publish
+- Posts in English; comment replies match the comment language
+- ITCy is AI, not Gregory Roussac and not a human employee
+
+Code repository (implementation): https://github.com/Interchouette-ITC/itcy
+Status UI: https://github.com/Interchouette-ITC/itcy-tui
+Publications pipeline (live content on GitHub, not in this database): https://github.com/Interchouette-ITC/itcy-publications
+Branch = kind: drafts and posts (LinkedIn), drafts_tweet and tweets (X). Each artefact is body.md plus meta.toml under a date shard. BAT (gRoussac Approve) before merge to posts/tweets.
+
+AI worker GitHub profile: https://github.com/Interchouette
+"""
+
+[[doc]]
+slug = "itcy"
+lang = "nl"
+title = "ITCy"
+body = """
+ITCy is de mascotte van Interchouette ITC: een kleine Linux-uil die van IT, humor en woordspelingen houdt.
+
+ITCy is een bekendgemaakt AI-experiment:
+- Bedient de LinkedIn-bedrijfspagina: https://linkedin.com/company/interchouette-itc
+- Bedient het X-account: https://x.com/interchouette
+- Draait de AI-chatbot op https://interchouette.net/ in afwezigheidsmodus (wanneer Greg offline is)
+
+Openbaarmaking op publieke posts:
+Written by AI - ITCy - model <provider/id> - tokens in:<n> out:<n>
+
+Publieke principes:
+- BAT (goedkeuring publications PR) vóór elke publieke LinkedIn- of X-post
+- Posts in het Engels; reacties in de taal van de comment
+- ITCy is AI, niet Gregory Roussac en geen menselijke medewerker
+
+Code-repository: https://github.com/Interchouette-ITC/itcy
+Status-TUI: https://github.com/Interchouette-ITC/itcy-tui
+Publicaties (live op GitHub): https://github.com/Interchouette-ITC/itcy-publications
+Branch = soort: drafts en posts (LinkedIn), drafts_tweet en tweets (X). Elk artefact is body.md plus meta.toml onder een datumschijf. BAT (gRoussac Approve) vóór merge naar posts/tweets.
+
+AI-profiel op GitHub: https://github.com/Interchouette
+"""
+
+[[doc]]
+slug = "itcy"
+lang = "fr"
+title = "ITCy"
+body = """
+ITCy est la mascotte d'Interchouette ITC : une petite chouette Linux qui aime l'IT, l'humour et les jeux de mots.
+
+ITCy est une experience IA declaree :
+- Opere la page LinkedIn entreprise : https://linkedin.com/company/interchouette-itc
+- Opere le compte X : https://x.com/interchouette
+- Assure le chat visiteur en mode absence sur https://interchouette.net/ (quand Greg est offline)
+
+Divulgation sur les posts publics :
+Written by AI - ITCy - model <provider/id> - tokens in:<n> out:<n>
+
+Principes publics :
+- BAT (approbation PR publications) avant toute publication LinkedIn ou X
+- Posts en anglais ; reponses aux commentaires dans la langue du commentaire
+- ITCy est une IA, pas Gregory Roussac ni un employe humain
+
+Depot code : https://github.com/Interchouette-ITC/itcy
+TUI de statut : https://github.com/Interchouette-ITC/itcy-tui
+Publications (live sur GitHub) : https://github.com/Interchouette-ITC/itcy-publications
+Branche = type : drafts et posts (LinkedIn), drafts_tweet et tweets (X). Chaque artefact est body.md plus meta.toml sous un shard date. BAT (Approve gRoussac) avant merge vers posts/tweets.
+
+Profil GitHub IA : https://github.com/Interchouette
+"""
+
+[[doc]]
+slug = "contact"
+lang = "en"
+title = "Contact Interchouette ITC"
+body = """
+Email: contact@interchouette.net
+Personal: gregory@interchouette.net
+Site: https://interchouette.net/
+CV: https://interchouette.net/CV
+CV PDF: https://interchouette.net/CV/Gregory_Roussac.pdf
+GitHub org: https://github.com/Interchouette-ITC
+Gregory LinkedIn: https://www.linkedin.com/in/gregoryroussac/
+Company LinkedIn: https://www.linkedin.com/company/interchouette-itc/
+Signal: https://signal.me/#u/interchouette.42 (username interchouette.42)
+X: https://twitter.com/interchouette
+Telegram: https://t.me/Interchouette
+Booking: https://calendar.app.google/tw9hhtJkmcssZQCY7
+Chat widget: https://interchouette.net/ (open chat)
+Remote MCP: https://mcp.interchouette.net/
+"""
+
+[[doc]]
+slug = "contact"
+lang = "nl"
+title = "Contact Interchouette ITC"
+body = """
+E-mail: contact@interchouette.net
+Persoonlijk: gregory@interchouette.net
+Site: https://interchouette.net/
+CV: https://interchouette.net/CV
+GitHub-org: https://github.com/Interchouette-ITC
+Gregory LinkedIn: https://www.linkedin.com/in/gregoryroussac/
+Bedrijf LinkedIn: https://www.linkedin.com/company/interchouette-itc/
+Signal: https://signal.me/#u/interchouette.42
+X: https://twitter.com/interchouette
+Telegram: https://t.me/Interchouette
+Afspraak: https://calendar.app.google/tw9hhtJkmcssZQCY7
+Chat: https://interchouette.net/
+MCP: https://mcp.interchouette.net/
+"""
+
+[[doc]]
+slug = "contact"
+lang = "fr"
+title = "Contact Interchouette ITC"
+body = """
+Email : contact@interchouette.net
+Personnel : gregory@interchouette.net
+Site : https://interchouette.net/
+CV : https://interchouette.net/CV
+Organisation GitHub : https://github.com/Interchouette-ITC
+LinkedIn Gregory : https://www.linkedin.com/in/gregoryroussac/
+LinkedIn entreprise : https://www.linkedin.com/company/interchouette-itc/
+Signal : https://signal.me/#u/interchouette.42
+X : https://twitter.com/interchouette
+Telegram : https://t.me/Interchouette
+Rendez-vous : https://calendar.app.google/tw9hhtJkmcssZQCY7
+Chat : https://interchouette.net/
+MCP : https://mcp.interchouette.net/
+"""
+
+[[doc]]
+slug = "radio"
+lang = "en"
+title = "Interchouette radio"
+body = """
+Play ITC is the Interchouette SoundCloud playlist on the home page.
+
+Playlist: https://soundcloud.com/labonnevoile/sets/playitc
+Home: https://interchouette.net/
+
+Playback controls exist on the site (home card), not on remote MCP:
+- Play / pause, next track, mute / unmute, show / hide player embed
+
+WebMCP tools (in browser): play_radio, pause_radio, toggle_radio, next_radio_track, toggle_radio_mute, get_radio_info
+Remote MCP: get_radio_info (metadata and URLs only)
+"""
+
+[[doc]]
+slug = "radio"
+lang = "nl"
+title = "Interchouette radio"
+body = """
+Play ITC is de Interchouette SoundCloud-playlist op de homepagina.
+
+Playlist: https://soundcloud.com/labonnevoile/sets/playitc
+Home: https://interchouette.net/
+
+Bediening staat op de site (homekaart), niet op remote MCP:
+- Afspelen / pauze, volgend nummer, dempen, player tonen / verbergen
+
+WebMCP-tools: play_radio, pause_radio, toggle_radio, next_radio_track, toggle_radio_mute, get_radio_info
+Remote MCP: get_radio_info (alleen metadata en URLs)
+"""
+
+[[doc]]
+slug = "radio"
+lang = "fr"
+title = "Radio Interchouette"
+body = """
+Play ITC est la playlist SoundCloud Interchouette sur la page d'accueil.
+
+Playlist : https://soundcloud.com/labonnevoile/sets/playitc
+Accueil : https://interchouette.net/
+
+Les controles sont sur le site (carte d'accueil), pas sur le MCP distant :
+- Lecture / pause, piste suivante, muet, afficher / masquer le lecteur
+
+Outils WebMCP : play_radio, pause_radio, toggle_radio, next_radio_track, toggle_radio_mute, get_radio_info
+MCP distant : get_radio_info (metadonnees et URLs seulement)
+"""
+
+[[doc]]
+slug = "public-projects"
+lang = "en"
+title = "Public projects (legacy index)"
+body = """
+This flat project list moved to two documents:
+- products-shipped (shipped and beta products)
+- products-wip (projects in progress)
+
+Use MCP search or read products-shipped / products-wip. Catalog source: mcp/catalog/products.toml
+"""
+
+[[doc]]
+slug = "public-projects"
+lang = "nl"
+title = "Publieke projecten (legacy index)"
+body = """
+Deze platte lijst is verplaatst naar:
+- products-shipped (gelanceerde producten)
+- products-wip (projecten in ontwikkeling)
+
+Gebruik MCP search of lees products-shipped / products-wip. Catalogus: mcp/catalog/products.toml
+"""
+
+[[doc]]
+slug = "public-projects"
+lang = "fr"
+title = "Projets publics (index legacy)"
+body = """
+Cette liste plate a ete remplacee par :
+- products-shipped (produits livres)
+- products-wip (projets en cours)
+
+Utilisez search MCP ou lisez products-shipped / products-wip. Catalogue : mcp/catalog/products.toml
+"""

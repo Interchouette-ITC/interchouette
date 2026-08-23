@@ -11,6 +11,10 @@ authors = ["Interchouette <contact@interchouette.net>"]
 name = "interchouette-mcp"
 path = "src/main.rs"
 
+[[bin]]
+name = "interchouette-mcp-db"
+path = "src/bin/interchouette-mcp-db.rs"
+
 [dependencies]
 anyhow = "1"
 axum = { version = "0.8", default-features = false, features = [
@@ -42,6 +46,7 @@ tokio = { version = "1", features = [
     "io-util",
     "sync",
 ] }
+toml = "0.8"
 tower-http = { version = "0.6", features = ["cors"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

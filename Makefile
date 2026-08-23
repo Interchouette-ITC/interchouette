@@ -11,7 +11,7 @@ DOCKER_BUILDKIT ?= 1
 
 CLIPPY_FLAGS := -D warnings -D clippy::all -D clippy::pedantic -D clippy::nursery
 
-.PHONY: help run run-www mcp-lint mcp-test mcp-build \
+.PHONY: help run run-www mcp-lint mcp-test mcp-build mcp-db \
 	chat-lint chat-test chat-build \
 	news-pg-up news-pg-down \
 	mcp-docker-build mcp-docker-push-hub \
@@ -20,7 +20,7 @@ CLIPPY_FLAGS := -D warnings -D clippy::all -D clippy::pedantic -D clippy::nurser
 
 help:
 	@echo "Interchouette MCP"
-	@echo "  make mcp-lint / mcp-test / mcp-build"
+	@echo "  make mcp-lint / mcp-test / mcp-build / mcp-db"
 	@echo "  make mcp-docker-build / mcp-docker-push"
 	@echo "Chat"
 	@echo "  make chat-lint / chat-test / chat-build"
@@ -39,6 +39,9 @@ mcp-test:
 
 mcp-build:
 	cd mcp && cargo build --release
+
+mcp-db:
+	cd mcp && cargo run --bin interchouette-mcp-db -- ../db/interchouette.db
 
 chat-lint:
 	cd backend && cargo fmt --check && cargo clippy --all-targets -- $(CLIPPY_FLAGS)

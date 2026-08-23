@@ -6,11 +6,12 @@ Official MCP URL: `https://mcp.interchouette.net/` (alias `/interchouette` kept 
 
 ## Update content
 
-1. Edit `db/interchouette.db` (DB Browser for SQLite, `sqlite3`, etc.)
-2. Commit + push to `dev`
-3. CI publishes `interchouette/interchouette-mcp:latest`
+1. Edit sources under **`mcp/catalog/`** (`docs.toml`, `products.toml`)
+2. Rebuild the committed database: **`make mcp-db`**
+3. Commit `db/interchouette.db` + catalog changes, push to `dev`
+4. CI publishes `interchouette/interchouette-mcp:latest`
 
-No Postgres. No markdown ingest pipeline. No admin upsert API.
+No Postgres. No runtime admin upsert API. Public catalog lives in this repo (not itc-cursor).
 
 ## Run (image)
 
