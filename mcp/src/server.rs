@@ -140,6 +140,16 @@ struct BookArgs {
 }
 
 #[derive(Debug, Deserialize, JsonSchema)]
+struct FreeBusyArgs {
+    /// Must match env `MCP_CHAT_TOKEN` on the server.
+    token: String,
+    /// Window start (RFC3339 preferred, e.g. `2026-09-01T00:00:00Z`).
+    time_min: String,
+    /// Window end (exclusive).
+    time_max: String,
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
 struct DocSlugArgs {
     /// Document slug (e.g. `itcy`, `contact`, `products-shipped`).
     slug: String,
@@ -425,6 +435,7 @@ impl InterchouetteMcp {
              - get_chat_relay_status (token): relay status\n\
              - send_message_to_gregory_roussac (token): post a free-form message to Greg\n\
              - book_appointment (token): request a meeting (name, email, start time)\n\
+             - check_availability (token): list busy intervals on Greg's calendar\n\
              Visitors without a token: use the chat widget at https://interchouette.net/\n\
              WebMCP explorer: https://mcp.interchouette.net/\n\
              token_configured={}\nrelay_configured={}",
@@ -545,6 +556,60 @@ impl InterchouetteMcp {
             start.trim(),
             email.trim(),
         )))
+    }
+
+    #[tool(
+        description = "Check Gregory Roussac calendar busy intervals for a time window. \
+                       Requires MCP_CHAT_TOKEN. Provide time_min and time_max (RFC3339 preferred). \
+                       Returns busy blocks; gaps are candidate free times. Does not book."
+    )]
+    async fn check_availability(
+        &self,
+        Parameters(FreeBusyArgs {
+            token,
+            time_min,
+            time_max,
+        }): Parameters<FreeBusyArgs>,
+    ) -> Result<CallToolResult, McpError> {
+        if !self.chat.authorize(&token) {
+            return Err(mcp_err("invalid or missing token"));
+        }
+        let time_min = time_min.trim();
+        let time_max = time_max.trim();
+        if time_min.is_empty() || time_max.is_empty() {
+            return Err(mcp_err("time_min and time_max are required"));
+        }
+        if time_min >= time_max {
+            return Err(mcp_err("time_min must be before time_max"));
+        }
+        let Some(base_url) = &self.chat_backend_url else {
+            return Err(mcp_err(
+                "availability not available (CHAT_BACKEND_URL not configured)",
+            ));
+        };
+        let url = format!("{base_url}/v1/calendar/freebusy");
+        let resp = self
+            .http
+            .post(&url)
+            .json(&json!({
+                "token": token,
+                "time_min": time_min,
+                "time_max": time_max,
+            }))
+            .send()
+            .await
+            .map_err(|err| mcp_err(format!("chat backend unreachable: {err}")))?;
+        if !resp.status().is_success() {
+            let status = resp.status().as_u16();
+            let body: serde_json::Value = resp.json().await.unwrap_or_default();
+            let msg = body["error"].as_str().unwrap_or("freebusy failed");
+            return Err(mcp_err(format!("[{status}] {msg}")));
+        }
+        let body: serde_json::Value = resp.json().await.unwrap_or_default();
+        if let Some(snippet) = body["snippet"].as_str().filter(|s| !s.is_empty()) {
+            return Ok(text_ok(snippet.to_string()));
+        }
+        Ok(text_ok(body.to_string()))
     }
 }
 
@@ -703,6 +768,7 @@ impl ServerHandler for InterchouetteMcp {
              Knowledge: search, get_doc_by_slug, list_knowledge_index, get_itcy, \
              list_shipped_products, list_projects_in_progress, get_radio_info, get_contact. \
              Publications (live GitHub): list_publications, get_publication. \
+             Calendar (token): check_availability, book_appointment. \
              Chat tools: list_chat_capabilities, send_message_to_gregory_roussac, get_chat_relay_status \
              (write tools need token matching MCP_CHAT_TOKEN). \
              Official URL: https://mcp.interchouette.net/",
@@ -1245,6 +1311,44 @@ mod tests {
                 last_name: "Test".into(),
                 email: "alice@example.com".into(),
                 start: "2026-09-01T10:00:00".into(),
+            }))
+            .await;
+        assert!(err.is_err());
+        let msg = err.unwrap_err().message;
+        assert!(
+            msg.contains("CHAT_BACKEND_URL"),
+            "expected backend URL error, got: {msg}"
+        );
+    }
+
+    #[tokio::test]
+    async fn check_availability_rejects_bad_token() {
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db).unwrap());
+        let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
+        let err = mcp
+            .check_availability(Parameters(FreeBusyArgs {
+                token: "wrong".into(),
+                time_min: "2026-09-01T00:00:00Z".into(),
+                time_max: "2026-09-08T00:00:00Z".into(),
+            }))
+            .await;
+        assert!(err.is_err());
+    }
+
+    #[tokio::test]
+    async fn check_availability_without_backend_url_returns_error() {
+        std::env::remove_var("CHAT_BACKEND_URL");
+        let dir = tempdir().unwrap();
+        let db = seed_store(&dir);
+        let store = Arc::new(Store::open_readonly(db).unwrap());
+        let mcp = InterchouetteMcp::new(store, ChatRelay::for_test(Some("secret")));
+        let err = mcp
+            .check_availability(Parameters(FreeBusyArgs {
+                token: "secret".into(),
+                time_min: "2026-09-01T00:00:00Z".into(),
+                time_max: "2026-09-08T00:00:00Z".into(),
             }))
             .await;
         assert!(err.is_err());

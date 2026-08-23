@@ -23,6 +23,7 @@ No Postgres. No runtime admin upsert API. Public catalog lives in this repo (not
 | `list_shipped_products`, `list_projects_in_progress` | DB (from `products.toml`) |
 | `list_publications`, `get_publication` | Live GitHub `itcy-publications` (optional `GITHUB_TOKEN` for rate limits) |
 | `get_news` | Live API `GET /v1/news` |
+| `check_availability`, `book_appointment` | Chat backend calendar proxy (`CHAT_BACKEND_URL` + `MCP_CHAT_TOKEN`) |
 
 ## Resources
 

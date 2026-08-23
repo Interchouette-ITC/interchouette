@@ -62,18 +62,25 @@ impl AwayBrain {
     }
 
     /// Answer as `ITCy` using remote MCP context, prior turns, and `OpenRouter`.
+    ///
+    /// `calendar_context` is an optional busy-interval snippet for scheduling turns.
     pub async fn reply(
         &self,
         visitor_text: &str,
         locale: ChatLocale,
         history: &[ChatLine],
         visitor_email: Option<&str>,
+        calendar_context: Option<&str>,
     ) -> String {
         if visitor_turns_blocked(visitor_text, history) {
             return refusal_message(locale).to_string();
         }
         let query = rag_query(visitor_text, history);
-        let context = self.rag_context(&query, locale).await;
+        let mut context = self.rag_context(&query, locale).await;
+        if let Some(cal) = calendar_context.map(str::trim).filter(|s| !s.is_empty()) {
+            context.push_str("\n\n## Calendar availability\n");
+            context.push_str(cal);
+        }
         match self
             .call_openrouter(
                 &self.openrouter_key,
@@ -543,6 +550,7 @@ mod tests {
                 ChatLocale::En,
                 &[],
                 None,
+                None,
             )
             .await;
         assert_eq!(reply, refusal_message(ChatLocale::En));
@@ -553,7 +561,9 @@ mod tests {
         let brain = AwayBrain::with_static_context(
             "### Gregory\nGregory Roussac does Rust and Wasm freelance work.",
         );
-        let reply = brain.reply("Rust Wasm", ChatLocale::En, &[], None).await;
+        let reply = brain
+            .reply("Rust Wasm", ChatLocale::En, &[], None, None)
+            .await;
         assert!(reply.contains("ITCy"));
         assert!(reply.contains("Gregory") || reply.contains("Rust"));
     }
