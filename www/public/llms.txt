@@ -38,7 +38,8 @@ When the browser supports WebMCP, this site registers tools via Angular (runtime
 - `get_contact` - public contact channels
 - `list_public_pages` - public page list with absolute URLs
 - `open_public_page` - navigate this tab to a public page
-- `get_remote_mcp` - official Streamable HTTP MCP endpoint (not in-page WebMCP)
+- `get_remote_mcp` - official Streamable HTTP MCP endpoint (not in-page WebMCP); use for full corpus search
+- `list_knowledge_topics` - knowledge slug/title index; document bodies and FTS stay on remote MCP
 - `get_news` - ITC LinkedIn and X posts from API `GET /v1/news` (JSON cached about every 4 hours)
 
 When the chat widget is enabled:
@@ -47,8 +48,13 @@ When the chat widget is enabled:
 - `open_site_chat` - open the site chat panel
 - `send_site_chat_message` - send a visitor message (also declarative `toolname` on the compose form)
 
+When the radio widget is enabled (home):
+
+- `get_radio_info` - Play ITC playlist metadata and in-page playback state
+- `play_radio` / `pause_radio` / `toggle_radio` / `next_radio_track` / `toggle_radio_mute` - control SoundCloud in this tab
+
 `get_remote_mcp` returns the official Streamable HTTP MCP URL above.
-In-page WebMCP is not the remote MCP HTTP endpoint.
+In-page WebMCP is not the remote MCP HTTP endpoint. Remote MCP holds the knowledge corpus (`search`, `get_doc_by_slug`, `list_knowledge_index`); remote `get_radio_info` is metadata only (no server-side audio).
 
 ## HTTP API (public OpenAPI)
 

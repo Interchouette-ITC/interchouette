@@ -114,6 +114,25 @@ async function mustDiscoverMcp() {
     console.error('llms.txt must mention WebMCP get_remote_mcp');
     process.exitCode = 1;
   }
+  if (!llms.includes('list_knowledge_topics')) {
+    console.error('llms.txt must mention WebMCP list_knowledge_topics');
+    process.exitCode = 1;
+  }
+  if (!llms.includes('play_radio')) {
+    console.error('llms.txt must mention WebMCP play_radio');
+    process.exitCode = 1;
+  }
+  if (!llms.includes('list_knowledge_index')) {
+    console.error('llms.txt must mention remote list_knowledge_index');
+    process.exitCode = 1;
+  }
+  if (
+    typeof card?.instructions === 'string' &&
+    !card.instructions.includes('list_knowledge_index')
+  ) {
+    console.error('mcp.json instructions must mention list_knowledge_index');
+    process.exitCode = 1;
+  }
 
   const index = await readFile(join(root, 'index.html'), 'utf8');
   if (!index.includes(`href="${MCP_ENDPOINT}"`) && !index.includes(`href='${MCP_ENDPOINT}'`)) {

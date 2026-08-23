@@ -136,6 +136,38 @@ export function remoteMcpText(): string {
     'Transport: streamable-http',
     'Server card: https://interchouette.net/.well-known/mcp.json',
     'Site map: https://interchouette.net/llms.txt',
+    'Full corpus search: remote tools search, get_doc_by_slug, list_knowledge_index.',
+    'In-page WebMCP list_knowledge_topics is a slug index only; use remote MCP for bodies.',
+  ].join('\n');
+}
+
+/**
+ * Curated knowledge slug index (aligned with mcp/catalog → interchouette.db).
+ * Bodies stay on remote MCP; WebMCP only advertises topics.
+ */
+export const KNOWLEDGE_TOPICS = [
+  { slug: 'overview', title: 'Interchouette ITC' },
+  { slug: 'gregory-roussac', title: 'Gregory Roussac' },
+  { slug: 'cv-summary', title: 'Gregory Roussac - CV summary' },
+  { slug: 'itcy', title: 'ITCy' },
+  { slug: 'contact', title: 'Contact Interchouette ITC' },
+  { slug: 'radio', title: 'Interchouette radio' },
+  { slug: 'news-feeds', title: 'News RSS and Atom feeds' },
+  { slug: 'products-shipped', title: 'Shipped products' },
+  { slug: 'products-wip', title: 'Projects in progress' },
+  { slug: 'public-projects', title: 'Public projects (legacy index)' },
+] as const;
+
+export function knowledgeTopicsText(): string {
+  const rows = KNOWLEDGE_TOPICS.map((t) => `${t.slug}\t${t.title}`);
+  return [
+    'Interchouette knowledge topics (committed MCP corpus; en/nl/fr where available).',
+    'This WebMCP tool lists slugs only. For full text and FTS search, call get_remote_mcp then use remote tools:',
+    'search, get_doc_by_slug, list_knowledge_index, get_itcy, list_shipped_products, list_projects_in_progress.',
+    'Live (not in SQLite): list_publications, get_publication, get_news.',
+    '',
+    'slug\ttitle',
+    ...rows,
   ].join('\n');
 }
 
@@ -167,9 +199,16 @@ export function createSiteInfoWebMcpTools() {
     {
       name: 'get_remote_mcp',
       description:
-        'Returns the official remote Streamable HTTP MCP endpoint for Interchouette MCP (not this in-page WebMCP).',
+        'Returns the official remote Streamable HTTP MCP endpoint for Interchouette MCP (not this in-page WebMCP). Use it for full corpus search and document fetch.',
       inputSchema: EMPTY_INPUT_SCHEMA,
       execute: () => remoteMcpText(),
+    },
+    {
+      name: 'list_knowledge_topics',
+      description:
+        'Lists knowledge document slugs and titles in the Interchouette MCP corpus. For full document bodies or search, use get_remote_mcp then remote search / get_doc_by_slug.',
+      inputSchema: EMPTY_INPUT_SCHEMA,
+      execute: () => knowledgeTopicsText(),
     },
     {
       name: 'get_news',
