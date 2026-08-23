@@ -1,6 +1,10 @@
 //! Away mode: `OpenRouter` plus remote Interchouette MCP over HTTP.
 //!
-//! Chat does not open `interchouette.db`. Context comes from the MCP HTTP API.
+//! Chat does not open `interchouette.db`. Context comes from the MCP HTTP API
+//! via capped multi-tool RAG (`search` → `get_doc_by_slug` → optional `get_news`
+//! or `list_publications`).
+
+use std::collections::BTreeSet;
 
 use serde_json::{json, Value};
 
@@ -11,8 +15,35 @@ use crate::chat::sessions::ChatLine;
 
 const DEFAULT_MCP_URL: &str = "https://mcp.interchouette.net/";
 const MCP_SEARCH_TOOL: &str = "search";
+const MCP_GET_DOC_TOOL: &str = "get_doc_by_slug";
+const MCP_GET_NEWS_TOOL: &str = "get_news";
+const MCP_LIST_PUBLICATIONS_TOOL: &str = "list_publications";
+/// Hard cap on remote MCP `tools/call` requests per visitor turn.
+const MAX_MCP_TOOL_CALLS: usize = 4;
+/// Full docs to fetch after search (each counts toward `MAX_MCP_TOOL_CALLS`).
+const MAX_DOC_FETCHES: usize = 2;
 
-/// Away LLM helper backed by remote MCP search.
+const NEWS_NEEDLES: &[&str] = &[
+    "news",
+    "linkedin",
+    "tweet",
+    "twitter",
+    "actualit",
+    "nieuws",
+    "x.com",
+    "posts on x",
+];
+
+const PUBLICATION_NEEDLES: &[&str] = &[
+    "publication",
+    "publications",
+    "itcy-publications",
+    "draft post",
+    "artefact",
+    "artifacts",
+];
+
+/// Away LLM helper backed by remote MCP multi-tool RAG.
 #[derive(Clone)]
 pub struct AwayBrain {
     mcp_url: String,
@@ -114,37 +145,118 @@ impl AwayBrain {
         if let Some(ctx) = &self.static_context {
             return ctx.clone();
         }
-        match self.mcp_search(query, locale).await {
+        match self.mcp_multi_tool_rag(query, locale).await {
             Ok(text) if !text.trim().is_empty() => text,
             Ok(_) => String::from("(no MCP hits)"),
             Err(err) => {
-                tracing::warn!(error = %err, mcp = %self.mcp_url, "remote MCP search failed");
+                tracing::warn!(error = %err, mcp = %self.mcp_url, "remote MCP RAG failed");
                 String::from("(MCP unavailable)")
             }
         }
     }
 
-    async fn mcp_search(&self, query: &str, locale: ChatLocale) -> anyhow::Result<String> {
+    /// `search` then up to two `get_doc_by_slug`, then optional `get_news` or
+    /// `list_publications`, capped at [`MAX_MCP_TOOL_CALLS`].
+    async fn mcp_multi_tool_rag(&self, query: &str, locale: ChatLocale) -> anyhow::Result<String> {
         let session_id = self.mcp_initialize().await?;
+        self.mcp_notify_initialized(&session_id).await;
+        let lang = locale.as_str();
+        let mut calls = 0usize;
+        let mut parts: Vec<String> = Vec::new();
+
+        let search_text = self
+            .mcp_tool_call(
+                &session_id,
+                MCP_SEARCH_TOOL,
+                json!({ "query": query, "lang": lang }),
+            )
+            .await?;
+        calls += 1;
+        parts.push(format!("## Search\n{search_text}"));
+
+        let slugs = extract_slugs_from_search(&search_text);
+        for slug in slugs.into_iter().take(MAX_DOC_FETCHES) {
+            if calls >= MAX_MCP_TOOL_CALLS {
+                break;
+            }
+            match self
+                .mcp_tool_call(
+                    &session_id,
+                    MCP_GET_DOC_TOOL,
+                    json!({ "slug": slug, "lang": lang }),
+                )
+                .await
+            {
+                Ok(doc) if !doc.trim().is_empty() => {
+                    calls += 1;
+                    parts.push(format!("## Document `{slug}`\n{doc}"));
+                }
+                Ok(_) => {}
+                Err(err) => {
+                    tracing::warn!(%slug, error = %err, "MCP get_doc_by_slug failed");
+                }
+            }
+        }
+
+        if calls < MAX_MCP_TOOL_CALLS && wants_news(query) {
+            match self
+                .mcp_tool_call(&session_id, MCP_GET_NEWS_TOOL, json!({}))
+                .await
+            {
+                Ok(news) if !news.trim().is_empty() => {
+                    parts.push(format!("## News\n{news}"));
+                }
+                Ok(_) => {}
+                Err(err) => tracing::warn!(error = %err, "MCP get_news failed"),
+            }
+        } else if calls < MAX_MCP_TOOL_CALLS && wants_publications(query) {
+            match self
+                .mcp_tool_call(
+                    &session_id,
+                    MCP_LIST_PUBLICATIONS_TOOL,
+                    json!({ "limit": 5 }),
+                )
+                .await
+            {
+                Ok(pubs) if !pubs.trim().is_empty() => {
+                    parts.push(format!("## Publications\n{pubs}"));
+                }
+                Ok(_) => {}
+                Err(err) => tracing::warn!(error = %err, "MCP list_publications failed"),
+            }
+        }
+
+        Ok(parts.join("\n\n"))
+    }
+
+    async fn mcp_notify_initialized(&self, session_id: &str) {
         let _ = self
             .client
             .post(&self.mcp_url)
             .header("Content-Type", "application/json")
             .header("Accept", "application/json, text/event-stream")
-            .header("mcp-session-id", &session_id)
+            .header("mcp-session-id", session_id)
             .json(&json!({
                 "jsonrpc": "2.0",
                 "method": "notifications/initialized"
             }))
             .send()
             .await;
+    }
+
+    async fn mcp_tool_call(
+        &self,
+        session_id: &str,
+        name: &str,
+        arguments: Value,
+    ) -> anyhow::Result<String> {
         let resp = self
             .client
             .post(&self.mcp_url)
             .header("Content-Type", "application/json")
             .header("Accept", "application/json, text/event-stream")
-            .header("mcp-session-id", &session_id)
-            .json(&mcp_search_call_body(query, locale.as_str()))
+            .header("mcp-session-id", session_id)
+            .json(&mcp_tools_call_body(2, name, &arguments))
             .send()
             .await?;
         let status = resp.status();
@@ -154,7 +266,7 @@ impl AwayBrain {
         }
         let payload = parse_sse_jsonrpc(&body)?;
         if let Some(err) = payload.get("error") {
-            tracing::warn!(mcp = %self.mcp_url, error = %err, "MCP tools/call JSON-RPC error");
+            tracing::warn!(mcp = %self.mcp_url, tool = %name, error = %err, "MCP tools/call JSON-RPC error");
             anyhow::bail!("MCP tools/call error: {err}");
         }
         extract_tool_text(&payload)
@@ -412,16 +524,62 @@ fn completion_messages(
     messages
 }
 
-fn mcp_search_call_body(query: &str, lang: &str) -> Value {
+fn mcp_tools_call_body(id: u64, name: &str, arguments: &Value) -> Value {
     json!({
         "jsonrpc": "2.0",
-        "id": 2,
+        "id": id,
         "method": "tools/call",
         "params": {
-            "name": MCP_SEARCH_TOOL,
-            "arguments": { "query": query, "lang": lang }
+            "name": name,
+            "arguments": arguments
         }
     })
+}
+
+/// Parse unique slugs from MCP search headings shaped like `## Title (en/itcy)`.
+fn extract_slugs_from_search(search_text: &str) -> Vec<String> {
+    let mut seen = BTreeSet::new();
+    let mut out = Vec::new();
+    for line in search_text.lines() {
+        let trimmed = line.trim();
+        if !trimmed.starts_with("## ") {
+            continue;
+        }
+        let Some(slug) = parse_search_heading_slug(trimmed) else {
+            continue;
+        };
+        if seen.insert(slug.clone()) {
+            out.push(slug);
+        }
+    }
+    out
+}
+
+fn parse_search_heading_slug(heading: &str) -> Option<String> {
+    let open = heading.rfind('(')?;
+    let close = heading[open..].find(')')? + open;
+    let inner = heading[open + 1..close].trim();
+    let (_lang, slug) = inner.split_once('/')?;
+    let slug = slug.trim();
+    if slug.is_empty()
+        || !slug
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+    {
+        return None;
+    }
+    Some(slug.to_string())
+}
+
+fn wants_news(query: &str) -> bool {
+    let lower = query.to_ascii_lowercase();
+    NEWS_NEEDLES.iter().any(|n| lower.contains(n))
+}
+
+fn wants_publications(query: &str) -> bool {
+    let lower = query.to_ascii_lowercase();
+    PUBLICATION_NEEDLES.iter().any(|n| lower.contains(n))
+        || lower.split_whitespace().any(|w| w == "bat")
 }
 
 fn rag_fallback(context: &str, visitor_text: &str, locale: ChatLocale) -> String {
@@ -577,10 +735,38 @@ mod tests {
 
     #[test]
     fn tools_call_uses_search() {
-        let body = mcp_search_call_body("Gregory Roussac", "en");
+        let body = mcp_tools_call_body(
+            2,
+            MCP_SEARCH_TOOL,
+            &json!({ "query": "Gregory Roussac", "lang": "en" }),
+        );
         assert_eq!(body["params"]["name"], MCP_SEARCH_TOOL);
         assert_eq!(body["params"]["arguments"]["query"], "Gregory Roussac");
         assert_eq!(body["params"]["arguments"]["lang"], "en");
+    }
+
+    #[test]
+    fn extract_slugs_keeps_search_order_and_dedupes() {
+        let text =
+            "## A (en/itcy)\nx\n## B (fr/contact)\ny\n## C (nl/itcy)\ndupe\n## D (en/radio)\nz\n";
+        assert_eq!(
+            extract_slugs_from_search(text),
+            vec![
+                "itcy".to_string(),
+                "contact".to_string(),
+                "radio".to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn news_and_publication_intent() {
+        assert!(wants_news("Any LinkedIn news?"));
+        assert!(wants_news("montre les actualites"));
+        assert!(!wants_news("What is Rust Wasm?"));
+        assert!(wants_publications("list publications"));
+        assert!(wants_publications("BAT for the draft"));
+        assert!(!wants_publications("book a meeting"));
     }
 
     #[test]
