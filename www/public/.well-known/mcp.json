@@ -6,7 +6,7 @@
     "title": "Interchouette MCP",
     "version": "0.2.0"
   },
-  "description": "Read-only MCP for Gregory Roussac, Interchouette ITC, CV summary, Rust/Wasm/MCP/API public content, and project blurbs.",
+  "description": "Read-only Streamable HTTP MCP for Gregory Roussac and Interchouette ITC: knowledge corpus, CV summary, shipped/wip products, live publications, news, radio metadata, and calendar/chat tools.",
   "documentationUrl": "https://interchouette.net/llms.txt",
   "websiteUrl": "https://interchouette.net/",
   "transport": {
@@ -14,11 +14,12 @@
     "endpoint": "https://mcp.interchouette.net/"
   },
   "capabilities": {
-    "tools": {}
+    "tools": {},
+    "resources": {}
   },
   "authentication": {
     "required": false,
     "schemes": []
   },
-  "instructions": "Search with full name Gregory Roussac, Interchouette, Rust MCP, Rust API, Wasm. Official Streamable HTTP endpoint above."
+  "instructions": "Search with full name Gregory Roussac, Interchouette, Rust MCP, Rust API, Wasm. Knowledge: search, get_doc_by_slug, list_knowledge_index, get_itcy, list_shipped_products, list_projects_in_progress, get_radio_info, get_contact. Publications (live GitHub): list_publications, get_publication. News: get_news. Playback controls are in-page WebMCP on interchouette.net, not this server. Site map: https://interchouette.net/llms.txt. Official Streamable HTTP endpoint above."
 }

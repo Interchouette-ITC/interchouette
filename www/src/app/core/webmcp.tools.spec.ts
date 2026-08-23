@@ -3,6 +3,7 @@ import {
   contactText,
   formatNewsSnapshotText,
   isWebMcpPagePath,
+  knowledgeTopicsText,
   listPagesText,
   remoteMcpText,
   siteOverviewText,
@@ -55,5 +56,15 @@ describe('webmcp.tools helpers', () => {
     expect(remoteMcpText()).toContain('streamable-http');
     expect(remoteMcpText()).toContain('https://interchouette.net/.well-known/mcp.json');
     expect(remoteMcpText()).toContain('https://interchouette.net/llms.txt');
+    expect(remoteMcpText()).toContain('list_knowledge_index');
+  });
+
+  it('lists knowledge topics and points at remote MCP for bodies', () => {
+    const text = knowledgeTopicsText();
+    expect(text).toContain('itcy');
+    expect(text).toContain('products-shipped');
+    expect(text).toContain('get_remote_mcp');
+    expect(text).toContain('get_doc_by_slug');
+    expect(text).not.toContain('WORK-CONTRACT');
   });
 });
