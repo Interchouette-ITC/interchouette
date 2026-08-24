@@ -25,8 +25,16 @@ pub struct ThreadRef {
 
 impl SlackRelay {
     /// From env `SLACK_BOT_TOKEN` + `GREG_SLACK_USER_ID`.
+    ///
+    /// `CHAT_ENV=local` never opens Slack (agent restarts must not spam Greg's DM).
+    /// Prod and e2e still relay when tokens are set.
     #[must_use]
     pub fn from_env() -> Self {
+        let env = crate::chat::chat_env_label();
+        if !crate::chat::env_label::slack_relay_allowed(&env) {
+            tracing::info!(%env, "chat Slack relay disabled (local env)");
+            return Self { inner: None };
+        }
         let token = std::env::var("SLACK_BOT_TOKEN").unwrap_or_default();
         let greg_user_id = std::env::var("GREG_SLACK_USER_ID").unwrap_or_default();
         if token.is_empty() || greg_user_id.is_empty() {
@@ -87,7 +95,7 @@ impl SlackRelay {
     ) -> anyhow::Result<ThreadRef> {
         let channel = self.open_dm().await?;
         let env = crate::chat::chat_env_label();
-        let text = format!("[{short_code}] mode={mode} env={env}");
+        let text = crate::chat::env_label::format_session_thread_header(short_code, mode, &env);
         let ts = self.post_raw(&channel, None, &text).await?;
         Ok(ThreadRef {
             channel,

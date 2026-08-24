@@ -30,9 +30,27 @@ pub fn resolve_chat_env_label(chat_env: Option<&str>, port_set: bool) -> String 
     }
 }
 
+/// Parent Slack line for a new visitor thread (`[CODE] mode=… env=…`).
+///
+/// Non-prod envs wrap with warning marks so Greg can skim past agent/local noise.
+#[must_use]
+pub fn format_session_thread_header(short_code: &str, mode: &str, env: &str) -> String {
+    let core = format!("[{short_code}] mode={mode} env={env}");
+    match env {
+        "prod" => core,
+        _ => format!("⚠️ {core} ⚠️"),
+    }
+}
+
+/// Local agent restarts must not open Slack DMs (prod + e2e still relay).
+#[must_use]
+pub fn slack_relay_allowed(env: &str) -> bool {
+    env != "local"
+}
+
 #[cfg(test)]
 mod tests {
-    use super::resolve_chat_env_label;
+    use super::{format_session_thread_header, resolve_chat_env_label, slack_relay_allowed};
 
     #[test]
     fn maps_aliases_and_defaults() {
@@ -41,5 +59,28 @@ mod tests {
         assert_eq!(resolve_chat_env_label(Some("e2e"), false), "e2e");
         assert_eq!(resolve_chat_env_label(Some("production"), false), "prod");
         assert_eq!(resolve_chat_env_label(Some("dev"), true), "local");
+    }
+
+    #[test]
+    fn thread_header_warns_non_prod() {
+        assert_eq!(
+            format_session_thread_header("ABCD1234", "away", "prod"),
+            "[ABCD1234] mode=away env=prod"
+        );
+        assert_eq!(
+            format_session_thread_header("ABCD1234", "away", "local"),
+            "⚠️ [ABCD1234] mode=away env=local ⚠️"
+        );
+        assert_eq!(
+            format_session_thread_header("ABCD1234", "live", "e2e"),
+            "⚠️ [ABCD1234] mode=live env=e2e ⚠️"
+        );
+    }
+
+    #[test]
+    fn local_blocks_slack_relay() {
+        assert!(!slack_relay_allowed("local"));
+        assert!(slack_relay_allowed("prod"));
+        assert!(slack_relay_allowed("e2e"));
     }
 }

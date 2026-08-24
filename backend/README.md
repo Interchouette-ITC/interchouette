@@ -23,26 +23,26 @@ Session, WebSocket, and `/v1/book` stay implemented but are omitted from the pub
 
 ## Env
 
-| Variable               | Role                                                                                |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| `CHAT_ENV`             | Slack label: `local` / `e2e` / `prod` (default: `prod` if `PORT` set, else `local`) |
-| `CHAT_LISTEN`          | Bind address (default `0.0.0.0:8080`)                                               |
-| `CHAT_FORCE_MODE`      | `live` or `away` (local/tests)                                                      |
-| `SLACK_BOT_TOKEN`      | Bot token (`xoxb-…`): presence, open DM, post to Greg                               |
-| `SLACK_APP_TOKEN`      | App token (`xapp-…`): Socket Mode so Greg DM replies reach the widget               |
-| `GREG_SLACK_USER_ID`   | Greg's Slack user id                                                                |
-| `OPENROUTER_API_KEY`   | Away LLM (required)                                                                 |
-| `OPENROUTER_MODEL`     | Away model id (required), e.g. `google/gemini-2.5-flash`                            |
-| `LLM_GUARD_ENABLED`    | Away LLM input/output scanners (default on; set `false` to disable)                 |
-| `LLM_GUARD_MODE`       | `log_only` scans and logs without blocking                                          |
-| `BOOKING_SCHEDULE_URL` | Public appointment page. When set, ITCy sends this link for meetings                |
-| `CHAT_PLAYLIST_AFTER_TURNS` | Away mode: after N visitor turns (default 3), ITCy may emit `[[PLAYLIST: play]]` once |
-| `MCP_URL`              | Interchouette MCP Streamable HTTP URL (default `https://mcp.interchouette.net/`)    |
-| `CORS_ORIGIN`          | Browser origin (default `https://interchouette.net`)                                |
-| `LINKEDIN_LI_AT`       | LinkedIn `li_at` session cookie for `/v1/news` LinkedIn fetches (server-only)       |
-| `NEWS_CACHE_TTL_SECS`  | News feed cache lifetime in seconds (default `14400`, 4 hours)                      |
-| `NEWS_FETCH_LIMIT`     | Max posts per feed on `/v1/news` (default `8`)                                      |
-| `DATABASE_URL`         | Optional Postgres URL for durable ISO-week news archive (`/v1/news/archive`)        |
+| Variable                    | Role                                                                                                                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CHAT_ENV`                  | Slack label: `local` / `e2e` / `prod` (default: `prod` if `PORT` set, else `local`). `local` never posts to Slack (avoids agent-restart spam). Non-prod thread headers are wrapped with warning marks. |
+| `CHAT_LISTEN`               | Bind address (default `0.0.0.0:8080`)                                                                                                                                                                  |
+| `CHAT_FORCE_MODE`           | `live` or `away` (local/tests)                                                                                                                                                                         |
+| `SLACK_BOT_TOKEN`           | Bot token (`xoxb-…`): presence, open DM, post to Greg                                                                                                                                                  |
+| `SLACK_APP_TOKEN`           | App token (`xapp-…`): Socket Mode so Greg DM replies reach the widget                                                                                                                                  |
+| `GREG_SLACK_USER_ID`        | Greg's Slack user id                                                                                                                                                                                   |
+| `OPENROUTER_API_KEY`        | Away LLM (required)                                                                                                                                                                                    |
+| `OPENROUTER_MODEL`          | Away model id (required), e.g. `google/gemini-2.5-flash`                                                                                                                                               |
+| `LLM_GUARD_ENABLED`         | Away LLM input/output scanners (default on; set `false` to disable)                                                                                                                                    |
+| `LLM_GUARD_MODE`            | `log_only` scans and logs without blocking                                                                                                                                                             |
+| `BOOKING_SCHEDULE_URL`      | Public appointment page. When set, ITCy sends this link for meetings                                                                                                                                   |
+| `CHAT_PLAYLIST_AFTER_TURNS` | Away mode: after N visitor turns (default 3), ITCy may emit `[[PLAYLIST: play]]` once                                                                                                                  |
+| `MCP_URL`                   | Interchouette MCP Streamable HTTP URL (default `https://mcp.interchouette.net/`)                                                                                                                       |
+| `CORS_ORIGIN`               | Browser origin (default `https://interchouette.net`)                                                                                                                                                   |
+| `LINKEDIN_LI_AT`            | LinkedIn `li_at` session cookie for `/v1/news` LinkedIn fetches (server-only)                                                                                                                          |
+| `NEWS_CACHE_TTL_SECS`       | News feed cache lifetime in seconds (default `14400`, 4 hours)                                                                                                                                         |
+| `NEWS_FETCH_LIMIT`          | Max posts per feed on `/v1/news` (default `8`)                                                                                                                                                         |
+| `DATABASE_URL`              | Optional Postgres URL for durable ISO-week news archive (`/v1/news/archive`)                                                                                                                           |
 
 `GET /v1/news` (and RSS/Atom siblings) share one in-memory cache (default 4 hours). Successful refreshes also upsert the current ISO week into Postgres when `DATABASE_URL` is set (last snapshot of the week; keep 52 weeks). Without `DATABASE_URL`, live news still works; archive list is empty and week GETs return 404. The `/news` page, WebMCP `get_news`, and remote MCP `get_news` call the JSON route. `/archive` reads the archive endpoints. Apex `/feed`, `/rss.xml`, and `/atom.xml` redirect to the API feed URLs. Set `LINKEDIN_LI_AT` from your browser LinkedIn cookies when the ITC LinkedIn feed should populate; rotate it when LinkedIn returns an authwall.
 
@@ -81,7 +81,7 @@ Website static site stays separate. This API needs its **own** web service (WebS
 
 Create a repo-root `.env` with the variables above (Slack, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `MCP_URL`, optional `BOOKING_SCHEDULE_URL`). The binary loads repo-root `.env` on start (does not override vars already in the shell).
 
-`CHAT_ENV=local` does not open Slack Socket Mode (that connection stays on prod). Greg replies are read from the open Slack thread over HTTP, about every two seconds, only for sessions that already have a thread.
+`CHAT_ENV=local` does not open Slack Socket Mode (that connection stays on prod). It also does **not** post visitor threads to Slack (agent restarts must not spam Greg). Greg replies on local are only useful when Slack is enabled for another env.
 
 ```bash
 cargo run --manifest-path backend/Cargo.toml
