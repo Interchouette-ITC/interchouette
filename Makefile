@@ -14,14 +14,14 @@ CLIPPY_FLAGS := -D warnings -D clippy::all -D clippy::pedantic -D clippy::nurser
 .PHONY: help run run-www mcp-lint mcp-test mcp-build mcp-db mcp-news-snapshot \
 	chat-lint chat-test chat-build \
 	news-pg-up news-pg-down \
-	mcp-docker-build mcp-docker-push-hub \
+	mcp-docker-build mcp-docker-push-hub mcp-docker-hub-desc \
 	mcp-docker-push-ghcr-personal mcp-docker-push-ghcr-itc \
 	mcp-docker-push
 
 help:
 	@echo "Interchouette MCP"
 	@echo "  make mcp-lint / mcp-test / mcp-build / mcp-db / mcp-news-snapshot"
-	@echo "  make mcp-docker-build / mcp-docker-push"
+	@echo "  make mcp-docker-build / mcp-docker-push / mcp-docker-hub-desc"
 	@echo "Chat"
 	@echo "  make chat-lint / chat-test / chat-build"
 	@echo "Local"
@@ -30,6 +30,7 @@ help:
 	@echo "  make news-pg-up / news-pg-down   local Postgres for news archive"
 	@echo "Tags: :dev :latest only"
 	@echo "Images: $(MCP_HUB_IMAGE) | $(MCP_GHCR_ORG_IMAGE)"
+	@echo "Hub Overview: docker/DOCKERHUB.md (make mcp-docker-hub-desc)"
 
 mcp-lint:
 	cd mcp && cargo fmt --check && cargo clippy --all-targets -- $(CLIPPY_FLAGS)
@@ -92,6 +93,10 @@ mcp-docker-build:
 mcp-docker-push-hub:
 	docker push $(MCP_HUB_IMAGE):dev
 	docker push $(MCP_HUB_IMAGE):latest
+
+# Patch Hub short + full description from docker/DOCKERHUB.md (JWT via Hub login).
+mcp-docker-hub-desc:
+	python3 docker/sync-hub-description.py
 
 mcp-docker-push-ghcr-personal:
 	docker push $(MCP_GHCR_PERSONAL_IMAGE):dev
