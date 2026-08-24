@@ -95,6 +95,14 @@ mod tests {
     }
 
     #[test]
+    fn parses_session_header_with_warning_marks() {
+        let (code, env) =
+            parse_session_header("⚠️ [ABCD1234] mode=away env=e2e ⚠️").expect("header");
+        assert_eq!(code, "ABCD1234");
+        assert_eq!(env, "e2e");
+    }
+
+    #[test]
     fn rejects_untagged() {
         assert!(parse_session_reply("hello without tag").is_none());
         assert!(parse_session_reply("[SHORT] x").is_none());
