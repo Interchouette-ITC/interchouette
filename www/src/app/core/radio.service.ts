@@ -29,6 +29,9 @@ const TRACK_HINT = 24;
 /**
  * SoundCloud Play ITC controller shared by the home widget, WebMCP, and chat
  * `[[PLAYLIST: …]]` bridge.
+ *
+ * `frameSrc` is the single source of truth for the iframe URL (Angular binding).
+ * Never assign `iframe.src` directly or change detection will snap back to a stale URL.
  */
 @Injectable({ providedIn: 'root' })
 export class RadioService {
@@ -38,6 +41,8 @@ export class RadioService {
   readonly error = signal(false);
   readonly frameOpen = signal(false);
   readonly mounted = signal(false);
+  /** Raw SoundCloud embed URL bound by the widget template. */
+  readonly frameSrc = signal<string | null>(null);
 
   private widget: SoundCloudWidget | null = null;
   private track = 0;
@@ -45,12 +50,6 @@ export class RadioService {
   private wired = false;
   private unlocked = false;
   private listening = false;
-  private frameSrcRaw: string | null = null;
-
-  /** Current iframe URL (for the widget template). */
-  frameSrcUrl(): string | null {
-    return this.frameSrcRaw;
-  }
 
   /** Start listening for `interchouette:radio` (idempotent; call from widget). */
   ensureListening(): void {
@@ -69,16 +68,17 @@ export class RadioService {
     this.listening = false;
   }
 
-  /** Prepare initial (paused) player URL after first paint. Call `markMounted` after binding `frameSrc`. */
+  /** Prepare initial (paused) player URL after first paint. Call `markMounted` after bind. */
   mountInitialFrame(): string {
     this.track = pickRandomIndex(TRACK_HINT);
-    this.frameSrcRaw = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
+    const url = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
       autoPlay: false,
       startTrack: this.track,
     });
+    this.frameSrc.set(url);
     void loadSoundCloudWidgetApi().catch(() => undefined);
     this.ensureListening();
-    return this.frameSrcRaw;
+    return url;
   }
 
   /** Show the widget once the template has a trusted iframe URL. */
@@ -91,7 +91,7 @@ export class RadioService {
     this.wired = false;
     this.unlocked = false;
     this.wantPlay = false;
-    this.frameSrcRaw = null;
+    this.frameSrc.set(null);
     this.playing.set(false);
     this.loading.set(false);
     this.error.set(false);
@@ -123,14 +123,23 @@ export class RadioService {
   }
 
   pause(): void {
-    this.widget?.pause();
-    this.playing.set(false);
     this.wantPlay = false;
+    this.playing.set(false);
+    if (this.widget) {
+      this.widget.pause();
+      return;
+    }
+    // Widget API not ready (common while iframe is off-screen): remount paused.
+    this.remount(false);
   }
 
   play(): void {
     this.error.set(false);
     this.wantPlay = true;
+    this.playing.set(true);
+    if (this.muted()) {
+      this.muted.set(false);
+    }
 
     if (this.unlocked && this.widget) {
       this.applyVol();
@@ -138,9 +147,10 @@ export class RadioService {
       return;
     }
 
-    const frame = document.getElementById(RADIO_FRAME_ID) as HTMLIFrameElement | null;
-    if (!frame) {
+    if (typeof document !== 'undefined' && !document.getElementById(RADIO_FRAME_ID)) {
       this.error.set(true);
+      this.playing.set(false);
+      this.wantPlay = false;
       icConsoleWrite({
         ns: 'ic:radio',
         topic: 'play',
@@ -150,20 +160,11 @@ export class RadioService {
       return;
     }
 
-    this.loading.set(true);
-    this.widget = null;
-    this.wired = false;
-
-    const url = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
-      autoPlay: true,
-      startTrack: this.track,
-    });
-    this.frameSrcRaw = url;
-    frame.src = url;
+    this.remount(true);
   }
 
   togglePlay(): void {
-    if (this.playing()) {
+    if (this.playing() || this.wantPlay) {
       this.pause();
       return;
     }
@@ -176,6 +177,10 @@ export class RadioService {
       return;
     }
     this.wantPlay = true;
+    this.playing.set(true);
+    if (this.muted()) {
+      this.muted.set(false);
+    }
     this.applyVol();
     const widget = this.widget;
     widget.getCurrentSoundIndex((current) => {
@@ -214,6 +219,18 @@ export class RadioService {
       default:
         return 'Unknown radio action.';
     }
+  }
+
+  private remount(autoPlay: boolean): void {
+    this.loading.set(true);
+    this.widget = null;
+    this.wired = false;
+    this.unlocked = false;
+    const url = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
+      autoPlay,
+      startTrack: this.track,
+    });
+    this.frameSrc.set(url);
   }
 
   private readonly onControlEvent = (ev: Event): void => {
@@ -263,10 +280,14 @@ export class RadioService {
 
       if (this.wantPlay) {
         widget.play();
+      } else {
+        widget.pause();
       }
     } catch {
       this.error.set(true);
-      this.playing.set(false);
+      if (!this.wantPlay) {
+        this.playing.set(false);
+      }
       this.widget = null;
       this.loading.set(false);
     }
@@ -301,7 +322,11 @@ export class RadioService {
       this.loading.set(false);
       this.applyVol();
     });
-    widget.bind(events.PAUSE, () => this.playing.set(false));
+    widget.bind(events.PAUSE, () => {
+      if (!this.wantPlay) {
+        this.playing.set(false);
+      }
+    });
     widget.bind(events.FINISH, () => {
       widget.getCurrentSoundIndex((current) => {
         widget.getSounds((sounds) => {

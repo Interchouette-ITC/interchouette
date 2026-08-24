@@ -97,9 +97,11 @@ pub fn playlist_nudge_note(lines: &[crate::chat::sessions::ChatLine]) -> Option<
         return None;
     }
     Some(
-        "Optional once: after a helpful reply, you may start Play ITC radio for the visitor by \
-         emitting [[PLAYLIST: play]] on its own line (browser will start the SoundCloud playlist). \
-         Do not mention the raw tag. Only once per conversation.",
+        "If the visitor asks about music, radio, or a playlist: say yes, Interchouette has Play ITC, \
+         and ask before starting. Only after they clearly agree (yes / play / go ahead / start it), \
+         emit [[PLAYLIST: play]] on its own line. Never start Play ITC unprompted. \
+         If they say stop, pause, or quiet: emit [[PLAYLIST: pause]]. Do not mention the raw tag. \
+         At most one unsolicited music offer per conversation.",
     )
 }
 

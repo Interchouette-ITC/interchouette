@@ -80,8 +80,8 @@ export class ChatWidget implements OnDestroy {
   private ticketCopyTimer: ReturnType<typeof setTimeout> | null = null;
   private bubbleDismissed = false;
   private wideMql: MediaQueryList | null = null;
-  /** Static ITCy intro stays above the first visitor turn on fresh chats. */
-  private introEligible = true;
+  /** Static ITCy intro stays above visitor turns on fresh chats (signal for OnPush). */
+  private readonly introEligible = signal(true);
   private readySeen = false;
 
   constructor() {
@@ -126,7 +126,7 @@ export class ChatWidget implements OnDestroy {
       }
       this.readySeen = true;
       if (this.chat.messages().length > 0) {
-        this.introEligible = false;
+        this.introEligible.set(false);
       }
     });
   }
@@ -223,7 +223,7 @@ export class ChatWidget implements OnDestroy {
     this.showEmail.set(false);
     this.canSend.set(false);
     this.draft = '';
-    this.introEligible = true;
+    this.introEligible.set(true);
     this.readySeen = false;
     void this.chat.forgetChat();
   }
@@ -354,7 +354,7 @@ export class ChatWidget implements OnDestroy {
     if (this.chat.connecting() && this.chat.messages().length === 0) {
       return false;
     }
-    return this.introEligible;
+    return this.introEligible();
   }
 
   private scheduleEmailSeed(): void {
