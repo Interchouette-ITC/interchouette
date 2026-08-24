@@ -48,8 +48,9 @@ export class RadioService {
   private track = 0;
   private wantPlay = false;
   private wired = false;
-  private unlocked = false;
   private listening = false;
+  /** Ignore a transient PAUSE while SoundCloud is starting playback we requested. */
+  private playPending = false;
 
   /** Start listening for `interchouette:radio` (idempotent; call from widget). */
   ensureListening(): void {
@@ -89,8 +90,8 @@ export class RadioService {
   detach(): void {
     this.widget = null;
     this.wired = false;
-    this.unlocked = false;
     this.wantPlay = false;
+    this.playPending = false;
     this.frameSrc.set(null);
     this.playing.set(false);
     this.loading.set(false);
@@ -124,13 +125,11 @@ export class RadioService {
 
   pause(): void {
     this.wantPlay = false;
+    this.playPending = false;
     this.playing.set(false);
-    if (this.widget) {
-      this.widget.pause();
-      return;
-    }
-    // Widget API not ready (common while iframe is off-screen): remount paused.
-    this.remount(false);
+    this.loading.set(false);
+    // Never remount on pause: that reloads the SoundCloud embed and flashes loading.
+    this.widget?.pause();
   }
 
   play(): void {
@@ -141,8 +140,10 @@ export class RadioService {
       this.muted.set(false);
     }
 
-    if (this.unlocked && this.widget) {
+    // Prefer the live Widget API. Remounting here reloads the embed and breaks pause→play.
+    if (this.widget) {
       this.applyVol();
+      this.playPending = true;
       this.widget.play();
       return;
     }
@@ -157,6 +158,13 @@ export class RadioService {
         level: 'warn',
         kv: { err: 'iframe missing (open home page)' },
       });
+      return;
+    }
+
+    // Iframe already mounted: wait for bindWidget (wantPlay) instead of nuking src.
+    if (this.frameSrc()) {
+      this.loading.set(true);
+      void this.bindWidget();
       return;
     }
 
@@ -190,6 +198,7 @@ export class RadioService {
         }
         this.track = (current + 1) % sounds.length;
         widget.skip(this.track);
+        this.playPending = true;
         widget.play();
       });
     });
@@ -225,7 +234,6 @@ export class RadioService {
     this.loading.set(true);
     this.widget = null;
     this.wired = false;
-    this.unlocked = false;
     const url = soundCloudPlayerSrc(SOUNDCLOUD_PLAYLIST_URL, {
       autoPlay,
       startTrack: this.track,
@@ -279,6 +287,7 @@ export class RadioService {
       this.loading.set(false);
 
       if (this.wantPlay) {
+        this.playPending = true;
         widget.play();
       } else {
         widget.pause();
@@ -317,21 +326,25 @@ export class RadioService {
 
   private wire(widget: SoundCloudWidget, events: NonNullable<ReturnType<typeof scEvents>>): void {
     widget.bind(events.PLAY, () => {
-      this.unlocked = true;
+      this.playPending = false;
+      this.wantPlay = true;
       this.playing.set(true);
       this.loading.set(false);
       this.applyVol();
     });
     widget.bind(events.PAUSE, () => {
-      if (!this.wantPlay) {
-        this.playing.set(false);
+      if (this.playPending) {
+        return;
       }
+      this.wantPlay = false;
+      this.playing.set(false);
     });
     widget.bind(events.FINISH, () => {
       widget.getCurrentSoundIndex((current) => {
         widget.getSounds((sounds) => {
           this.track = pickRandomIndex(sounds.length, current);
           widget.skip(this.track);
+          this.playPending = true;
           widget.play();
         });
       });
