@@ -5,11 +5,11 @@ on:
   push:
     branches: [dev]
     paths:
-      - 'mcp/**'
-      - 'db/**'
-      - 'docker/Dockerfile'
-      - 'Makefile'
-      - '.github/workflows/docker-build-push-mcp.yml'
+      - "mcp/**"
+      - "db/**"
+      - "docker/Dockerfile"
+      - "Makefile"
+      - ".github/workflows/docker-build-push-mcp.yml"
 
 permissions:
   contents: read
@@ -41,6 +41,12 @@ jobs:
 
       - name: Push :dev and :latest to Docker Hub
         run: make mcp-docker-push-hub
+
+      - name: Sync Docker Hub Overview from docker/DOCKERHUB.md
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: make mcp-docker-hub-desc
 
       - name: Log in to GHCR (personal)
         uses: docker/login-action@v4
