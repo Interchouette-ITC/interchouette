@@ -262,11 +262,13 @@ export class ChatService {
       if (resumed) {
         return true;
       }
+      // Failed resume: drop leftover transcript so a fresh session keeps the ITCy intro.
       this.clearTranscriptStore();
+      this.sessionId = null;
+      this.shortCode.set('');
+      this.messages.set([]);
       this.showOpening();
-    }
-
-    if (!stored?.messages.length) {
+    } else if (!stored?.messages.length) {
       this.messages.set([]);
     }
 

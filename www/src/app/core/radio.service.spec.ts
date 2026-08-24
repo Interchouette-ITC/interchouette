@@ -25,4 +25,19 @@ describe('RadioService', () => {
     expect(radio.applyControl('pause')).toContain('paused');
     expect(radio.playing()).toBe(false);
   });
+
+  it('play sets optimistic playing and unmutes', () => {
+    expect(radio.muted()).toBe(true);
+    // No iframe in unit test: play records error and clears want-play.
+    radio.applyControl('play');
+    expect(radio.playing()).toBe(false);
+    expect(radio.error()).toBe(true);
+  });
+
+  it('frameSrc is the sole embed URL source', () => {
+    const url = radio.mountInitialFrame();
+    expect(radio.frameSrc()).toBe(url);
+    expect(url).toContain('soundcloud.com');
+    expect(url).toContain('auto_play=false');
+  });
 });

@@ -191,13 +191,20 @@ test.describe('chat widget', () => {
       .toBeGreaterThan(60);
 
     await input.fill('What is Interchouette?');
+    await expect(page.locator('.chat-row--intro')).toBeVisible();
     await page.getByRole('button', { name: 'Send message' }).click();
     await expect(page.getByText('What is Interchouette?')).toBeVisible();
+    await expect(
+      page.locator('.chat-row--intro'),
+      'static ITCy intro must stay above the transcript',
+    ).toBeVisible();
 
-    const itcy = page.locator('.chat-bubble[data-role="itcy"]').first();
-    await expect(itcy).toBeVisible({ timeout: 25_000 });
-    await expect(itcy).not.toContainText('](mailto:');
-    const select = await itcy.evaluate((el) => getComputedStyle(el).userSelect);
+    const reply = page
+      .locator('.chat-row:not(.chat-row--intro) .chat-bubble[data-role="itcy"]')
+      .first();
+    await expect(reply).toBeVisible({ timeout: 25_000 });
+    await expect(reply).not.toContainText('](mailto:');
+    const select = await reply.evaluate((el) => getComputedStyle(el).userSelect);
     expect(select === 'text' || select === 'auto').toBeTruthy();
   });
 });

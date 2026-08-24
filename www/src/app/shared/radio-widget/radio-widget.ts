@@ -5,9 +5,8 @@ import {
   computed,
   inject,
   OnDestroy,
-  signal,
 } from '@angular/core';
-import { DomSanitizer, type SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 
 import { LocaleService } from '../../core/locale.service';
 import { RADIO_FRAME_ID, RadioService } from '../../core/radio.service';
@@ -33,7 +32,11 @@ export class RadioWidget implements OnDestroy {
   protected readonly frameOpen = this.radio.frameOpen;
   protected readonly error = this.radio.error;
 
-  protected readonly frameSrc = signal<SafeResourceUrl | null>(null);
+  /** Trusted iframe URL from the service signal (chat / WebMCP / UI all share it). */
+  protected readonly frameSrc = computed(() => {
+    const url = this.radio.frameSrc();
+    return url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+  });
 
   protected readonly playLabel = computed(() => {
     if (this.loading()) {
@@ -55,8 +58,7 @@ export class RadioWidget implements OnDestroy {
 
   constructor() {
     afterNextRender(() => {
-      const url = this.radio.mountInitialFrame();
-      this.frameSrc.set(this.sanitizer.bypassSecurityTrustResourceUrl(url));
+      this.radio.mountInitialFrame();
       this.radio.markMounted();
     });
   }
@@ -71,7 +73,6 @@ export class RadioWidget implements OnDestroy {
 
   protected onPlayToggle(): void {
     this.radio.togglePlay();
-    this.syncFrameSrc();
   }
 
   protected onNext(): void {
@@ -84,10 +85,5 @@ export class RadioWidget implements OnDestroy {
 
   protected onFrameLoad(): void {
     this.radio.onFrameLoad();
-  }
-
-  private syncFrameSrc(): void {
-    const url = this.radio.frameSrcUrl();
-    this.frameSrc.set(url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null);
   }
 }
