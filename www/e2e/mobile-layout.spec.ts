@@ -122,7 +122,7 @@ test.describe('mobile layout at 360x664', () => {
       await page.getByRole('button', { name: 'Decline' }).click();
     }
 
-    const fab = page.locator('app-chat-widget').getByRole('button', { name: /Open chat/i });
+    const fab = page.locator('app-chat-widget').getByRole('button', { name: /Open InterChat/i });
     await expect(fab).toBeVisible({ timeout: 15_000 });
 
     const badgeLayout = await page.evaluate(() => {
@@ -192,7 +192,7 @@ test.describe('mobile layout at 360x664', () => {
       await page.getByRole('button', { name: 'Decline' }).click();
     }
 
-    const fab = page.locator('app-chat-widget').getByRole('button', { name: /Open chat/i });
+    const fab = page.locator('app-chat-widget').getByRole('button', { name: /Open InterChat/i });
     await expect(fab).toBeVisible({ timeout: 15_000 });
     await fab.click();
     await expect(page.locator('#interchouette-chat-panel')).toHaveClass(/chat-panel--open/);
@@ -253,7 +253,7 @@ test.describe('mobile layout at 360x664', () => {
       await page.getByRole('button', { name: 'Decline' }).click();
     }
 
-    const fab = page.locator('app-chat-widget').getByRole('button', { name: /Open chat/i });
+    const fab = page.locator('app-chat-widget').getByRole('button', { name: /Open InterChat/i });
     await expect(fab).toBeVisible({ timeout: 15_000 });
     await fab.click();
     await expect(page.locator('#interchouette-chat-panel')).toHaveClass(/chat-panel--open/);

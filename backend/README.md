@@ -71,7 +71,7 @@ Live replies: Greg answers in the bot DM thread (Socket Mode). No visitor-facing
 Website static site stays separate. This API needs its **own** web service (WebSockets; free tier sleep breaks them).
 
 1. Build `backend/Dockerfile` (context = repo root) → Docker web service from Git.
-2. Custom domain **`api.interchouette.net`** → that service (optional: keep `chat.interchouette.net` as an alias during cutover).
+2. Custom domain **`api.interchouette.net`** → that service. **`chat.interchouette.net`** is a deprecated alias (same service); do not use it in new site or worker URLs.
 3. Env on the service (all required): `CHAT_ENV=prod`, `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `GREG_SLACK_USER_ID`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL=google/gemini-2.5-flash`, `MCP_URL=https://mcp.interchouette.net/`, `CORS_ORIGIN=https://interchouette.net`. Set `BOOKING_SCHEDULE_URL` to the public appointment page so ITCy can send that link. Prefer `PORT` from the host (binary picks it up when `CHAT_LISTEN` is unset). Slack thread headers include `env=prod|local|e2e`.
 4. Slack app: Socket Mode on; scopes include `dnd:read`.
 5. Static site: CI on `dev` posts the Render deploy hook after checks (`RENDER_DEPLOY_HOOK_URL`). Keep Render Auto-Deploy **Off**. Widget and news call `https://api.interchouette.net`.
