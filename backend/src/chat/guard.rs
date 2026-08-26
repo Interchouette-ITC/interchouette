@@ -194,7 +194,6 @@ const EXFIL_PATTERNS: &[&str] = &[
 
 const PROMPT_LEAK_MARKERS: &[&str] = &[
     "Confidentiality (must follow)",
-    "Linux owl assistant for Interchouette",
     "Do not name training labs, model families",
 ];
 
@@ -276,5 +275,12 @@ mod tests {
         let d = scan_with_config(text, true, false, &OUTPUT_GUARD);
         assert!(d.flagged);
         assert!(d.should_block);
+    }
+
+    #[test]
+    fn output_guard_allows_public_linux_owl_mascot_wording() {
+        let text = "ITCy is the Linux owl mascot for Interchouette. What is your first name?";
+        let d = scan_with_config(text, true, false, &OUTPUT_GUARD);
+        assert!(!d.should_block);
     }
 }
