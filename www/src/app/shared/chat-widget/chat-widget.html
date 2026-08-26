@@ -220,16 +220,8 @@
                 <span class="chat-bubble__who">{{ whoLabel(introRole()) }}</span>
                 <p>{{ introLead() }}</p>
                 <p>{{ introCan() }}</p>
-                <p>
-                  {{ introSlackBefore()
-                  }}<a
-                    class="chat-bubble__link"
-                    [href]="slackJoinUrl"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >{{ introSlackLinkLabel() }}</a
-                  >{{ introSlackAfter() }}
-                </p>
+                <!-- prettier-ignore -->
+                <p><ng-container>{{ introSlackBefore() }}<a class="chat-bubble__link" [href]="slackJoinUrl" target="_blank" rel="noopener noreferrer">{{ introSlackLinkLabel() }}</a>{{ introSlackAfter() }}</ng-container></p>
               </div>
             </article>
           }
