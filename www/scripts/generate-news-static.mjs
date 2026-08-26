@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PUBLIC = join(ROOT, 'public');
-const CHAT_BASE = process.env.CHAT_API_BASE?.replace(/\/$/, '') || 'https://chat.interchouette.net';
+const CHAT_BASE = process.env.CHAT_API_BASE?.replace(/\/$/, '') || 'https://api.interchouette.net';
 const SITE = 'https://interchouette.net';
 const RETRIES = 3;
 const BACKOFF_MS = 1500;

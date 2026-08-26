@@ -1,8 +1,8 @@
 export const NL_HOME = {
   altAvatar: 'Gregory Roussac, Interchouette ITC',
-  avatarGreg: 'Open de chat met Greg',
-  avatarItcy: 'Open de chat met ITCy',
-  contactChat: 'Open de chat met {who} of neem contact op via {email}',
+  avatarGreg: 'Open InterChat met Greg',
+  avatarItcy: 'Open InterChat met ITCy',
+  contactChat: 'Open InterChat met {who} of neem contact op via {email}',
   contactWarming: 'Neem contact op via {email}. De chat verbindt.',
   contactMail: 'Neem contact op via {email}',
   emailCopied: 'E-mail gekopieerd naar het klembord',

@@ -1,8 +1,8 @@
 export const EN_HOME = {
   altAvatar: 'Gregory Roussac, Interchouette ITC',
-  avatarGreg: 'Open chat with Greg',
-  avatarItcy: 'Open chat with ITCy',
-  contactChat: 'Open chat with {who} or contact us at {email}',
+  avatarGreg: 'Open InterChat with Greg',
+  avatarItcy: 'Open InterChat with ITCy',
+  contactChat: 'Open InterChat with {who} or contact us at {email}',
   contactWarming: 'Contact us at {email}. Chat is connecting.',
   contactMail: 'Contact us at {email}',
   emailCopied: 'Email copied to clipboard',

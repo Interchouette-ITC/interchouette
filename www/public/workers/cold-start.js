@@ -1,5 +1,5 @@
 /**
- * Wake Render Free chat / MCP as soon as the page is parsed.
+ * Wake Render Free API / MCP as soon as the page is parsed.
  * Same origin as the site, so hostname tells local vs production.
  */
 const host = self.location.hostname;
@@ -7,7 +7,7 @@ const local = host === 'localhost' || host === '127.0.0.1';
 
 if (!local) {
   for (const url of [
-    'https://chat.interchouette.net/health',
+    'https://api.interchouette.net/health',
     'https://mcp.interchouette.net/health',
   ]) {
     void pingUntilWarm(url);
