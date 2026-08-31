@@ -99,9 +99,12 @@ export class NewsService {
   }
 
   /** Load ISO-week archive index from `GET /v1/news/archive`. */
-  loadArchive(): void {
+  loadArchive(preferredWeekId?: string): void {
     const locale = this.locale.locale;
-    if (this.archiveInFlight || this.archiveLoadedLocale === locale) {
+    if (this.archiveInFlight) {
+      return;
+    }
+    if (this.archiveLoadedLocale === locale && !preferredWeekId) {
       return;
     }
     this.archiveInFlight = true;
@@ -109,7 +112,7 @@ export class NewsService {
     this.archiveLoading.set(true);
     this.pendingTasks.run(async () => {
       try {
-        await this.fetchArchiveIndex(locale);
+        await this.fetchArchiveIndex(locale, preferredWeekId);
       } finally {
         this.archiveLoading.set(false);
         this.archiveInFlight = false;
@@ -183,7 +186,7 @@ export class NewsService {
     }
   }
 
-  private async fetchArchiveIndex(locale: SiteLocale): Promise<void> {
+  private async fetchArchiveIndex(locale: SiteLocale, preferredWeekId?: string): Promise<void> {
     try {
       const res = await fetch(`${apiBase()}/v1/news/archive?locale=${locale}`);
       if (!res.ok) {
@@ -193,9 +196,13 @@ export class NewsService {
       this.archiveWeeks.set(body.weeks ?? []);
       this.archiveLoadedLocale = locale;
       this.archiveError.set(null);
-      const first = body.weeks?.[0];
-      if (first) {
-        this.selectArchiveWeek(first.week_id);
+      const weeks = body.weeks ?? [];
+      const pick =
+        (preferredWeekId && weeks.some((week) => week.week_id === preferredWeekId)
+          ? preferredWeekId
+          : null) ?? weeks[0]?.week_id;
+      if (pick) {
+        this.selectArchiveWeek(pick);
       } else {
         this.archiveWeekId.set(null);
         this.archiveFeeds.set(null);

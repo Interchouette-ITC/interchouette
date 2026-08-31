@@ -43,6 +43,16 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'archive/:weekId',
+    loadComponent: () => import('./pages/archive/archive').then((m) => m.ArchivePage),
+    title: 'News archive - Interchouette',
+    data: {
+      description: 'Weekly archived Interchouette news snapshots.',
+      titleKey: 'titleArchive',
+      descriptionKey: 'descArchive',
+    },
+  },
+  {
     path: 'login',
     loadComponent: () => import('./pages/login/login').then((m) => m.LoginPage),
     title: 'Client login - Interchouette',

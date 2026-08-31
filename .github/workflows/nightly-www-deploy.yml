@@ -1,0 +1,36 @@
+name: Nightly www deploy
+
+on:
+  schedule:
+    # 04:00 Europe/Paris - refresh prerendered /news and /archive after API cache (~4h).
+    - cron: '0 4 * * *'
+      timezone: Europe/Paris
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-www-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Render static site hook
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Deploy to Render
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          test -n "$RENDER_DEPLOY_HOOK_URL"
+          hook="$(printf '%s' "$RENDER_DEPLOY_HOOK_URL" | tr -d '\r\n')"
+          http_code="$(curl -sS -o /tmp/render-nightly-hook.json -w '%{http_code}' --get "$hook")"
+          echo "render_hook_http=${http_code}"
+          cat /tmp/render-nightly-hook.json
+          echo
+          case "$http_code" in
+            200|202) ;;
+            *) exit 1 ;;
+          esac

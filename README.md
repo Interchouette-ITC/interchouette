@@ -54,7 +54,7 @@ cd www
 npm run ci
 ```
 
-CI (GitHub Actions on `dev` / PRs into `dev`): Prettier, `npm audit --audit-level=high`, production build + prerender, unit tests, and a static publish layout check (including MCP discovery files). Pin Node with `www/.nvmrc` (**24.19.0**). On push to `dev` after those steps succeed, CI calls the static-site Render deploy hook (`RENDER_DEPLOY_HOOK_URL` org secret). Keep Render Auto-Deploy **Off** so only that hook triggers production.
+CI (GitHub Actions on `dev` / PRs into `dev`): Prettier, `npm audit --audit-level=high`, production build + prerender, unit tests, and a static publish layout check (including MCP discovery files). Pin Node with `www/.nvmrc` (**24.19.0**). On push to `dev` after those steps succeed, CI calls the static-site Render deploy hook (`RENDER_DEPLOY_HOOK_URL` org secret). Keep Render Auto-Deploy **Off** so only that hook triggers production. A nightly workflow (04:00 Europe/Paris) calls the same hook so prerendered `/news` and `/archive/*` stay aligned with the API cache.
 
 Chat API (`api.interchouette.net`): Render builds Docker from `backend/Dockerfile` (context `.`). Auto-Deploy **Off**; `chat-ci.yml` on `dev` calls `RENDER_DEPLOY_HOOK_URL_API` only when `backend/**` changes (not on `db/news.db`-only commits). Runtime archive sync commits `db/news.db` to `dev` via `NEWS_GITHUB_TOKEN` without redeploying the API.
 

@@ -210,13 +210,5 @@
   </head>
   <body>
     <app-root></app-root>
-    <script>
-      (() => {
-        if (document.documentElement.getAttribute('data-locale') === 'en') {
-          return;
-        }
-        document.querySelector('app-root')?.replaceChildren();
-      })();
-    </script>
   </body>
 </html>

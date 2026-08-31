@@ -68,6 +68,42 @@ export class SeoService {
     this.setFeedAlternates();
   }
 
+  /** Rich meta + JSON-LD for news listing pages (prerender + client). */
+  applyPageExtras(extras: {
+    title?: string;
+    description?: string;
+    jsonLd?: Record<string, unknown> | null;
+  }): void {
+    if (extras.title) {
+      this.title.setTitle(extras.title);
+      this.meta.updateTag({ property: 'og:title', content: extras.title });
+      this.meta.updateTag({ name: 'twitter:title', content: extras.title });
+    }
+    if (extras.description) {
+      this.meta.updateTag({ name: 'description', content: extras.description });
+      this.meta.updateTag({ property: 'og:description', content: extras.description });
+      this.meta.updateTag({ name: 'twitter:description', content: extras.description });
+    }
+    this.setJsonLd(extras.jsonLd ?? null);
+  }
+
+  private setJsonLd(data: Record<string, unknown> | null): void {
+    const head = this.doc.head;
+    const id = 'app-page-jsonld';
+    const existing = head.querySelector<HTMLScriptElement>(`script#${id}`);
+    if (!data) {
+      existing?.remove();
+      return;
+    }
+    const script = existing ?? this.doc.createElement('script');
+    script.id = id;
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(data);
+    if (!existing) {
+      head.appendChild(script);
+    }
+  }
+
   private leafRoute(): ActivatedRoute {
     let current = this.route;
     while (current.firstChild) {

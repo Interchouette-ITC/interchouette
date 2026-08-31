@@ -20,5 +20,9 @@ public/css
 public/cover
 public/**/*.min.css
 public/sitemap.xml
+public/archive-weeks.json
+public/news-snapshot.json
+public/rss.xml
+public/atom.xml
 public/robots.txt
 test-results

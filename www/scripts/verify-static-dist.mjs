@@ -19,6 +19,8 @@ const required = [
   'terms.html',
   'news/index.html',
   'news.html',
+  'archive/index.html',
+  'archive.html',
   'about/index.html',
   'about.html',
   'account/index.html',
@@ -50,6 +52,8 @@ const htmlPages = [
   'terms.html',
   'news/index.html',
   'news.html',
+  'archive/index.html',
+  'archive.html',
   'about/index.html',
   'about.html',
   'account/index.html',
@@ -146,6 +150,21 @@ async function mustDiscoverMcp() {
 }
 
 await Promise.all(required.map(mustExist));
+
+const archiveWeeksPath = join(process.cwd(), 'public', 'archive-weeks.json');
+try {
+  const weekIds = JSON.parse(await readFile(archiveWeeksPath, 'utf8'));
+  if (Array.isArray(weekIds)) {
+    for (const weekId of weekIds) {
+      if (typeof weekId === 'string' && /^20\d{2}-W\d{2}$/.test(weekId)) {
+        await mustExist(`archive/${weekId}/index.html`);
+      }
+    }
+  }
+} catch {
+  console.warn('verify-static-dist: skip archive week paths (no archive-weeks.json)');
+}
+
 await Promise.all(htmlPages.map(mustBePacked));
 await mustDiscoverMcp();
 if (process.exitCode) {
