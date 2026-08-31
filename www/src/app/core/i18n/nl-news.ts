@@ -19,5 +19,5 @@ export const NL_NEWS = {
   archiveEmpty: 'Nog geen gearchiveerde weken.',
   archiveSelectWeek: 'Kies een week',
   archiveBackToNews: 'Terug naar nieuws',
-  archiveSnapshot: 'Snapshot van {time}',
+  archiveSnapshot: 'Weekarchief van {time}',
 } as const;

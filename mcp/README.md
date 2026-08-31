@@ -35,7 +35,7 @@ Browser agents on [interchouette.net](https://interchouette.net/) get a thin Web
 4. Commit `db/interchouette.db` + catalog changes, push to `dev`
 5. CI publishes `interchouette/interchouette-mcp:latest`
 
-No Postgres for MCP. The chat API may keep a Postgres news archive (`DATABASE_URL`); MCP ships selected weeks as committed JSON under `mcp/catalog/news/`. Embeddings are built only from `mcp/catalog/` (never from private ops trees).
+No Postgres for MCP. The chat API keeps the news archive in SQLite (`db/news.db`, synced from the API on Render). MCP ships selected weeks as committed JSON under `mcp/catalog/news/`. Embeddings are built only from `mcp/catalog/` (never from private ops trees).
 
 ## Tools (knowledge)
 

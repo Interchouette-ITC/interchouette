@@ -42,25 +42,20 @@ Session, WebSocket, and `/v1/book` stay implemented but are omitted from the pub
 | `LINKEDIN_LI_AT`            | LinkedIn `li_at` session cookie for `/v1/news` LinkedIn fetches (server-only)                                                                                                                          |
 | `NEWS_CACHE_TTL_SECS`       | News feed cache lifetime in seconds (default `14400`, 4 hours)                                                                                                                                         |
 | `NEWS_FETCH_LIMIT`          | Max posts per feed on `/v1/news` (default `8`)                                                                                                                                                         |
-| `DATABASE_URL`              | Optional Postgres URL for durable ISO-week news archive (`/v1/news/archive`)                                                                                                                           |
+| `NEWS_DB`                   | Optional override for archive SQLite path (default `/app/db/news.db` in Docker, else `db/news.db`)                                                                                                     |
+| `NEWS_GITHUB_TOKEN`         | PAT for Contents API sync (Render **chat API** only; not the static www site)                                                                                                                          |
 
-`GET /v1/news` (and RSS/Atom siblings) share one in-memory cache (default 4 hours). Successful refreshes also upsert the current ISO week into Postgres when `DATABASE_URL` is set (last snapshot of the week; keep 52 weeks). Without `DATABASE_URL`, live news still works; archive list is empty and week GETs return 404. The `/news` page, WebMCP `get_news`, and remote MCP `get_news` call the JSON route. `/archive` reads the archive endpoints. Apex `/feed`, `/rss.xml`, and `/atom.xml` redirect to the API feed URLs. Set `LINKEDIN_LI_AT` from your browser LinkedIn cookies when the ITC LinkedIn feed should populate; rotate it when LinkedIn returns an authwall.
+`NEWS_GITHUB_REPO`, `NEWS_GITHUB_PATH`, and `NEWS_GITHUB_BRANCH` default in code to `Interchouette-ITC/interchouette`, `db/news.db`, and `dev`. Override only for forks or experiments.
 
-### Local news Postgres
+`GET /v1/news` (and RSS/Atom siblings) share one in-memory cache (default 4 hours). Successful refreshes **merge** scraped items into SQLite (by stable post id; ISO week from `published_at`; keep 52 weeks). When `NEWS_GITHUB_TOKEN` is set on the API, it **pulls** `db/news.db` on boot and **pushes** after a merge that changed rows (~4h cadence). The `/news` page and `/archive` call this API. Set `LINKEDIN_LI_AT` from your browser LinkedIn cookies when the ITC LinkedIn feed should populate; rotate it when LinkedIn returns an authwall.
 
-```bash
-make news-pg-up
-```
-
-Then add to repo-root `.env` (gitignored):
+### Local news archive
 
 ```bash
-DATABASE_URL=postgres://interchouette:interchouette_local@127.0.0.1:5432/interchouette?sslmode=disable
+NEWS_DB=db/news.db   # optional; this is already the local default
 ```
 
-Compose file: `docker/docker-compose.news-pg.yml`. Stop with `make news-pg-down`.
-
-Bot OAuth scopes for DM + presence: `im:write`, `chat:write`, `users:read`, `dnd:read`, plus `im:history` for Socket Mode inbound.
+GitHub sync needs only `NEWS_GITHUB_TOKEN` on the deployed API service.Bot OAuth scopes for DM + presence: `im:write`, `chat:write`, `users:read`, `dnd:read`, plus `im:history` for Socket Mode inbound.
 
 Chat live when Slack presence is `active` and DND is not in effect now (inside `next_dnd_*` window and/or snooze). Bare `dnd_enabled` outside that window is ignored.
 

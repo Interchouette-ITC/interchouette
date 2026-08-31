@@ -27,7 +27,7 @@ pub struct NewsState {
 }
 
 impl NewsState {
-    /// Build from environment (`NEWS_CACHE_TTL_SECS`, optional `DATABASE_URL`).
+    /// Build from environment (`NEWS_CACHE_TTL_SECS`, optional `NEWS_DB`).
     pub async fn from_env() -> Self {
         let cache_ttl_secs = std::env::var("NEWS_CACHE_TTL_SECS")
             .ok()
@@ -66,10 +66,6 @@ impl NewsState {
         let ttl = Duration::from_secs(self.cache_ttl_secs);
         if let Some(cached) = self.cache.get_fresh(locale, ttl).await {
             return cached;
-        }
-        if let Some(from_pg) = self.archive.load_latest_if_fresh(locale, ttl).await {
-            self.cache.put(locale, from_pg.clone()).await;
-            return from_pg;
         }
         match self.refresh(locale).await {
             Ok(response) => response,
