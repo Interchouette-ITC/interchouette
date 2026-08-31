@@ -367,7 +367,11 @@ async fn prune_old_weeks(pool: &SqlitePool) -> bool {
 /// Drop publication-bot metadata that must never appear on the public site.
 fn sanitize_public_text(text: &str) -> String {
     let trimmed = text.trim_end();
-    for marker in ["\n\nSources:", "\n\nCite = option", "\n\nSwap: /change_tweet_url"] {
+    for marker in [
+        "\n\nSources:",
+        "\n\nCite = option",
+        "\n\nSwap: /change_tweet_url",
+    ] {
         if let Some(idx) = trimmed.find(marker) {
             return trimmed[..idx].trim_end().to_string();
         }
