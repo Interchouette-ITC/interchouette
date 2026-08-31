@@ -202,9 +202,10 @@ impl NewsArchive {
             if last_seen > latest_seen {
                 latest_seen = last_seen;
             }
+            let text: String = row.get("text");
             let item = NewsItem {
                 id: row.get("item_id"),
-                text: row.get("text"),
+                text: sanitize_public_text(&text),
                 url: row.get("url"),
                 published_at,
             };
@@ -291,7 +292,7 @@ async fn merge_feed(pool: &SqlitePool, source: &str, items: &[NewsItem], now: &s
         .bind(&hash)
         .bind(item.published_at.as_deref())
         .bind(url)
-        .bind(&item.text)
+        .bind(sanitize_public_text(&item.text))
         .bind(now)
         .bind(now)
         .execute(pool)
@@ -363,6 +364,17 @@ async fn prune_old_weeks(pool: &SqlitePool) -> bool {
     }
 }
 
+/// Drop publication-bot metadata that must never appear on the public site.
+fn sanitize_public_text(text: &str) -> String {
+    let trimmed = text.trim_end();
+    for marker in ["\n\nSources:", "\n\nCite = option", "\n\nSwap: /change_tweet_url"] {
+        if let Some(idx) = trimmed.find(marker) {
+            return trimmed[..idx].trim_end().to_string();
+        }
+    }
+    trimmed.to_string()
+}
+
 fn content_hash(source: &str, item_id: &str, url: &str) -> String {
     let mut hasher = Md5::new();
     hasher.update(source.as_bytes());
@@ -422,6 +434,17 @@ mod tests {
         assert!(!is_valid_week_id("2026-W3"));
         assert!(!is_valid_week_id("2026-w34"));
         assert!(!is_valid_week_id("../etc"));
+    }
+
+    #[test]
+    fn sanitize_strips_publication_bot_metadata() {
+        let raw = "🦉 Proton's move to Rust.\n\nhttps://cyberinsider.com/foo/\n\nSources: \n- cyberinsider.com\n\nCite = option 1 (URL in tweet). Swap: /change_tweet_url TWEET-20260814-000014 <0|1|2|3|url>";
+        assert_eq!(
+            sanitize_public_text(raw),
+            "🦉 Proton's move to Rust.\n\nhttps://cyberinsider.com/foo/"
+        );
+        let cite_only = "Hello!\n\nCite = option 1 (publisher URL in body). Swap: /change_tweet_url TWEET-1 <0|1|2|3|url>";
+        assert_eq!(sanitize_public_text(cite_only), "Hello!");
     }
 
     #[test]
