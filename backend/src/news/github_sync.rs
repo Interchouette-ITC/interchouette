@@ -21,7 +21,7 @@ const DEFAULT_REPO_NAME: &str = "interchouette";
 const DEFAULT_REMOTE_PATH: &str = "db/news.db";
 const DEFAULT_BRANCH: &str = "dev";
 
-/// GitHub Contents sync for the news SQLite file.
+/// GitHub Contents sync for the news `SQLite` file.
 #[derive(Clone)]
 pub struct GitHubNewsSync {
     client: reqwest::Client,
@@ -56,7 +56,7 @@ impl GitHubNewsSync {
             .filter(|s| !s.is_empty())
             .unwrap_or_else(|| DEFAULT_BRANCH.into());
         let client = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(60))
+            .timeout(std::time::Duration::from_mins(1))
             .build()
             .ok()?;
         Some(Self {
@@ -97,7 +97,7 @@ impl GitHubNewsSync {
         Ok(())
     }
 
-    /// Checkpoint SQLite then commit the file via Contents API.
+    /// Checkpoint `SQLite` then commit the file via Contents API.
     pub async fn push_from(&self, local_path: &Path, pool: &SqlitePool) -> Result<(), String> {
         if let Err(err) = sqlx::query("PRAGMA wal_checkpoint(TRUNCATE)")
             .execute(pool)

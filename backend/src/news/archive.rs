@@ -1,4 +1,4 @@
-//! Durable news archive in SQLite (`NEWS_DB`).
+//! Durable news archive in `SQLite` (`NEWS_DB`).
 //!
 //! Items merge by `(source, item_id)` and bucket into ISO weeks from `published_at`.
 //! Live `/v1/news` stays an in-memory top-N snapshot; archive GETs rebuild from rows.
@@ -47,7 +47,7 @@ pub struct NewsArchive {
 }
 
 impl NewsArchive {
-    /// Open SQLite (`NEWS_DB` or `/app/db/news.db` / `db/news.db`); GitHub pull when `NEWS_GITHUB_TOKEN` is set.
+    /// Open `SQLite` (`NEWS_DB` or `/app/db/news.db` / `db/news.db`); GitHub pull when `NEWS_GITHUB_TOKEN` is set.
     pub async fn from_env() -> Self {
         let path = resolve_news_db_path();
         let sync = GitHubNewsSync::from_env();
