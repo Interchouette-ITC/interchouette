@@ -19,5 +19,5 @@ export const FR_NEWS = {
   archiveEmpty: 'Aucune semaine archivée pour le moment.',
   archiveSelectWeek: 'Choisir une semaine',
   archiveBackToNews: 'Retour aux actualités',
-  archiveSnapshot: 'Instantané du {time}',
+  archiveSnapshot: 'Archive de la semaine du {time}',
 } as const;

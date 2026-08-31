@@ -26,10 +26,14 @@ RUN apt-get update \
 
 WORKDIR /app
 COPY --from=builder /interchouette-chat /usr/local/bin/interchouette-chat
+COPY db/news.db /app/db/news.db
+
+RUN chown -R chat:chat /app
 
 USER chat
 # Do not set CHAT_LISTEN here: Render injects PORT; the binary binds 0.0.0.0:$PORT when CHAT_LISTEN is unset.
 ENV CORS_ORIGIN=https://interchouette.net \
+    NEWS_DB=/app/db/news.db \
     SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
 EXPOSE 8080

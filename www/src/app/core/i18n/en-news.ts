@@ -19,5 +19,5 @@ export const EN_NEWS = {
   archiveEmpty: 'No archived weeks yet.',
   archiveSelectWeek: 'Select a week',
   archiveBackToNews: 'Back to news',
-  archiveSnapshot: 'Snapshot from {time}',
+  archiveSnapshot: 'Week archive from {time}',
 } as const;

@@ -450,7 +450,7 @@ impl InterchouetteMcp {
                 }
                 out.push_str(
                     "\nFetch one week with get_news_week. Live feed remains get_news. \
-                     API Postgres archive: GET /v1/news/archive (when DATABASE_URL is set).",
+                     API SQLite archive: GET /v1/news/archive (from NEWS_DB / db/news.db).",
                 );
                 Ok(text_ok(out))
             }

@@ -5,6 +5,7 @@ mod archive;
 mod cache;
 mod feed;
 mod fetch;
+mod github_sync;
 mod parse_linkedin;
 mod parse_x;
 pub(crate) mod types;
