@@ -55,8 +55,10 @@ impl NewsState {
     /// Prefetch feeds for all site locales when the process starts.
     pub fn spawn_cache_warmup(self) {
         tokio::spawn(async move {
-            for locale in ["en", "nl", "fr"] {
-                let _ = self.load(locale).await;
+            // One scrape + archive merge; news feeds are locale-agnostic.
+            let shared = self.load("en").await;
+            for locale in ["nl", "fr"] {
+                self.cache.put(locale, shared.clone()).await;
             }
             tracing::info!("news cache warmup finished");
         });

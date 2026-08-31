@@ -19,7 +19,7 @@ const USER_AGENT_VALUE: &str = "interchouette-chat-news-archive";
 const DEFAULT_REPO_OWNER: &str = "Interchouette-ITC";
 const DEFAULT_REPO_NAME: &str = "interchouette";
 const DEFAULT_REMOTE_PATH: &str = "db/news.db";
-const DEFAULT_BRANCH: &str = "dev";
+const DEFAULT_BRANCH: &str = "news-db";
 
 /// GitHub Contents sync for the news `SQLite` file.
 #[derive(Clone)]
@@ -97,7 +97,7 @@ impl GitHubNewsSync {
         Ok(())
     }
 
-    /// Checkpoint `SQLite` then commit the file via Contents API.
+    /// Checkpoint `SQLite` then commit the file via Contents API when bytes changed.
     pub async fn push_from(&self, local_path: &Path, pool: &SqlitePool) -> Result<(), String> {
         if let Err(err) = sqlx::query("PRAGMA wal_checkpoint(TRUNCATE)")
             .execute(pool)
@@ -108,10 +108,21 @@ impl GitHubNewsSync {
         let bytes = tokio::fs::read(local_path)
             .await
             .map_err(|e| e.to_string())?;
-        let sha = match self.get_remote().await? {
-            Some(remote) => Some(remote.sha),
-            None => None,
-        };
+        let remote = self.get_remote().await?;
+        if let Some(ref remote) = remote {
+            let remote_bytes = decode_content(&remote.content, remote.encoding.as_deref())?;
+            if remote_bytes == bytes {
+                info!(
+                    repo = %format!("{}/{}", self.owner, self.repo),
+                    path = %self.remote_path,
+                    branch = %self.branch,
+                    bytes = bytes.len(),
+                    "news archive GitHub push skipped (unchanged)"
+                );
+                return Ok(());
+            }
+        }
+        let sha = remote.map(|remote| remote.sha);
         let content = base64::engine::general_purpose::STANDARD.encode(&bytes);
         let url = self.contents_url(None);
         let mut body = json!({
