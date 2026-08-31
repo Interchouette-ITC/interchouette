@@ -4,15 +4,15 @@ on:
   pull_request:
     branches: [dev]
     paths:
-      - 'backend/**'
-      - 'Makefile'
-      - '.github/workflows/chat-ci.yml'
+      - "backend/**"
+      - "Makefile"
+      - ".github/workflows/chat-ci.yml"
   push:
     branches: [dev]
     paths:
-      - 'backend/**'
-      - 'Makefile'
-      - '.github/workflows/chat-ci.yml'
+      - "backend/**"
+      - "Makefile"
+      - ".github/workflows/chat-ci.yml"
 
 concurrency:
   group: chat-ci-${{ github.workflow }}-${{ github.ref }}
@@ -45,3 +45,19 @@ jobs:
 
       - name: Lint + test
         run: make chat-lint chat-test
+
+      - name: Deploy chat API to Render
+        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+        env:
+          RENDER_DEPLOY_HOOK_URL_API: ${{ secrets.RENDER_DEPLOY_HOOK_URL_API }}
+        run: |
+          test -n "$RENDER_DEPLOY_HOOK_URL_API"
+          hook="$(printf '%s' "$RENDER_DEPLOY_HOOK_URL_API" | tr -d '\r\n')"
+          http_code="$(curl -sS -o /tmp/render-chat-hook.json -w '%{http_code}' --get "$hook")"
+          echo "render_hook_http=${http_code}"
+          cat /tmp/render-chat-hook.json
+          echo
+          case "$http_code" in
+            200|202) ;;
+            *) exit 1 ;;
+          esac

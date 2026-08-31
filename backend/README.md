@@ -45,7 +45,7 @@ Session, WebSocket, and `/v1/book` stay implemented but are omitted from the pub
 | `NEWS_DB`                   | Optional override for archive SQLite path (default `/app/db/news.db` in Docker, else `db/news.db`)                                                                                                     |
 | `NEWS_GITHUB_TOKEN`         | PAT for Contents API sync (Render **chat API** only; not the static www site)                                                                                                                          |
 
-`NEWS_GITHUB_REPO`, `NEWS_GITHUB_PATH`, and `NEWS_GITHUB_BRANCH` default in code to `Interchouette-ITC/interchouette`, `db/news.db`, and `news-db` (not `dev`, so archive sync does not retrigger API deploys). Override only for forks or experiments.
+`NEWS_GITHUB_REPO`, `NEWS_GITHUB_PATH`, and `NEWS_GITHUB_BRANCH` default in code to `Interchouette-ITC/interchouette`, `db/news.db`, and `dev` (same branch Render builds from). Override only for forks or experiments. Do **not** point sync at another branch: the image bakes `db/news.db` from the deploy branch on each build.
 
 `GET /v1/news` (and RSS/Atom siblings) share one in-memory cache (default 4 hours). Successful refreshes **merge** scraped items into SQLite (by stable post id; ISO week from `published_at`; keep 52 weeks). When `NEWS_GITHUB_TOKEN` is set on the API, it **pulls** `db/news.db` on boot and **pushes** after a merge that changed rows (~4h cadence). The `/news` page and `/archive` call this API. Set `LINKEDIN_LI_AT` from your browser LinkedIn cookies when the ITC LinkedIn feed should populate; rotate it when LinkedIn returns an authwall.
 
@@ -55,7 +55,9 @@ Session, WebSocket, and `/v1/book` stay implemented but are omitted from the pub
 NEWS_DB=db/news.db   # optional; this is already the local default
 ```
 
-GitHub sync needs only `NEWS_GITHUB_TOKEN` on the deployed API service.Bot OAuth scopes for DM + presence: `im:write`, `chat:write`, `users:read`, `dnd:read`, plus `im:history` for Socket Mode inbound.
+GitHub sync needs only `NEWS_GITHUB_TOKEN` on the deployed API service.
+
+Bot OAuth scopes for DM + presence: `im:write`, `chat:write`, `users:read`, `dnd:read`, plus `im:history` for Socket Mode inbound.
 
 Chat live when Slack presence is `active` and DND is not in effect now (inside `next_dnd_*` window and/or snooze). Bare `dnd_enabled` outside that window is ignored.
 
@@ -70,7 +72,8 @@ Website static site stays separate. This API needs its **own** web service (WebS
 3. Env on the service (all required): `CHAT_ENV=prod`, `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `GREG_SLACK_USER_ID`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL=google/gemini-2.5-flash`, `MCP_URL=https://mcp.interchouette.net/`, `CORS_ORIGIN=https://interchouette.net`. Set `BOOKING_SCHEDULE_URL` to the public appointment page so ITCy can send that link. Prefer `PORT` from the host (binary picks it up when `CHAT_LISTEN` is unset). Slack thread headers include `env=prod|local|e2e`.
 4. Slack app: Socket Mode on; scopes include `dnd:read`.
 5. Static site: CI on `dev` posts the Render deploy hook after checks (`RENDER_DEPLOY_HOOK_URL`). Keep Render Auto-Deploy **Off**. Widget and news call `https://api.interchouette.net`.
-6. MCP env `CHAT_BACKEND_URL` (booking / `get_news`) should be `https://api.interchouette.net`.
+6. Chat API: Render Auto-Deploy **Off**; deploy hook `RENDER_DEPLOY_HOOK_URL_API`. `chat-ci.yml` on `dev` posts that hook only when `backend/**` changes, so bot commits that touch only `db/news.db` do not redeploy the API.
+7. MCP env `CHAT_BACKEND_URL` (booking / `get_news`) should be `https://api.interchouette.net`.
 
 ## Local
 

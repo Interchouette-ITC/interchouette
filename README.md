@@ -14,12 +14,12 @@ Public site for [interchouette.net](https://interchouette.net/): Gregory Roussac
 
 ## Layout
 
-| Path       | Role                                          |
-| ---------- | --------------------------------------------- |
-| `www/`     | Angular site (`package.json`, `node_modules`) |
+| Path       | Role                                                               |
+| ---------- | ------------------------------------------------------------------ |
+| `www/`     | Angular site (`package.json`, `node_modules`)                      |
 | `mcp/`     | Interchouette MCP crate (`interchouette-mcp`); see `mcp/README.md` |
-| `backend/` | Website chat crate (`interchouette-chat`)     |
-| `db/`      | Committed SQLite (`interchouette.db`) for MCP |
+| `backend/` | Website chat crate (`interchouette-chat`)                          |
+| `db/`      | Committed SQLite (`interchouette.db`) for MCP                      |
 
 ## Develop
 
@@ -56,9 +56,9 @@ npm run ci
 
 CI (GitHub Actions on `dev` / PRs into `dev`): Prettier, `npm audit --audit-level=high`, production build + prerender, unit tests, and a static publish layout check (including MCP discovery files). Pin Node with `www/.nvmrc` (**24.19.0**). On push to `dev` after those steps succeed, CI calls the static-site Render deploy hook (`RENDER_DEPLOY_HOOK_URL` org secret). Keep Render Auto-Deploy **Off** so only that hook triggers production.
 
-Chat web service (`api.interchouette.net`): Render Docker from `backend/Dockerfile` (context `.`), auto-deploy when CI checks pass and `backend/**` changes.
+Chat API (`api.interchouette.net`): Render builds Docker from `backend/Dockerfile` (context `.`). Auto-Deploy **Off**; `chat-ci.yml` on `dev` calls `RENDER_DEPLOY_HOOK_URL_API` only when `backend/**` changes (not on `db/news.db`-only commits). Runtime archive sync commits `db/news.db` to `dev` via `NEWS_GITHUB_TOKEN` without redeploying the API.
 
-Interchouette MCP image CI (on `mcp/` / `db/` / Docker changes): builds and pushes `interchouette/interchouette-mcp` `:dev` and `:latest`, then calls the MCP Render deploy hook (`RENDER_DEPLOY_HOOK_URL_MCP` org secret).
+Interchouette MCP: CI builds and pushes Hub image `interchouette/interchouette-mcp` (`:dev`, `:latest`); Render runs that image (not a repo build). Hook `RENDER_DEPLOY_HOOK_URL_MCP` after `mcp/` / `db/interchouette.db` / Docker changes.
 
 E2E: Playwright specs in `www/e2e/` (`npm run e2e` from `www/`) with **desktop**, **mobile** (Pixel 7), and **tablet** (834×1194) projects via host Chrome. **Do not** run `playwright install` or download browsers in this repo. If you install npm deps in an environment that would fetch browsers, set `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`.
 

@@ -19,7 +19,7 @@ const USER_AGENT_VALUE: &str = "interchouette-chat-news-archive";
 const DEFAULT_REPO_OWNER: &str = "Interchouette-ITC";
 const DEFAULT_REPO_NAME: &str = "interchouette";
 const DEFAULT_REMOTE_PATH: &str = "db/news.db";
-const DEFAULT_BRANCH: &str = "news-db";
+const DEFAULT_BRANCH: &str = "dev";
 
 /// GitHub Contents sync for the news `SQLite` file.
 #[derive(Clone)]
