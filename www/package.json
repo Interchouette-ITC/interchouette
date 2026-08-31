@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build && node scripts/minify-static-html.mjs && node scripts/publish-clean-routes.mjs",
+    "build": "node scripts/generate-news-static.mjs && node scripts/prerender-data.mjs && ng build && node scripts/minify-static-html.mjs && node scripts/publish-clean-routes.mjs",
     "generate:news": "node scripts/generate-news-static.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",

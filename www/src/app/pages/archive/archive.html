@@ -16,15 +16,14 @@
         <ul class="archive-weeks__list">
           @for (week of news.archiveWeeks(); track week.week_id) {
             <li>
-              <button
-                type="button"
+              <a
                 class="archive-weeks__btn"
                 [class.is-selected]="isSelectedWeek(week.week_id)"
-                (click)="selectWeek(week)"
+                [routerLink]="weekRoute(week.week_id)"
               >
                 <span class="archive-weeks__id">{{ weekLabel(week) }}</span>
                 <span class="archive-weeks__date">{{ weekFetchedLabel(week) }}</span>
-              </button>
+              </a>
             </li>
           }
         </ul>

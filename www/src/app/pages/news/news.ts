@@ -1,9 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { LocaleService } from '../../core/locale.service';
 import { ChatLinkPart, isHttpHref as hrefIsHttp, splitHttpLinks } from '../../core/chat.links';
+import { newsListingDescription, newsListingJsonLd } from '../../core/news-seo';
 import { formatPostDate, NewsService, type NewsFeed, type NewsItem } from '../../core/news.service';
+import { LOCALE_ORIGINS } from '../../core/seo.constants';
+import { SeoService } from '../../core/seo.service';
 import { PageBrandMark } from '../../shared/page-brand-mark/page-brand-mark';
 import { onPageTabKeydown } from '../../shared/page-tabs/page-tab-nav';
 import { SiteFooter } from '../../shared/site-footer/site-footer';
@@ -23,6 +26,7 @@ export class NewsPage {
   protected readonly copy = inject(LocaleService).copy;
   protected readonly locale = inject(LocaleService).locale;
   protected readonly news = inject(NewsService);
+  private readonly seo = inject(SeoService);
   protected readonly activeTab = signal<NewsTabId>('itcX');
   protected readonly tabs = TAB_ORDER;
 
@@ -32,6 +36,19 @@ export class NewsPage {
 
   constructor() {
     this.news.load();
+    effect(() => {
+      const feeds = this.news.feeds();
+      if (!feeds) {
+        return;
+      }
+      const origin = LOCALE_ORIGINS[this.locale];
+      const pageUrl = `${origin}/news`;
+      this.seo.applyPageExtras({
+        title: this.copy.titleNews,
+        description: newsListingDescription(feeds, this.copy.descNews),
+        jsonLd: newsListingJsonLd(feeds, pageUrl, this.copy.titleNews),
+      });
+    });
   }
 
   protected tabLabel(id: NewsTabId): string {

@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { ChatLinkPart, isHttpHref as hrefIsHttp, splitHttpLinks } from '../../core/chat.links';
 import { LocaleService } from '../../core/locale.service';
+import { archiveWeekDescription, newsListingJsonLd } from '../../core/news-seo';
 import {
   formatPostDate,
   NewsService,
@@ -10,6 +11,8 @@ import {
   type NewsFeed,
   type NewsItem,
 } from '../../core/news.service';
+import { LOCALE_ORIGINS } from '../../core/seo.constants';
+import { SeoService } from '../../core/seo.service';
 import { PageBrandMark } from '../../shared/page-brand-mark/page-brand-mark';
 import { onPageTabKeydown } from '../../shared/page-tabs/page-tab-nav';
 import { SiteFooter } from '../../shared/site-footer/site-footer';
@@ -29,11 +32,40 @@ export class ArchivePage {
   protected readonly copy = inject(LocaleService).copy;
   protected readonly locale = inject(LocaleService).locale;
   protected readonly news = inject(NewsService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly seo = inject(SeoService);
   protected readonly activeTab = signal<ArchiveTabId>('itcX');
   protected readonly tabs = TAB_ORDER;
 
   constructor() {
-    this.news.loadArchive();
+    const weekId = this.route.snapshot.paramMap.get('weekId');
+    this.news.loadArchive(weekId ?? undefined);
+    this.route.paramMap.subscribe((params) => {
+      const next = params.get('weekId');
+      if (!next || next === this.news.archiveWeekId()) {
+        return;
+      }
+      if (this.news.archiveWeeks().some((week) => week.week_id === next)) {
+        this.news.selectArchiveWeek(next);
+        return;
+      }
+      this.news.loadArchive(next);
+    });
+    effect(() => {
+      const feeds = this.news.archiveFeeds();
+      const weekId = this.news.archiveWeekId();
+      if (!feeds || !weekId) {
+        return;
+      }
+      const origin = LOCALE_ORIGINS[this.locale];
+      const pageUrl = `${origin}/archive/${weekId}`;
+      const title = `${this.copy.titleArchive} ${weekId}`;
+      this.seo.applyPageExtras({
+        title,
+        description: archiveWeekDescription(weekId, feeds, this.copy.descArchive),
+        jsonLd: newsListingJsonLd(feeds, pageUrl, title),
+      });
+    });
   }
 
   protected tabLabel(id: ArchiveTabId): string {
@@ -62,8 +94,8 @@ export class ArchivePage {
     onPageTabKeydown(event, index, TAB_ORDER, (id) => this.activeTab.set(id));
   }
 
-  protected selectWeek(week: NewsArchiveWeek): void {
-    this.news.selectArchiveWeek(week.week_id);
+  protected weekRoute(weekId: string): string[] {
+    return ['/archive', weekId];
   }
 
   protected isSelectedWeek(weekId: string): boolean {
