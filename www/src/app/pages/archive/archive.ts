@@ -58,7 +58,7 @@ export class ArchivePage {
         return;
       }
       const origin = LOCALE_ORIGINS[this.locale];
-      const pageUrl = `${origin}/archive/${weekId}`;
+      const pageUrl = `${origin}/archive/${weekId}/`;
       const title = `${this.copy.titleArchive} ${weekId}`;
       this.seo.applyPageExtras({
         title,
@@ -94,8 +94,8 @@ export class ArchivePage {
     onPageTabKeydown(event, index, TAB_ORDER, (id) => this.activeTab.set(id));
   }
 
-  protected weekRoute(weekId: string): string[] {
-    return ['/archive', weekId];
+  protected weekRoute(weekId: string): string {
+    return `/archive/${weekId}/`;
   }
 
   protected isSelectedWeek(weekId: string): boolean {
