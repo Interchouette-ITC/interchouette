@@ -155,9 +155,16 @@ const archiveWeeksPath = join(process.cwd(), 'public', 'archive-weeks.json');
 try {
   const weekIds = JSON.parse(await readFile(archiveWeeksPath, 'utf8'));
   if (Array.isArray(weekIds)) {
+    const redirects = await readFile(join(root, '_redirects'), 'utf8');
     for (const weekId of weekIds) {
       if (typeof weekId === 'string' && /^20\d{2}-W\d{2}$/.test(weekId)) {
         await mustExist(`archive/${weekId}/index.html`);
+        await mustExist(`archive/${weekId}.html`);
+        const rule = `/archive/${weekId}  /archive/${weekId}.html  200`;
+        if (!redirects.includes(rule)) {
+          console.error(`missing _redirects rule for archive week: ${weekId}`);
+          process.exitCode = 1;
+        }
       }
     }
   }

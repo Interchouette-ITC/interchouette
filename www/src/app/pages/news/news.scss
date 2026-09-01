@@ -238,6 +238,16 @@
   margin-top: 0.55rem;
 }
 
+/* Week picker links must beat `.news a` (purple + underline). */
+.news .archive-weeks__btn {
+  color: #444;
+  text-decoration: none;
+}
+
+.news .archive-weeks__btn.is-selected {
+  color: #fff;
+}
+
 @media screen and (max-width: 768px) {
   .card.news {
     width: auto;

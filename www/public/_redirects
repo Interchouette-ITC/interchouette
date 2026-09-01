@@ -12,7 +12,7 @@
 /privacy  /privacy/index.html  200
 /news     /news/index.html     200
 /archive       /archive/index.html       200
-/archive/*     /archive/:splat/index.html  200
+# /archive/:weekId clean URLs are appended at build (see publish-clean-routes.mjs).
 /account  /account/index.html  200
 /gis-signin  /gis-signin/index.html  200
 /CV       /CV/index.html       200

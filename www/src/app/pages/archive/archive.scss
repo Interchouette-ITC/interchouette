@@ -36,18 +36,34 @@
   color: #444;
   font: inherit;
   text-align: left;
+  text-decoration: none;
   cursor: pointer;
+}
+
+.archive-weeks__btn:visited {
+  color: #444;
 }
 
 .archive-weeks__btn:hover,
 .archive-weeks__btn:focus-visible {
   border-color: rgba(39, 8, 78, 0.4);
   background: #f3f0f8;
+  color: #444;
+  text-decoration: none;
 }
 
-.archive-weeks__btn.is-selected {
+.archive-weeks__btn.is-selected,
+.archive-weeks__btn.is-selected:visited,
+.archive-weeks__btn.is-selected:hover,
+.archive-weeks__btn.is-selected:focus-visible {
   border-color: #27084e;
   background: #27084e;
+  color: #fff;
+  text-decoration: none;
+}
+
+.archive-weeks__btn.is-selected .archive-weeks__id,
+.archive-weeks__btn.is-selected .archive-weeks__date {
   color: #fff;
 }
 
