@@ -123,15 +123,15 @@
   line-height: 1.2;
 }
 
-.news a {
+.news a:not(.archive-weeks__btn) {
   color: #27084e;
   text-decoration: underline;
   text-decoration-color: rgba(39, 8, 78, 0.35);
   cursor: pointer;
 }
 
-.news a:hover,
-.news a:focus-visible {
+.news a:not(.archive-weeks__btn):hover,
+.news a:not(.archive-weeks__btn):focus-visible {
   color: #3a1868;
   text-decoration-color: rgba(58, 24, 104, 0.55);
 }
@@ -236,16 +236,6 @@
 
 .news-meta--archive {
   margin-top: 0.55rem;
-}
-
-/* Week picker links must beat `.news a` (purple + underline). */
-.news .archive-weeks__btn {
-  color: #444;
-  text-decoration: none;
-}
-
-.news .archive-weeks__btn.is-selected {
-  color: #fff;
 }
 
 @media screen and (max-width: 768px) {
