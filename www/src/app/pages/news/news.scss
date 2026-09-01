@@ -169,11 +169,16 @@
   list-style: none;
   margin: 0;
   padding: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .news-item {
   padding: 1.1rem 0;
   border-bottom: 1px solid rgba(39, 8, 78, 0.1);
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .news-item:first-child {

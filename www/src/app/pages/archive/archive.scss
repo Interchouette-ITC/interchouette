@@ -6,6 +6,12 @@
   gap: 1.5rem 1.75rem;
   align-items: start;
   margin-top: 0.35rem;
+  min-width: 0;
+}
+
+.archive-weeks,
+.archive-detail {
+  min-width: 0;
 }
 
 .archive-weeks__label {
@@ -82,19 +88,26 @@ a.archive-weeks__btn.is-selected .archive-weeks__date {
 .archive-detail .news-meta {
   margin-top: 0;
   margin-bottom: 0.85rem;
+  padding-inline: 0.65rem;
+  box-sizing: border-box;
 }
 
 @media screen and (max-width: 768px) {
   .archive-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .archive-weeks__list {
     flex-direction: row;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.15rem;
   }
 
   .archive-weeks__btn {
     width: auto;
+    flex: 0 0 auto;
   }
 }
