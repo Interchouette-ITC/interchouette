@@ -1,5 +1,7 @@
 .page-tabs {
   margin-top: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .page-tabs__scroll {
@@ -10,6 +12,8 @@
   -webkit-overflow-scrolling: touch;
   margin: 0 0 1.25rem;
   padding: 0.65rem 0.65rem 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .page-tabs__list {
@@ -75,6 +79,10 @@
 
 .page-tabs__panel {
   animation: page-tabs-panel-in 0.28s ease;
+  min-width: 0;
+  max-width: 100%;
+  padding-inline: 0.65rem;
+  box-sizing: border-box;
 }
 
 @keyframes page-tabs-panel-in {
