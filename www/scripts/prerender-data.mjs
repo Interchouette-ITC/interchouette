@@ -58,7 +58,7 @@ function buildSitemap(weekIds) {
     { loc: `${SITE}/terms`, changefreq: 'yearly', priority: '0.4' },
   ];
   const archivePages = weekIds.map((weekId) => ({
-    loc: `${SITE}/archive/${weekId}`,
+    loc: `${SITE}/archive/${weekId}/`,
     changefreq: 'monthly',
     priority: '0.45',
   }));

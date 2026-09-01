@@ -74,6 +74,7 @@ Dashboard → Redirects/Rewrites must **not** Redirect `/*` to `/index.html` (th
 | `/about`                     | `/about/index.html`                              | **Rewrite**                  |
 | `/news`                      | `/news/index.html`                               | **Rewrite**                  |
 | `/archive`                   | `/archive/index.html`                            | **Rewrite**                  |
+| `/archive/*`                 | `/archive/*/index.html`                          | **Rewrite** (week pages)     |
 | `/terms`                     | `/terms/index.html`                              | **Rewrite**                  |
 | `/privacy`                   | `/privacy/index.html`                            | **Rewrite**                  |
 | `/account`                   | `/account/index.html`                            | **Rewrite**                  |
