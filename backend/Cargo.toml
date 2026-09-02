@@ -3,7 +3,7 @@ name = "interchouette-chat"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.97"
-license = "MIT"
+license = "BUSL-1.1"
 description = "Interchouette website chat (WebSocket + Slack)"
 authors = ["Interchouette <contact@interchouette.net>"]
 
