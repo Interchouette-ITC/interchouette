@@ -14,20 +14,25 @@ Public site for [interchouette.net](https://interchouette.net/): Gregory Roussac
 
 ## Pages
 
-| Path                             | Page                                     |
-| -------------------------------- | ---------------------------------------- |
-| `/`                              | Home                                     |
-| `/news`                          | News                                     |
-| `/archive`                       | News archive index                       |
-| `/archive/:weekId`               | Archived week (e.g. `/archive/2026-W35`) |
-| `/CV`                            | CV (HTML + PDF)                          |
-| `/about`                         | About                                    |
-| `/privacy`                       | Privacy Policy                           |
-| `/terms`                         | Terms of Service                         |
-| `/login`                         | Client Google sign-in                    |
-| `/account`                       | Client account                           |
-| `/gis-signin`                    | Google sign-in callback                  |
-| `/feed`, `/rss.xml`, `/atom.xml` | News feeds (API)                         |
+Live site: [https://interchouette.net/](https://interchouette.net/)  
+MCP: [https://mcp.interchouette.net/](https://mcp.interchouette.net/)
+
+| URL | Page |
+| --- | ---- |
+| [https://interchouette.net/](https://interchouette.net/) | Home |
+| [https://interchouette.net/news](https://interchouette.net/news) | News |
+| [https://interchouette.net/archive](https://interchouette.net/archive) | News archive index |
+| [https://interchouette.net/archive/2026-W35](https://interchouette.net/archive/2026-W35) | Archived week (ISO week id) |
+| [https://interchouette.net/CV](https://interchouette.net/CV) | CV (HTML + PDF) |
+| [https://interchouette.net/about](https://interchouette.net/about) | About |
+| [https://interchouette.net/privacy](https://interchouette.net/privacy) | Privacy Policy |
+| [https://interchouette.net/terms](https://interchouette.net/terms) | Terms of Service |
+| [https://interchouette.net/login](https://interchouette.net/login) | Client Google sign-in |
+| [https://interchouette.net/account](https://interchouette.net/account) | Client account |
+| [https://interchouette.net/gis-signin](https://interchouette.net/gis-signin) | Google sign-in callback |
+| [https://interchouette.net/feed](https://interchouette.net/feed) | News RSS feed |
+| [https://interchouette.net/rss.xml](https://interchouette.net/rss.xml) | News RSS |
+| [https://interchouette.net/atom.xml](https://interchouette.net/atom.xml) | News Atom |
 
 Host redirect/rewrite rules for the static site live in `www/public/_redirects` (operator config, not duplicated here).
 
