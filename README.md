@@ -6,11 +6,30 @@ Public site for [interchouette.net](https://interchouette.net/): Gregory Roussac
 
 - Angular 22 (standalone, signals, zoneless, OnPush, SCSS)
 - Fonts / icons / motion via npm (`@fontsource/*`, `font-awesome`, `animate.css`) built into the CSS bundle (no CDN links in `index.html`)
-- Build-time prerender for `/`, `/CV`, `/privacy`, `/terms`
+- Build-time prerender for public pages (see Pages)
 - Per-route SEO: unique titles/descriptions, canonical, Open Graph / Twitter, JSON-LD
 - URLs: no trailing slash (`/CV/` → `/CV` on the static host)
 - Vitest (unit) · Playwright desktop / mobile / tablet (host Chrome; no browser download)
 - Render Static Site (CDN; build on deploy)
+
+## Pages
+
+| Path                             | Page                                     |
+| -------------------------------- | ---------------------------------------- |
+| `/`                              | Home                                     |
+| `/news`                          | News                                     |
+| `/archive`                       | News archive index                       |
+| `/archive/:weekId`               | Archived week (e.g. `/archive/2026-W35`) |
+| `/CV`                            | CV (HTML + PDF)                          |
+| `/about`                         | About                                    |
+| `/privacy`                       | Privacy Policy                           |
+| `/terms`                         | Terms of Service                         |
+| `/login`                         | Client Google sign-in                    |
+| `/account`                       | Client account                           |
+| `/gis-signin`                    | Google sign-in callback                  |
+| `/feed`, `/rss.xml`, `/atom.xml` | News feeds (API)                         |
+
+Host redirect/rewrite rules for the static site live in `www/public/_redirects` (operator config, not duplicated here).
 
 ## Layout
 
@@ -62,27 +81,25 @@ Interchouette MCP: CI builds and pushes Hub image `interchouette/interchouette-m
 
 E2E: Playwright specs in `www/e2e/` (`npm run e2e` from `www/`) with **desktop**, **mobile** (Pixel 7), and **tablet** (834×1194) projects via host Chrome. **Do not** run `playwright install` or download browsers in this repo. If you install npm deps in an environment that would fetch browsers, set `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1`.
 
-## Render redirects (required)
+## Thanks
 
-Dashboard → Redirects/Rewrites must **not** Redirect `/*` to `/index.html` (that 301s `/terms` → `/index.html` and breaks clean URLs). Use:
+This site and its services stand on excellent open-source projects and hosts:
 
-| Source                       | Destination                                      | Action                       |
-| ---------------------------- | ------------------------------------------------ | ---------------------------- |
-| `/CV/CV_Gregory_Roussac.pdf` | `/CV/Gregory_Roussac.pdf`                        | Redirect                     |
-| `/CV/CV_Roussac.pdf`         | `/CV/Gregory_Roussac.pdf`                        | Redirect                     |
-| `/CV/`                       | `/CV`                                            | Redirect                     |
-| `/about`                     | `/about/index.html`                              | **Rewrite**                  |
-| `/news`                      | `/news/index.html`                               | **Rewrite**                  |
-| `/archive`                   | `/archive/index.html`                            | **Rewrite**                  |
-| `/archive/*`                 | `/archive/*/index.html`                          | **Rewrite** (week pages)     |
-| `/terms`                     | `/terms/index.html`                              | **Rewrite**                  |
-| `/privacy`                   | `/privacy/index.html`                            | **Rewrite**                  |
-| `/account`                   | `/account/index.html`                            | **Rewrite**                  |
-| `/gis-signin`                | `/gis-signin/index.html`                         | **Rewrite**                  |
-| `/CV`                        | `/CV/index.html`                                 | **Rewrite**                  |
-| `/feed`                      | `https://api.interchouette.net/v1/news/rss.xml`  | Redirect                     |
-| `/rss.xml`                   | `https://api.interchouette.net/v1/news/rss.xml`  | Redirect                     |
-| `/atom.xml`                  | `https://api.interchouette.net/v1/news/atom.xml` | Redirect                     |
-| `/*`                         | `/index.html`                                    | **Rewrite** (never Redirect) |
+| Project                                                                                                                  | Role here                              |
+| ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| [Angular](https://angular.dev/)                                                                                          | Public SPA (`www/`)                    |
+| [Rust](https://www.rust-lang.org/)                                                                                       | MCP and website chat backends          |
+| [Axum](https://github.com/tokio-rs/axum) / [Tokio](https://tokio.rs/)                                                    | HTTP, WebSocket, async runtime         |
+| [rmcp](https://crates.io/crates/rmcp)                                                                                    | MCP Streamable HTTP server             |
+| [SQLite](https://sqlite.org/) (`rusqlite` / `sqlx`)                                                                      | Knowledge and news stores              |
+| [Render](https://render.com/)                                                                                            | Static site, API, and MCP hosting      |
+| [Vitest](https://vitest.dev/) / [Playwright](https://playwright.dev/)                                                    | Unit and e2e tests                     |
+| [Fontsource](https://fontsource.org/) / [Font Awesome](https://fontawesome.com/) / [animate.css](https://animate.style/) | Fonts, icons, motion (bundled, no CDN) |
 
-Same rules live in `www/public/_redirects` for hosts that honor it. The static build also writes sibling files (`news.html`, `about.html`, …) so clean URLs still get prerendered HTML when the SPA catch-all would otherwise win.
+Thank you to their maintainers and communities.
+
+## License
+
+Business Source License 1.1 (source-available). See [`LICENSE`](LICENSE).
+You may run your own personal or internal deployment; you may not resell or
+offer it as a competing hosted product. Change license: Apache-2.0 on 2099-01-01.
