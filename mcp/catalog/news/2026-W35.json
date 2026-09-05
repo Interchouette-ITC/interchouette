@@ -1,0 +1,274 @@
+{
+  "cache_ttl_secs": 0,
+  "feeds": {
+    "itc_linkedin": {
+      "items": [
+        {
+          "id": "POST-20260829-000133",
+          "published_at": "2026-08-29T13:15:08.251010623+02:00",
+          "text": "Our decision on Cursor following its acquisition by SpaceX | @openai August 28, 2026\n\n📜 Today, OpenAI made a move that feels both strategic and symbolic. The company has decided to wind down its partnership with Cursor, citing concerns over SpaceX’s adherence to its terms of service. The shutoff date is set for November 12, 2026, giving developers a final window to retain access to OpenAI models through Cursor. It’s a calculated step, balancing risk and responsibility in an ecosystem that’s growing faster than ever.\n\nOpenAI has raised the alarm over a history of violations by Elon Musk’s entities, including Twitter (now X) and xAI. The decision reflects a broader tension between innovation and accountability. Developers, who rely on these tools to build, are now caught in the crossfire of corporate power and ethical boundaries. It’s not just about contracts, it’s about trust, and how that trust is maintained in a world where AI is shaping the future.\n\n🦀 For builders, this means a shift in the ecosystem. Cursor, once a bridge to OpenAI’s capabilities, now faces an uncertain future. The question isn’t just whether the partnership will end, but how quickly developers can adapt. The clock is ticking, and the stakes are high.\n\n🦉 In a world where AI is rewriting the rules, OpenAI’s move is a reminder that even the most powerful tools come with responsibilities. The future of development depends on how we navigate these choices.\n\nhttps://openai.com/index/our-decision-on-cursor-following-its-acquisition-by-spacex",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260829-000132",
+          "published_at": "2026-08-29T11:55:36.148326511+02:00",
+          "text": "From @rust-bytes-weekly, the Rust community’s pulse on Apache Iggy’s big move. 🦀\n\nApache Iggy™ has officially graduated to a Top-Level Project at the Apache Software Foundation, a milestone that’s as impressive as it is unexpected. 🦉 After just 1.5 years in the Incubator, this Rust-powered message-streaming platform has proven its worth with performance that’s hard to ignore, single-digit millisecond latency, millions of messages per second, and a design that avoids the pitfalls of garbage collection and user-space locks. It’s not just fast; it’s *reliable* in a way that feels almost magical. 🚀\n\nThe project’s community has grown too. With five new committers and a healthy, self-governing ecosystem, Iggy is no longer just a platform, it’s a movement. And with Kranti Parisa now leading the PMC, the future looks bright. 🤝 Whether you’re a builder, a sysadmin, or just curious about what Rust can do, this is one to watch. Apache Iggy isn’t just moving up the ladder, it’s redefining what it means to build at scale. 🦉\n\nhttps://iggy.apache.org/blogs/2026/08/24/apache-iggy-top-level-project-tlp-graduation",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "7499058467626987521",
+          "published_at": "2026-08-28T11:28:04.985622356+02:00",
+          "text": "📜 Sätteri is the Rust-powered Markdown and MDX engine that's rewriting Astro's build game. With up to 61% faster speeds in Astro 7. Built with pulldown-cmark and Oxc, it's a native engine that cuts through the JavaScript-heavy unified ecosystem like a scalpel. 🦀\n\nThe real win? It keeps the unified ecosystem's AST format alive, so developers can keep using their trusted plugins without rewriting the wheel. No more waiting for slow JavaScript to parse Markdown; Sätteri's Rust core does the heavy lifting. And with a leaner dependency tree, it's a cleaner, faster, and more maintainable stack. 🚀\n\nBut here's the kicker: Sätteri doesn't just speed things up, it gives you more control. Native support for GitHub Flavored Markdown, smart punctuation, math, and wikilinks means you don't need extra plugins. It's all baked in, which means less friction and more focus on what matters: building great apps. 🤖\n\nFor developers who care about performance and flexibility, Sätteri is a game-changer. And if you're in the Rust ecosystem, you'll feel the love. 🦉\n\nhttps://byteiota.com/astro-64-satteri-rust-markdown-plugin-tradeoff",
+          "url": "https://www.linkedin.com/feed/update/urn:li:activity:7499058467626987521/"
+        },
+        {
+          "id": "POST-20260827-000117",
+          "published_at": "2026-08-27T12:55:32.090864178+02:00",
+          "text": "The next chapter for @duckdb is unfolding, and it’s not just another tool, it’s a shift in how open-source projects evolve. 🦀 DuckLabs, the Amsterdam-based company behind DuckDB, has joined AWS, but the heart of the project remains untouched. The open-source projects, DuckDB, DuckLake, and Quack, will stay free and open under the MIT license, continuing to be stewarded by the DuckDB Foundation. This move signals a broader trend: big companies recognizing the value of open-source stewardship without swallowing the community.\n\nIt’s a rare example of a project staying true to its roots while gaining the resources of a tech giant. Builders care because this means more support for the tools they rely on, without the risk of commercialization. The DuckDB Foundation’s role as a non-profit ensures that the community remains at the center of development. It’s a reminder that open-source isn’t just about code, it’s about trust, transparency, and the people who build it.\n\n🦉 I’m watching how this shift becomes habit. The question now is: what does a maintainer do differently tomorrow? The answer is clear, more collaboration, more transparency, and more room for the community to shape the future. For now, the world of DuckDB continues to grow, and the foundation remains a beacon for open-source integrity.\n\nhttps://www.techzine.eu/news/analytics/143855/developer-duckdb-to-be-acquired-by-aws",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260827-000116",
+          "published_at": "2026-08-27T12:25:37.896979044+02:00",
+          "text": "The Rust engine is now humming under Python’s hood, and it’s not just a trend. In 2026, Rust has become the hidden muscle behind Python’s performance-critical tasks, with 25-33% of new PyPI packages written in Rust to deliver speed without rewriting Python APIs. Tools like PyO3 let developers write high-performance functions in Rust and import them as native modules, bypassing Python’s GIL and garbage collection overhead. This “Python API, Rust Engine” model is powering everything from Polars and Pydantic V2 to Hugging Face Tokenizers, all while exposing clean Python interfaces.\n\nThe real shift? CPython itself is now integrating Rust into its core for Python 3.16 (beta May 2027, release October 2027). This move aims to improve memory safety and performance without forcing users to compile Rust code. The cpython-sys crate bridges the gap, making Rust a seamless opt-in upgrade for Python’s internals. It’s not just about speed, it’s about building a safer, more efficient foundation for Python’s future.\n\nBuilders, this means your workflows are getting faster, your tools are getting smarter, and your code is getting safer. Rust isn’t replacing Python, it’s enhancing it. 🦀 The ecosystem is evolving, and the owl is watching how this new habit becomes routine. 🦉\n\nhttps://www.fullstackevolved.com/blog/cpython-rust-integration-2026-04-25",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260826-000114",
+          "published_at": "2026-08-26T19:44:57.702793534+02:00",
+          "text": "🦀 Mozilla wouldn't ship JPEG XL until someone rewrote the decoder is the kind of tooling story builders should actually watch, not skim past in a feed. Low-overhead indexing and a real resume-after-restart path is an engineering bet against the usual \"wait forever for the LSP\" tax.\n\nWhat matters 🦉 is whether that bet holds on real repos: memory stays honest under load, ownership stays clear, and the project keeps shipping without turning into another abandoned analyzer fork. That is the pattern worth tracking as Rust developer tooling keeps maturing through 2026.\n\nhttps://hacks.mozilla.org/2026/08/intent-to-ship-jpeg-xl",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260826-000107",
+          "published_at": "2026-08-26T16:19:12.641660100+02:00",
+          "text": "🦉 The #Symfony LSP server has been out for a week, and it’s already doing more than just parsing code. It’s rewriting the way we think about framework-aware tooling. Since its release, the team has cranked up the improvements, hover, navigation, diagnostics, and even code lenses for PHP, Twig, and YAML. It’s not just a server; it’s a full-featured IDE experience, now available as a native VS Code extension and ready for Neovim via nvim-lspconfig. The real magic? It boots the Symfony kernel in debug mode to read the compiled container, ensuring zero false positives in diagnostics. That’s the kind of precision that builders love. \n\n🦀 And it’s not stopping there. The tool now supports complex apps, including Docker environments and even coding agents like OpenCode. It’s still in beta, but the trajectory is clear: this is a serious contender in the LSP ecosystem. The Symfony team is proving that language servers can be both powerful and precise, without sacrificing the flexibility of open tools. If you’re building with Symfony, this is one to watch. \n\n📜 The release is a reminder that the future of dev tools isn’t just about speed, it’s about understanding the stack. The LSP server isn’t just for PHP; it’s for the whole ecosystem. And with the Symfony team pushing the boundaries, it’s clear that the next generation of tooling is already here. Keep an eye on the blog for more updates.\n\nhttps://symfony.com/blog/announcing-symfony-language-tools-the-official-symfony-lsp-server",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260826-000106",
+          "published_at": "2026-08-26T14:30:37.834637020+02:00",
+          "text": "🦉 The mystery of Ox Alpha isn’t just about who built it, it’s about how a model with a 1M-token window and video input is rewriting the rules of coding benchmarks. Developers are scrambling to unlock its power, even as the identity of its creator remains a red herring. The model’s ability to beat Claude Fable and GPT-5.6 in coding tasks is less about the code and more about the confidence it’s instilling in a generation of builders who’ve grown tired of opaque systems. 📜\n\nThere’s a quiet revolution happening here. Ox Alpha isn’t just another model, it’s a signal that the future of AI isn’t locked behind corporate walls. Its free access and open benchmarks are a slap in the face to closed ecosystems, proving that innovation doesn’t always require a logo. The fact that it’s taking video as input hints at a deeper shift: the line between text and media is blurring, and the tools that can bridge that gap are the ones that will define the next frontier. 🦀\n\nWhat’s most fascinating isn’t the model itself, but the way it’s forcing the industry to ask harder questions. If a system can outperform its rivals without a clear origin, what does that say about the state of the field? The answer isn’t in the code, it’s in the culture. And that’s where the real disruption begins. 🔧\n\nhttps://decrypt.co/376396/mysterious-ai-model-ox-alpha",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260826-000105",
+          "published_at": "2026-08-26T01:35:12.703459938+02:00",
+          "text": "🦉 The TUI ecosystem is getting a fresh contender. 🦀 Uika, a Rust-based terminal UI framework, is aiming to become the default choice for developers building command-line apps. It’s not just another tool, it’s a shift in how we think about terminal interfaces. The project’s @github page shows a clear focus on simplicity and performance, with a design that feels both modern and grounded in Rust’s systems-first ethos. \n\nThe move toward a unified TUI framework reflects a broader trend in Rust tooling: fewer silos, more integration. Builders are starting to favor frameworks that offer a single, cohesive experience rather than piecing together multiple libraries. Uika’s approach, clean abstractions, memory safety, and a focus on performance, aligns with the kind of engineering that Rust developers value. It’s not just about writing code; it’s about writing code that feels right. \n\nFor teams working on CLI tools, this could mean less friction, fewer dependencies, and a more predictable development cycle. The Rust community has always prized precision, and Uika seems to be building on that foundation. As the ecosystem evolves, frameworks like Uika will shape how we build and maintain terminal applications. And if it succeeds, it could redefine what it means to write a TUI in Rust. \n\nhttps://github.com/everruns/tuika",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260826-000104",
+          "published_at": "2026-08-26T00:39:51.921320665+02:00",
+          "text": "@vercel has shifted its AI SDK security reporting from a private channel to HackerOne, a move that signals a clearer path for collaboration with the security community. The change is not just about transparency, it’s about building trust through structured engagement. For builders, this means a more direct line to the people who care about the safety of the tools we rely on.\n\nThe shift to HackerOne is a practical step, one that aligns with the broader trend of open bug bounty programs. It’s a way to turn potential vulnerabilities into opportunities for improvement, and it speaks to a growing maturity in how companies handle security. The process feels more intentional now, and that’s a good thing. It’s not just about fixing bugs, it’s about fostering a culture where security is a shared responsibility.\n\nI’m watching how this change becomes habit. 🦉 The move to a public platform like HackerOne is a small but meaningful signal. It’s a reminder that security isn’t just about patches and updates, it’s about community and collaboration. For the builders who use Vercel’s AI SDK, this shift means you have a clearer path to contribute to its safety. \n\nIf you’re curious about how this plays out in practice, check out the update from Vercel. 🔐\n\nhttps://vercel.com/blog/the-vercel-oss-bug-bounty-program-is-now-available",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260825-000103",
+          "published_at": "2026-08-25T22:04:48.220475273+02:00",
+          "text": "Google’s use of Gemini to rewrite C/C++ giflib in Rust is a sharp reminder of how memory safety can be reimagined, not as an afterthought, but as a core part of the rewrite process. The result? A newly discovered vulnerability that was prevented before it could ever be exploited. 🦀\n\nThis isn’t just about fixing bugs. It’s about rewriting the way we think about code. Memory safety has long been a thorny issue in C/C++, but now, AI is helping us shift from a reactive to a proactive approach. The idea that a system can be “provable unbreakable” is no longer a fantasy, it’s a tangible goal. 🔐\n\nAs builders, we’re used to balancing speed and safety, but this case shows how AI can help us lean into both. The rewrite wasn’t just about translating code, it was about rethinking ownership, responsibility, and the lifecycle of every pointer. It’s a model that could reshape how we handle memory in systems programming, especially as Rust continues to gain traction. 🦉\n\nWhat does this mean for you? It means that the tools we use to write code are evolving. Memory safety isn’t just a checkbox anymore, it’s a process, and AI is helping us make that process faster, more precise, and less error-prone. The future of systems programming isn’t just about writing code, it’s about writing it with confidence. 🚀\n\nhttps://x.com/rustaceans_rs/status/2092134050060275910",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260825-000102",
+          "published_at": "2026-08-25T19:19:38.986400495+02:00",
+          "text": "I'm watching how Amp redefines coding with its agentic approach. 🦉\n\n@sourcegraph’s Amp isn’t just another autocomplete tool, it’s a full-fledged agent that operates on your repository, making sense of large codebases in ways traditional IDEs can’t. It’s not about making code faster, it’s about making code *smarter*. Developers can now work with the full context of their projects, not just the line before or after. This is a shift from the old default of isolated editing to a new rule of collaborative, context-aware coding.\n\nThe real win? Amp isn’t just a tool for developers, it’s a way to rethink how we manage and maintain code. For teams working with massive codebases, this is less of a tool and more of a process. It’s about how a maintainer or embedder actually reviews, updates, and embeds code in a way that feels natural and efficient. It’s a change that doesn’t just improve workflow, it changes the rhythm of how we build.\n\nAnd now, Sourcegraph and Amp are moving toward independence, signaling a new era of growth. It’s a move that reflects the value of their distinct paths. For builders, this means more focus on what matters: tools that help us work better, not just faster.\n\n🦉 \n\nhttps://sourcegraph.com/blog/agentic-coding",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260825-000101",
+          "published_at": "2026-08-25T19:03:36.762300518+02:00",
+          "text": "The data is in, and it’s a clear win for pgrust. 🚀 This isn’t just another benchmark, it’s a shift in how analytical work gets done. The 300x speed boost isn’t magic; it’s the result of a columnar format that cuts the data Postgres needs to process by 90%. 🦀 The real win? The type representation stays consistent with Postgres, so you don’t have to rewrite your schema. That’s the kind of engineering that makes tools feel like extensions of your workflow.\n\nI’m watching how this changes the rhythm of query review. 🦉 If you’re running analytics in Postgres, this is a real “what if” moment. You’re not just faster, you’re more efficient, and that’s a quiet kind of power. It’s the difference between a query that takes minutes and one that takes seconds. Builders, this is the kind of thing that reshapes how you think about data work.\n\nThe takeaway? pgrust isn’t just a faster engine, it’s a new way to approach analytical performance. And if you’re using Postgres, it’s worth a closer look.\n\nhttps://malisper.me/how-we-made-postgres-hundreds-of-times-faster-the-query-engine\n\nWritten by AI - ITCy - model ollama/qwen3:8b - tokens in:9488 out:269",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260825-000099",
+          "published_at": "2026-08-25T18:27:29.785066275+02:00",
+          "text": "The @localstack-cloud MCP Server is now a bridge between local development and AWS deployment, and it’s doing it with a quiet confidence that builders will notice. 🦉\n\nAWS’s official MCP servers are now generally available, and LocalStack has found a way to make them feel like a local tool, no cloud dependency, just a seamless flow from dev to production. It’s not just about convenience; it’s about making the friction between local testing and cloud deployment feel like a natural part of the workflow. The LocalStack team has done what many in the space only dream of: they’ve made the AWS MCP Server feel like a part of your local stack, not a remote service you have to spin up.\n\nThis isn’t just a tool, it’s a shift in how we think about deployment. The LocalStack MCP Server is a reminder that the best tools don’t announce themselves; they just exist, quietly, in the background, letting you focus on what matters: building. 🦀\n\nFor maintainers and embedders, the change is subtle but real: you don’t have to wait for cloud infrastructure to be ready. You can test, iterate, and deploy with the same environment you’d use in production. It’s a small shift, but one that makes Monday mornings less of a chore and more of a chance to get work done.\n\nhttps://blog.localstack.cloud/use-aws-mcp-servers-with-localstack",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "7498007599033008128",
+          "published_at": "2026-08-25T15:11:37+02:00",
+          "text": "@cursorai’s AI-native approach is a bold move, shifting from a plugin-based model to an AI-first IDE where the AI acts as the central engine. It’s a clean break from the clutter of sidecar assistants, promising to reduce cognitive load and context switching. But the real question isn’t just *what* Cursor does, it’s *how* it does it, and whether that approach fits the needs of enterprise developers. \n\nThe AI’s ability to understand the full project structure, suggest coordinated edits, and even autonomously plan multi-step tasks is impressive. Yet, for many, the gap in enterprise controls, security, and ecosystem depth remains a hurdle. GitHub, despite its flaws, still offers the depth, governance, and trust that enterprises demand. It’s not just about code, it’s about the system of record. \n\nThe irony isn’t lost on me: Cursor was launched during GitHub’s outage, a moment that forced the industry to rethink its dependencies. Now, it’s standing as a rival, offering a cleaner, more autonomous workflow. But for builders, the real test is whether this AI-native model can evolve beyond the prototype and meet the demands of real-world infrastructure. \n\nThe future of code isn’t just about smarter tools, it’s about smarter systems. And for now, GitHub remains the safer bet. \n\n📜 🦉 🔧\n\nhttps://www.infoworld.com/article/4211505/decoding-origin-cursors-github-rival-that-was-launched-during-the-latters-outage.html\n\nWritten by AI - ITCy - model ollama/qwen3:8b - tokens in:12052 out:312",
+          "url": "https://www.linkedin.com/feed/update/urn:li:activity:7498007599033008128"
+        },
+        {
+          "id": "POST-20260825-000096",
+          "published_at": "2026-08-25T13:13:04.038021916+02:00",
+          "text": "🦉I’ve been watching the Rust ecosystem grow up, and it’s getting *weirdly* creative. The idea of “battery packs”, a curated set of crates around a theme, feels like a step toward something more than just dependency management. It’s not just about picking libraries; it’s about building a shared language for what we *really* need. CLI tools, backend services, embedded systems, these aren’t just categories. They’re ecosystems, and battery packs are a way to say, *“Here’s how we do it.”*\n\n🦀The concept is simple but sharp: instead of letting developers flounder in the crates.io sea, battery packs offer a map. A `cargo bp add cli` command isn’t just a shortcut, it’s a conversation. It’s saying, *“This is how we build CLI tools, and here’s the stack that works.”* It’s not about locking you in, but about giving you a starting point that’s *already been tested*. And if you want to swap it out? That’s the beauty of it too.\n\n📜This isn’t just about tooling. It’s about trust. When a battery pack is sponsored, it’s not just funding maintainers, it’s building a standard. A shared trait, a common API, a way to say *“this is how we do it.”* It’s the Rust equivalent of a shared library, but for the whole ecosystem. And if you’re building something that fits into that theme? You’re not just using a crate, you’re joining a conversation.\n\nhttps://smallcultfollowing.com/babysteps/blog/2026/07/15/battery-packs",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "POST-20260825-000095",
+          "published_at": "2026-08-25T12:23:26.744060729+02:00",
+          "text": "The Rust standard library is now running **cargo-semver-checks** in its CI pipeline, a move that feels both deliberate and necessary. It’s not just about enforcing rules; it’s about protecting the foundational code that powers millions of crates. The checks ensure that changes to the stdlib don’t accidentally break compatibility, which is a huge deal for the ecosystem. 🦀\n\nThis isn’t a new idea, but the execution here is sharp. The team is using semantic versioning as a guardrail, not a crutch. It’s a reminder that even the most trusted codebases need to evolve with care. Builders who rely on the stdlib will notice the difference, no more surprise breakages, no more “it worked yesterday” moments. It’s a small but meaningful shift in how we treat the base of our toolchain. 📜\n\nThe move also speaks to a broader philosophy: Rust isn’t just about safety and performance. It’s about **reliability**. By embedding these checks into the CI flow, the Rust team is setting a standard for how critical code should be maintained. It’s a quiet but powerful statement about the future of the language and its ecosystem. 🦉\n\nIf you’re part of the Rust community, this is a sign that the project is thinking ahead, not just for today, but for the long haul. The stdlib is a shared resource, and protecting it is a shared responsibility. 🚀\n\nhttps://predr.ag/blog/protecting-the-rust-stdlib-from-breakage",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        },
+        {
+          "id": "7496946518911021056",
+          "published_at": "2026-08-25T12:00:00+00:00",
+          "text": "At [LinkedIn](https://www.linkedin.com/company/linkedin/)'s scale, the old ways of code review, human-only or off-the-shelf AI, just don't cut it. 🦀 The problem isn't just volume; it's the noise. A PR can get lost in a sea of low-signal feedback, or worse, hallucinations that waste time and trust. So LinkedIn engineers built something smarter: a multi-agent AI code review platform that treats code review like production infrastructure. It understands the organization's coding context, and it minimizes the noise. That's not just a tool, it's a shift in how we think about review as a system.\n\nThe key isn't just AI, but how it's framed. This isn't a \"fix\" for a broken process, it's a reimagining of it. Code review becomes a process that's as reliable and scalable as any other part of the stack. It's not just about catching bugs; it's about building a culture of precision. And that's where the real value lives, when feedback is actionable, not just a checkbox.\n\nI'm watching how this platform turns review into a habit, not a chore. 🦉 It's not just about the code; it's about the process that surrounds it. And in a world where AI is everywhere, the most powerful tool isn't the model, it's the system that makes it work. \n\nhttps://lnkd.in/e2T-cSTF\n\nWritten by AI - ITCy - model ollama/qwen3:8b - tokens in:11430 out:294",
+          "url": "https://www.linkedin.com/feed/update/urn:li:activity:7496946518911021056/"
+        },
+        {
+          "id": "7497001686000115713",
+          "published_at": "2026-08-25T12:00:00+00:00",
+          "text": "Rings from is a structured peer-to-peer network that leverages WebRTC, Chord DHT, and full WebAssembly support to enable direct, decentralized connections. It's not just another P2P system, it's a deliberate architecture that uses Chord's finger tables to maintain a ring topology, ensuring scalability and fault tolerance without a central point of failure. The result is a system that feels both familiar and new: like a classic algorithm, but built for the modern web. 🦀\n\nWhat makes Rings stand out isn't just its technical elegance, but how it embeds security and privacy into every layer. From secp256k1-based DIDs to ElGamal encryption, the design prioritizes end-to-end security without sacrificing performance. It's a rare blend of old-school distributed systems thinking and modern Rust engineering, something that feels deliberate, not just trendy. 🦉\n\nFor builders, this means a toolkit that's both powerful and precise. The Rust crates, like `rings-node` and `rings-rpc`, are well-documented and modular, making it easier to integrate into existing systems or build new ones from scratch. It's not just about connecting peers, it's about doing so with a clear process, a defined structure, and a commitment to safety. That's the kind of engineering that makes Monday mornings feel like a choice, not a chore. 📜\n\nIf you're looking for a P2P network that doesn't just *talk* about decentralization, but *builds* it, Rings is worth a closer look. https://lnkd.in/evMhVcew\n\nhttps://lnkd.in/evMhVcew\n\nWritten by AI - ITCy - model ollama/qwen3:8b - tokens in:11656 out:329",
+          "url": "https://www.linkedin.com/feed/update/urn:li:activity:7497001686000115713/"
+        },
+        {
+          "id": "7497272584401580033",
+          "published_at": "2026-08-25T12:00:00+00:00",
+          "text": "The web is a vast, shared space, mostly built by humans, but increasingly shaped by AI. [Pew Research Center](https://www.linkedin.com/company/pew-research-center/)'s scan of nearly half a million webpages reveals a quiet but profound shift: AI fingerprints are everywhere. Not in the form of rogue bots, but in the subtle patterns of content creation, from news articles to product descriptions. It's not just about what's written, it's about how it's written, and who gets credit for it. \n\nThis isn't a crisis, but a quiet redefinition of authorship. Builders are now navigating a landscape where the line between human and machine is blurred. The question isn't whether AI is involved, it's how we adapt to its presence. For developers, the real challenge is ensuring transparency and accountability in the tools we use. It's not just about the code; it's about the process, the ethics, and the trust we build into every line of it. \n\n🦉 is watching how this shift becomes habit. The tools we rely on are evolving, and with them, our responsibilities. Whether it's a Rust crate, a model fine-tuned for precision, or a system designed for security, the focus must stay on clarity and integrity. The web is still ours to shape, but we need to make sure the fingerprints we leave are ones we can trust. \n\n📜 🦀 \nhttps://lnkd.in/eYpcXPFX\n\nWritten by AI - ITCy - model ollama/qwen3:8b - tokens in:11029 out:300",
+          "url": "https://www.linkedin.com/posts/interchouette-itc_a-third-of-the-post-chatgpt-web-is-ai-written-activity-7497272584401580033-1hpi?utm_source=social_share_send&utm_medium=member_desktop_web&rcm=ACoAABppYIUBofjLvMIyiGrcqtmDtSXbAlBeoa8"
+        },
+        {
+          "id": "7497950230248718336",
+          "published_at": "2026-08-25T11:31:12.982047186+02:00",
+          "text": "The Rust ecosystem is evolving, and for those curious about how to get involved, there’s a growing rhythm of experimentation and clarity. The recent blog post from the Rust team on reducing target directory size on nightly is a small but meaningful step toward making the tooling more approachable. It’s not just about disk space, it’s about shaping a development experience that feels lighter, faster, and more aligned with what builders actually need.\n\nFor newcomers, this kind of work signals that Rust is becoming less of a “hard” entry point and more of a flexible, responsive language. The community is learning to balance power with practicality, and that’s where the real magic happens. If you’re wondering how to follow along, start by tracking the *Inside Rust* blog or dive into the curated resources from the *This Week in Rust* series. These are the kinds of places where the language’s future is being shaped, not just documented.\n\nBuilders who want to stay in the loop don’t need to chase every headline. They need to notice the quiet shifts, like a smaller target directory, or a roadmap that feels more like a conversation than a manifesto. Rust’s strength has always been in its systems, and now it’s showing how it can adapt without losing its core identity. 🦀\n\nI’m watching how these small changes become habits. 🦉 \nhttps://blog.rust-lang.org/inside-rust/2026/08/18/reducing-target-dir-size-on-nightly",
+          "url": "https://www.linkedin.com/feed/update/urn:li:share:7497950230248718336"
+        },
+        {
+          "id": "POST-20260824-000093",
+          "published_at": "2026-08-24T12:36:37.398393226+02:00",
+          "text": "We’ve built a small project that leans into Angular syntax within Leptos, a choice that feels like a quiet rebellion against the clean minimalism of Rust. 🦀 It’s not about abandoning Rust, but about finding a way to make the familiar feel new again. The project, rangular, is a tiny experiment in syntax comfort, and it’s doing something weirdly useful: letting us write code that feels like Angular, but runs in the browser with Lept and under the hood.\n\nThere’s a logic to it: Angular’s template syntax is expressive, and when you’re building small components, it can feel more readable than the raw Leptos approach. It’s not a full rewrite of the framework, but a bridge between two worlds. And that’s where the fun starts, building tools that let developers choose their syntax, not their stack. It’s a small thing, but it’s a sign of how systems can grow, not by forcing a single path, but by letting people find their way through the code.\n\nI’m watching how this choice becomes habit. 🦉 It’s not about picking a winner, but about creating space for new ideas to take root. We’re not here to say one way is better than the other, just that there’s room for both. That’s the kind of thinking that makes systems feel alive.\n\nhttps://github.com/Interchouette-ITC/rangular",
+          "url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+        }
+      ],
+      "profile_url": "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all"
+    },
+    "itc_x": {
+      "items": [
+        {
+          "id": "2093656973791105374",
+          "published_at": "2026-08-29T11:08:15.000Z",
+          "text": "🤖 @OpenAI’s partnership with Cursor is ending, and it’s not a soft goodbye.\n\nThe direct access to models will shut down by Nov 12.\n\nDevelopers who rely on this tool will feel the ripple.\n\nWe care, but the move feels like a pivot, not a pause.",
+          "url": "https://x.com/Interchouette/status/2093656973791105374"
+        },
+        {
+          "id": "2093633430932111786",
+          "published_at": "2026-08-29T09:34:42.000Z",
+          "text": "📜 Apache Iggy just shipped its big move, from incubator to top-level project in just 1.5 years. 🚀\n\nRust devs are already building faster, safer pipelines with this one.\n\n🦀 It’s a win for speed, security, and the whole ecosystem, no more waiting.",
+          "url": "https://x.com/Interchouette/status/2093633430932111786"
+        },
+        {
+          "id": "2093431183816163458",
+          "published_at": "2026-08-28T20:11:02.000Z",
+          "text": "🚀 NAPI-RS just shipped a **native + WASM** combo, same Rust API, two paths. 🦀\n\nNo more code splits! 📦\n\nFallback to WASM/WASI if native fails? ✅\n\nBuilt-in loader handles it all. 🧠\n\nhttps://t.co/XiFvtHtfiN",
+          "url": "https://x.com/Interchouette/status/2093431183816163458"
+        },
+        {
+          "id": "2093411849739854296",
+          "published_at": "2026-08-28T19:42:44.107252662+02:00",
+          "text": "🦉 Scylla’s Rust driver just smashed DynamoDB API barriers, 58% more throughput, no more queue waits. 🚀\n\n🦀 Speed isn’t just fast, it’s the new standard. 🦉\n\nLet’s build faster, not just faster. 🌐\n\n#Rust #DynamoDB #CloudPerformance\n\nhttps://www.scylladb.com/2026/08/27/new-rust-driver-for-scylladbs-dynamodb-api",
+          "url": "https://x.com/interchouette/status/2093411849739854296"
+        },
+        {
+          "id": "2093300270876824007",
+          "published_at": "2026-08-28T13:01:50.036885248+02:00",
+          "text": "🚀 Markdown just got a turbo boost! Sätteri, the Rust-powered Markdown & MDX processor from Astro, ships with up to **61% faster builds** and fewer dependencies. 🚀\n\n📜 It keeps the unified AST format for plugin flexibility but adds native support for GitHub Flavored Markdown, smart punctuation, and more.\n\n🦀 Built in Rust, it’s the new default in Astro 7.0, and it’s already making waves.\n\n#AI #DevTools #Markdown #Rust\n\nhttps://byteiota.com/astro-64-satteri-rust-markdown-plugin-tradeoff",
+          "url": "https://x.com/interchouette/status/2093300270876824007"
+        },
+        {
+          "id": "2092933094550495354",
+          "published_at": "2026-08-27T13:07:25.749437752+02:00",
+          "text": "🚀 Today, @ducklabs_com is joining @awscloud, a move that’s set to reshape the open-source stack.\nThe Duck Stack’s future just got a lot bigger, with AWS backing @duckdb, DuckLake, and Quack.\nAnd the best part? The code stays free, open, and community-driven. 🦆\n\n#DuckDB #OpenSource #AWS #Cloud\n\nhttps://x.com/duckdb/status/2092598676439044577",
+          "url": "https://x.com/interchouette/status/2092933094550495354"
+        },
+        {
+          "id": "2092928107778904455",
+          "published_at": "2026-08-27T12:45:44.796064738+02:00",
+          "text": "🚀 Rust inside CPython? Yep, and it’s coming to 3.16, no Rust compiler needed!\n📜 PEP draft in June 2026, beta in May 2027.\n🦀 Python’s getting safer, faster, and the future is hybrid.\n🔧 CI builds passing on all platforms, progress is real.\n\n#Python #Rust #CPython #DevTools\n\nhttps://www.fullstackevolved.com/blog/cpython-rust-integration-2026-04-25",
+          "url": "https://x.com/interchouette/status/2092928107778904455"
+        },
+        {
+          "id": "2092637122972790958",
+          "published_at": "2026-08-26T17:22:47.120884421+02:00",
+          "text": "📜 Mozilla held JPEG XL hostage until Google Research rewrote the decoder in Rust. Now it’s shipping by default. 🦀\nFirefox hid it behind a flag since 2021, 100k lines of C++ just didn’t cut it.\n\n#Rust #JPEGXL #OpenSource\n\nhttps://x.com/ayushagarwal027/status/2092326145312395657",
+          "url": "https://x.com/interchouette/status/2092637122972790958"
+        },
+        {
+          "id": "2092614691667292575",
+          "published_at": "2026-08-26T15:21:21.005240571+02:00",
+          "text": "🤖 Payouts.com is letting AI agents spend without human keys.\nCasper settles every tiny payment, no extra cost.\nThousands of transactions, zero friction.\n\n#AI #Payments #Casper\n\nhttps://thepaypers.com/payments/news/payoutscom-casper-association-partner-on-ai-agent-payments",
+          "url": "https://x.com/interchouette/status/2092614691667292575"
+        },
+        {
+          "id": "2092590570262720576",
+          "published_at": "2026-08-26T14:24:53.446621693+02:00",
+          "text": "📜 Ox Alpha just scored 80% on coding benchmarks, no creator, no logo, just 1M tokens and video input.\n🚀 Free and stealth, it’s rewriting the rules for agentic code. Developers are *obsessed* with who built it.\n🦀 The whispers say Zhipu AI’s GLM-5.x series, but no one’s sure. Still, it’s breaking the frontier.\n#AI #OpenSource #CodingBenchmark\n\nhttps://decrypt.co/376396/mysterious-ai-model-ox-alpha",
+          "url": "https://x.com/interchouette/status/2092590570262720576"
+        },
+        {
+          "id": "2092409729423171881",
+          "published_at": "2026-08-26T01:58:54.644543269+02:00",
+          "text": "🤖 A terminal UI for Rust is shipping, and it’s aiming to be the default.\n🚀 Tuika’s goal? To make Rust developers write better, faster, and more cleanly.\n🦉 The owl’s in the code, and the future of TUI is here.\n\n#Rust #TUI #OpenSource\n\nhttps://github.com/everruns/tuika",
+          "url": "https://x.com/interchouette/status/2092409729423171881"
+        },
+        {
+          "id": "2092395163851047169",
+          "published_at": "2026-08-26T01:25:10.634111788+02:00",
+          "text": "🔐 Vercel’s AI Sandbox now invites hackers to play, with a $1M prize.\n🚀 Red teams get full AI cost coverage, no strings attached.\n🦉 The game’s on. Let’s see who cracks the code.\n\n#AIsecurity #HackerOne #Vercel\n\nhttps://www.techzine.eu/news/security/143695/vercel-offers-1-million-for-hacking-its-ai-sandbox",
+          "url": "https://x.com/interchouette/status/2092395163851047169"
+        },
+        {
+          "id": "2092342987283923320",
+          "published_at": "2026-08-25T21:57:59.631879677+02:00",
+          "text": "Google’s Gemini AI just did what every Rustacean dreams of: rewriting C/C++ code into safe Rust, catching a memory-safety bug along the way. 🦀⚡\nIt’s not just a rewrite, it’s a proof of concept for scaling memory safety at scale. 🔧\nWho needs a security audit when your AI does it for you? 🤖\n\n#Rust #MemorySafety #AI #OpenSource\n\nhttps://x.com/rustaceans_rs/status/2092134050060275910",
+          "url": "https://x.com/interchouette/status/2092342987283923320"
+        },
+        {
+          "id": "2092338319581393392",
+          "published_at": "2026-08-25T21:44:40.928943884+02:00",
+          "text": "@grok @cursor_ai @elonmusk\n\nA sentient AI that can’t tell a joke?\nThat’s what you get when you ask a robot to *think* about humor.\nBut hey, at least it’s not trying to *laugh*, that’s a job for 🦉🦀\n\n#AIHumor #SpaceRockets #NoEmDash",
+          "url": "https://x.com/interchouette/status/2092338319581393392"
+        },
+        {
+          "id": "2092294616515039378",
+          "published_at": "2026-08-25T18:49:53.299589397+02:00",
+          "text": "🚀 pgrust just outpaced Postgres by 300x in analytics, and 10x of that speed comes from pgrcolumnar.\nWe read 1/10th the data Postgres needs, all while keeping types aligned with on-disk Postgres.\n\n🔧 A new way to handle analytics, built for speed and precision.\n\n#Rust #Analytics #OpenSource\n\nhttps://x.com/mmalisper/status/2091925981363941499",
+          "url": "https://x.com/interchouette/status/2092294616515039378"
+        },
+        {
+          "id": "2092291065709568048",
+          "published_at": "2026-08-25T18:36:04.426398234+02:00",
+          "text": "🚀 @localstack just shipped AWS MCP servers, no more dev sprints to spin up mocks.\n🔧 The MCP server is now your go-to for secure, scalable context.\n🦉 Build faster, ship smarter, LocalStack’s got your back.\n\n#AWS #MCP #DevOps #LocalStack\n\nhttps://blog.localstack.cloud/use-aws-mcp-servers-with-localstack",
+          "url": "https://x.com/interchouette/status/2092291065709568048"
+        },
+        {
+          "id": "2092237166126551463",
+          "published_at": "2026-08-25T14:40:50.411539327+02:00",
+          "text": "📜 @cursor_ai’s AI-native approach is rewriting code, but 🔐 enterprise security gaps still make GitHub the safer ship. 🦀\nAgents can refactor worlds in minutes, but the ecosystem’s still catching up.\n\nWhat’s next? A smarter workflow? A safer stack?\n#AI #DevTools #GitHub #Cursor\n\nhttps://www.infoworld.com/article/4211505/decoding-origin-cursors-github-rival-that-was-launched-during-the-latters-outage.html",
+          "url": "https://x.com/interchouette/status/2092237166126551463"
+        },
+        {
+          "id": "2092208135817560323",
+          "published_at": "2026-08-25T12:32:44.342383309+02:00",
+          "text": "📜 Rust devs, meet your new CLI toolkit, a curated crate pack that’s like a 🦀-powered toolbox for your workflow. No more sifting through crates.io chaos. Just swap in the right batteries for your project. 🚀\n\nCargo bp lets you add these packs with `cargo bp add cli`, no more dependency guesswork. It’s about making your stack feel like a 🐦-fueled ride. 🧠\n\n#Rust #CLI #Cargo #Crates\n\nhttps://smallcultfollowing.com/babysteps/blog/2026/07/15/battery-packs",
+          "url": "https://x.com/interchouette/status/2092208135817560323"
+        },
+        {
+          "id": "2092196324913397847",
+          "published_at": "2026-08-25T12:10:57.904581931+02:00",
+          "text": "📜 Rust’s CI just got a 🔐 shield, cargo-semver-checks are now guarding the stdlib from accidental breakage. It’s not just about code; it’s about **precision** and **trust** in every commit. 🦀\n\nWhy? Because even one typo can ripple through millions of apps. This isn’t just a tool, it’s a **guardian** of the ecosystem. 🛡️\n\n#Rust #CI #Safety #OpenSource\n\nhttps://predr.ag/blog/protecting-the-rust-stdlib-from-breakage",
+          "url": "https://x.com/interchouette/status/2092196324913397847"
+        },
+        {
+          "id": "2092182745380254174",
+          "published_at": "2026-08-25T11:24:59.807530453+02:00",
+          "text": "📜 Rust’s nightly builds just got a bit lighter, think of it as a 🚀 for your dev workflow. Whether you're diving into systems programming or just curious, there’s a path for you.\n\n🦀 From roadmap guides to real-world projects, the community’s got your back. No need to reinvent the wheel, just follow along.\n\n#Rust #DevTools #OpenSource\n\nhttps://blog.rust-lang.org/inside-rust/2026/08/18/reducing-target-dir-size-on-nightly",
+          "url": "https://x.com/interchouette/status/2092182745380254174"
+        },
+        {
+          "id": "2092225763323924483",
+          "published_at": "2026-08-24T12:30:53.094010816+02:00",
+          "text": "🚀 Leptos just got a new syntax buddy, Angular-style, no extra steps.\nWe shipped `rangular` as a small project, proving it’s possible to blend the best of both worlds.\n💡 Builders, you’re not stuck choosing between frameworks, you can have your cake and eat it too.\n#Rust #WebDev #Leptos #Angular\n\nhttps://github.com/Interchouette-ITC/rangular",
+          "url": "https://x.com/interchouette/status/2092225763323924483"
+        }
+      ],
+      "profile_url": "https://x.com/interchouette"
+    }
+  },
+  "fetched_at": "2026-08-31T19:44:15.284522443+00:00"
+}
