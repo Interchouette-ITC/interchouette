@@ -39,7 +39,6 @@ __screenshots__/
 /www/playwright/.cache/
 
 # Local auth (never commit)
-.github_credentials
 
 # System files
 .DS_Store
