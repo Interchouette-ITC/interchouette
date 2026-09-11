@@ -122,6 +122,96 @@ blurb_nl = "ITCy LinkedIn- en X-publicatieartefacten (drafts/posts/tweets branch
 blurb_fr = "Artefacts de publication LinkedIn et X ITCy (branches drafts/posts/tweets ; BAT avant publication)."
 
 [[product]]
+id = "rangular"
+repo = "Interchouette-ITC/rangular"
+status = "shipped"
+public = true
+url = "https://rangular.interchouette.net"
+blurb_en = "Angular-shaped HTML and SCSS templates for Leptos CSR in the browser."
+blurb_nl = "Angular-achtige HTML- en SCSS-templates voor Leptos CSR in de browser."
+blurb_fr = "Templates HTML et SCSS façon Angular pour Leptos CSR dans le navigateur."
+
+[[product]]
+id = "interfire"
+repo = "Interchouette-ITC/InterFire"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/InterFire"
+blurb_en = "Linux-first Rust application firewall: process attribution, durable rules, NFQUEUE verdict path."
+blurb_nl = "Linux-first Rust-applicatiefirewall: process-attributie, duurzame regels, NFQUEUE-verdictpad."
+blurb_fr = "Pare-feu applicatif Rust Linux-first : attribution de processus, règles durables, chemin de verdict NFQUEUE."
+
+[[product]]
+id = "rustashop"
+repo = "Interchouette-ITC/rustashop"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/rustashop"
+blurb_en = "Modern commerce API in Rust: Actix, OpenAPI, Angular and rangular shops."
+blurb_nl = "Moderne commerce-API in Rust: Actix, OpenAPI, Angular- en rangular-shops."
+blurb_fr = "API commerce moderne en Rust : Actix, OpenAPI, boutiques Angular et rangular."
+
+[[product]]
+id = "serenade"
+repo = "Interchouette-ITC/Serenade"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/Serenade"
+blurb_en = "Symfony-oriented Rust application framework: kernel, DI, events, bundles, console."
+blurb_nl = "Symfony-georiënteerd Rust-applicatieframework: kernel, DI, events, bundles, console."
+blurb_fr = "Framework d'application Rust orienté Symfony : kernel, DI, events, bundles, console."
+
+[[product]]
+id = "codecov-mcp"
+repo = "Interchouette-ITC/codecov-rust-mcp"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/codecov-rust-mcp"
+blurb_en = "Rust MCP server for the Codecov API: coverage totals, miss files, file reports."
+blurb_nl = "Rust MCP-server voor de Codecov API: coverage-totalen, miss-bestanden, bestandsrapporten."
+blurb_fr = "Serveur MCP Rust pour l'API Codecov : totaux de couverture, fichiers manquants, rapports de fichier."
+
+[[product]]
+id = "rustux"
+repo = "Interchouette-ITC/Rustux"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/Rustux"
+blurb_en = "Compose unique Tux images from a seed and SVG spray layers (Rust library and browser app)."
+blurb_nl = "Unieke Tux-afbeeldingen samenstellen uit een seed en SVG-spraylagen (Rust-library en browser-app)."
+blurb_fr = "Composer des images Tux uniques à partir d'une seed et de couches SVG spray (bibliothèque Rust et app navigateur)."
+
+[[product]]
+id = "nftux"
+repo = "Interchouette-ITC/NFTux"
+status = "shipped"
+public = true
+url = "https://github.com/Interchouette-ITC/NFTux"
+blurb_en = "Mint unique Tux images as an NFT collection; compose via sibling Rustux."
+blurb_nl = "Unieke Tux-afbeeldingen minten als NFT-collectie; compositie via sibling Rustux."
+blurb_fr = "Minter des images Tux uniques en collection NFT ; composition via le sibling Rustux."
+
+[[product]]
+id = "interinnl"
+repo = "InterINNL/frontend"
+status = "shipped"
+public = true
+url = "https://interinnl.interchouette.net/"
+blurb_en = "InterINNL community hub (AI, LLMs, blockchain) and shared Nx frontend."
+blurb_nl = "InterINNL-communityhub (AI, LLMs, blockchain) en gedeelde Nx-frontend."
+blurb_fr = "Hub communautaire InterINNL (IA, LLMs, blockchain) et frontend Nx partagé."
+
+[[product]]
+id = "aquachain"
+repo = "InterINNL/Aquachain-contracts"
+status = "shipped"
+public = true
+url = "https://interinnl.interchouette.net/aquachain"
+blurb_en = "AquaChain CosmWasm water-management demo under InterINNL (contracts and agent gateway)."
+blurb_nl = "AquaChain CosmWasm waterbeheer-demo onder InterINNL (contracts en agent gateway)."
+blurb_fr = "Démo CosmWasm AquaChain de gestion de l'eau sous InterINNL (contrats et agent gateway)."
+
+[[product]]
 id = "open-trading"
 repo = "Interchouette-ITC/open-trading"
 status = "wip"
