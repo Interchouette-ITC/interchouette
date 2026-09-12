@@ -38,8 +38,6 @@ __screenshots__/
 /blob-report/
 /www/playwright/.cache/
 
-# Local worker auth (never commit)
-.github_credentials
 
 # System files
 .DS_Store
