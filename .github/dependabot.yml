@@ -1,3 +1,5 @@
+# Group Angular packages; ignore dtolnay/rust-toolchain (action tags are not
+# always publishable rustc versions, e.g. 1.120.0 → 404).
 version: 2
 updates:
   - package-ecosystem: npm
@@ -6,6 +8,11 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    groups:
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-eslint/*"
     ignore:
       - dependency-name: "*"
         update-types:
@@ -20,3 +27,4 @@ updates:
       - dependency-name: "*"
         update-types:
           - "version-update:semver-major"
+      - dependency-name: dtolnay/rust-toolchain
