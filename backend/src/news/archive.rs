@@ -15,7 +15,10 @@ use tracing::warn;
 use utoipa::ToSchema;
 
 use super::github_sync::GitHubNewsSync;
-use super::types::{sort_news_items_newest_first, NewsFeed, NewsFeeds, NewsItem, NewsResponse};
+use super::types::{
+    published_at_from_snowflake_id, sort_news_items_newest_first, NewsFeed, NewsFeeds, NewsItem,
+    NewsResponse,
+};
 
 const RETENTION_WEEKS: i64 = 52;
 const DEFAULT_NEWS_DB_DEPLOY: &str = "/app/db/news.db";
@@ -81,6 +84,9 @@ impl NewsArchive {
         {
             Ok(pool) => match migrate(&pool).await {
                 Ok(()) => {
+                    if let Err(err) = repair_week_buckets(&pool).await {
+                        warn!(error = %err, "news archive week-bucket repair failed");
+                    }
                     tracing::info!(path = %path.display(), "news archive SQLite ready");
                     Self {
                         pool: Some(pool),
@@ -264,8 +270,15 @@ async fn merge_feed(pool: &SqlitePool, source: &str, items: &[NewsItem], now: &s
         if item_id.is_empty() || url.is_empty() {
             continue;
         }
-        let week_id = item
+        // Never bucket by scrape time when the post id encodes a real timestamp.
+        let published = item
             .published_at
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map(str::to_owned)
+            .or_else(|| published_at_from_snowflake_id(source, item_id));
+        let week_id = published
             .as_deref()
             .and_then(week_id_from_fetched_at)
             .unwrap_or_else(|| week_id_from_fetched_at(now).unwrap_or_else(|| "1970-W01".into()));
@@ -294,7 +307,7 @@ async fn merge_feed(pool: &SqlitePool, source: &str, items: &[NewsItem], now: &s
         .bind(source)
         .bind(item_id)
         .bind(&hash)
-        .bind(item.published_at.as_deref())
+        .bind(published.as_deref())
         .bind(url)
         .bind(sanitize_public_text(&item.text))
         .bind(now)
@@ -313,6 +326,71 @@ async fn merge_feed(pool: &SqlitePool, source: &str, items: &[NewsItem], now: &s
         }
     }
     dirty
+}
+
+/// Move numeric-id rows into the ISO week encoded in the snowflake (not scrape time).
+async fn repair_week_buckets(pool: &SqlitePool) -> Result<(), sqlx::Error> {
+    let rows = sqlx::query(
+        r"
+        SELECT source, item_id, week_id, published_at
+        FROM news_items
+        WHERE item_id GLOB '[0-9]*'
+        ",
+    )
+    .fetch_all(pool)
+    .await?;
+    for row in rows {
+        let source: String = row.get("source");
+        let item_id: String = row.get("item_id");
+        let week_id: String = row.get("week_id");
+        let published_at: Option<String> = row.get("published_at");
+        let Some(from_id) = published_at_from_snowflake_id(&source, &item_id) else {
+            continue;
+        };
+        let Some(correct_week) = week_id_from_fetched_at(&from_id) else {
+            continue;
+        };
+        let published = published_at
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .map_or_else(|| from_id.clone(), str::to_owned);
+        let Some(week_from_published) = week_id_from_fetched_at(&published) else {
+            continue;
+        };
+        // Prefer an explicit published_at week when present; else snowflake week.
+        let target_week = if published_at
+            .as_deref()
+            .map(str::trim)
+            .is_some_and(|value| !value.is_empty())
+        {
+            week_from_published
+        } else {
+            correct_week
+        };
+        let need_pub = published_at
+            .as_deref()
+            .map(str::trim)
+            .is_none_or(str::is_empty);
+        if week_id == target_week && !need_pub {
+            continue;
+        }
+        let new_published = if need_pub { from_id } else { published };
+        sqlx::query(
+            r"
+            UPDATE news_items
+            SET week_id = ?, published_at = ?
+            WHERE source = ? AND item_id = ?
+            ",
+        )
+        .bind(&target_week)
+        .bind(&new_published)
+        .bind(&source)
+        .bind(&item_id)
+        .execute(pool)
+        .await?;
+    }
+    Ok(())
 }
 
 async fn migrate(pool: &SqlitePool) -> Result<(), sqlx::Error> {
@@ -561,21 +639,21 @@ mod tests {
                 itc_linkedin: NewsFeed {
                     items: vec![
                         NewsItem {
-                            id: "100".into(),
+                            id: "7505958666240000000".into(),
                             text: "oldest".into(),
-                            url: "https://www.linkedin.com/feed/update/urn:li:activity:100".into(),
+                            url: "https://www.linkedin.com/feed/update/urn:li:activity:7505958666240000000".into(),
                             published_at: None,
                         },
                         NewsItem {
-                            id: "300".into(),
+                            id: "7506683441971200000".into(),
                             text: "newest".into(),
-                            url: "https://www.linkedin.com/feed/update/urn:li:activity:300".into(),
+                            url: "https://www.linkedin.com/feed/update/urn:li:activity:7506683441971200000".into(),
                             published_at: None,
                         },
                         NewsItem {
-                            id: "200".into(),
+                            id: "7506321054105600000".into(),
                             text: "mid".into(),
-                            url: "https://www.linkedin.com/feed/update/urn:li:activity:200".into(),
+                            url: "https://www.linkedin.com/feed/update/urn:li:activity:7506321054105600000".into(),
                             published_at: None,
                         },
                     ],
@@ -585,15 +663,15 @@ mod tests {
                 itc_x: NewsFeed {
                     items: vec![
                         NewsItem {
-                            id: "10".into(),
+                            id: "2100192976696246272".into(),
                             text: "x-old".into(),
-                            url: "https://x.com/interchouette/status/10".into(),
+                            url: "https://x.com/interchouette/status/2100192976696246272".into(),
                             published_at: None,
                         },
                         NewsItem {
-                            id: "30".into(),
+                            id: "2100917752427446272".into(),
                             text: "x-new".into(),
-                            url: "https://x.com/interchouette/status/30".into(),
+                            url: "https://x.com/interchouette/status/2100917752427446272".into(),
                             published_at: None,
                         },
                     ],
@@ -619,8 +697,110 @@ mod tests {
             .iter()
             .map(|i| i.id.as_str())
             .collect();
-        assert_eq!(li, vec!["300", "200", "100"]);
-        assert_eq!(x, vec!["30", "10"]);
+        assert_eq!(
+            li,
+            vec![
+                "7506683441971200000",
+                "7506321054105600000",
+                "7505958666240000000"
+            ]
+        );
+        assert_eq!(x, vec!["2100917752427446272", "2100192976696246272"]);
+        let _ = tokio::fs::remove_file(&path).await;
+    }
+
+    #[tokio::test]
+    async fn merge_buckets_linkedin_activity_into_post_week_not_scrape_now() {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("news-archive-li-bucket-{nanos}.db"));
+        let archive = NewsArchive::from_path(&path).await;
+        assert!(archive.pool.is_some());
+
+        // Scrape "now" is W38; activity id is ~2026-09-05 (W36).
+        let batch = NewsResponse {
+            fetched_at: "2026-09-18T12:00:00Z".into(),
+            cache_ttl_secs: 14400,
+            feeds: NewsFeeds {
+                itc_linkedin: NewsFeed {
+                    items: vec![NewsItem {
+                        id: "7502004721122004992".into(),
+                        text: "openlogi".into(),
+                        url: "https://www.linkedin.com/feed/update/urn:li:activity:7502004721122004992".into(),
+                        published_at: None,
+                    }],
+                    profile_url: PROFILE_LINKEDIN.into(),
+                    error: None,
+                },
+                itc_x: NewsFeed {
+                    items: vec![],
+                    profile_url: PROFILE_X.into(),
+                    error: None,
+                },
+            },
+        };
+        archive.upsert_week("en", &batch).await;
+
+        assert!(archive.get_week("en", "2026-W38").await.is_none());
+        let week = archive
+            .get_week("en", "2026-W36")
+            .await
+            .expect("activity belongs in W36");
+        assert_eq!(week.feeds.itc_linkedin.items[0].id, "7502004721122004992");
+        let _ = tokio::fs::remove_file(&path).await;
+    }
+
+    #[tokio::test]
+    async fn merge_buckets_x_snowflake_into_post_week_not_scrape_now() {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("news-archive-bucket-{nanos}.db"));
+        let archive = NewsArchive::from_path(&path).await;
+        assert!(archive.pool.is_some());
+
+        // Scrape "now" is W38, but this status id is W36 (2026-08-31).
+        let batch = NewsResponse {
+            fetched_at: "2026-09-18T12:00:00Z".into(),
+            cache_ttl_secs: 14400,
+            feeds: NewsFeeds {
+                itc_linkedin: NewsFeed {
+                    items: vec![],
+                    profile_url: PROFILE_LINKEDIN.into(),
+                    error: None,
+                },
+                itc_x: NewsFeed {
+                    items: vec![NewsItem {
+                        id: "2094367997041291324".into(),
+                        text: "giflib".into(),
+                        url: "https://x.com/Interchouette/status/2094367997041291324".into(),
+                        published_at: None,
+                    }],
+                    profile_url: PROFILE_X.into(),
+                    error: None,
+                },
+            },
+        };
+        archive.upsert_week("en", &batch).await;
+
+        assert!(
+            archive.get_week("en", "2026-W38").await.is_none(),
+            "must not land in scrape week"
+        );
+        let week = archive.get_week("en", "2026-W36").await.expect("W36");
+        assert_eq!(week.feeds.itc_x.items.len(), 1);
+        assert_eq!(week.feeds.itc_x.items[0].id, "2094367997041291324");
+        assert!(
+            week.feeds.itc_x.items[0]
+                .published_at
+                .as_deref()
+                .is_some_and(|at| at.starts_with("2026-08-31")),
+            "snowflake published_at {:?}",
+            week.feeds.itc_x.items[0].published_at
+        );
         let _ = tokio::fs::remove_file(&path).await;
     }
 }

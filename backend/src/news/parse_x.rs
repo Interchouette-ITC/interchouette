@@ -28,6 +28,9 @@ pub fn parse_x(html: &str, profile_url: &str, limit: usize) -> Vec<NewsItem> {
     } else {
         items.clear();
     }
+    for item in &mut items {
+        item.ensure_published_at_from_id("x");
+    }
     super::types::sort_news_items_newest_first(&mut items);
     items.truncate(limit);
     items

@@ -33,6 +33,9 @@ pub fn parse_linkedin(html: &str, profile_url: &str, limit: usize) -> Vec<NewsIt
         items = parse_linkedin_embedded_json(html);
     }
     items.retain(|item| !item.text.trim().is_empty());
+    for item in &mut items {
+        item.ensure_published_at_from_id("linkedin");
+    }
     super::types::sort_news_items_newest_first(&mut items);
     items.truncate(limit);
     let _ = profile_url;
