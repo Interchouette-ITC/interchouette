@@ -13,7 +13,7 @@ import { SiteFooter } from '../../shared/site-footer/site-footer';
 
 export type NewsTabId = 'itcLinkedIn' | 'itcX';
 
-const TAB_ORDER: readonly NewsTabId[] = ['itcX', 'itcLinkedIn'];
+const TAB_ORDER: readonly NewsTabId[] = ['itcLinkedIn', 'itcX'];
 
 @Component({
   selector: 'app-news-page',
@@ -27,7 +27,7 @@ export class NewsPage {
   protected readonly locale = inject(LocaleService).locale;
   protected readonly news = inject(NewsService);
   private readonly seo = inject(SeoService);
-  protected readonly activeTab = signal<NewsTabId>('itcX');
+  protected readonly activeTab = signal<NewsTabId>('itcLinkedIn');
   protected readonly tabs = TAB_ORDER;
 
   protected readonly linkedinProfileUrl =

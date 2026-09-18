@@ -19,7 +19,7 @@ import { SiteFooter } from '../../shared/site-footer/site-footer';
 
 export type ArchiveTabId = 'itcLinkedIn' | 'itcX';
 
-const TAB_ORDER: readonly ArchiveTabId[] = ['itcX', 'itcLinkedIn'];
+const TAB_ORDER: readonly ArchiveTabId[] = ['itcLinkedIn', 'itcX'];
 
 @Component({
   selector: 'app-archive-page',
@@ -34,7 +34,7 @@ export class ArchivePage {
   protected readonly news = inject(NewsService);
   private readonly route = inject(ActivatedRoute);
   private readonly seo = inject(SeoService);
-  protected readonly activeTab = signal<ArchiveTabId>('itcX');
+  protected readonly activeTab = signal<ArchiveTabId>('itcLinkedIn');
   protected readonly tabs = TAB_ORDER;
 
   constructor() {

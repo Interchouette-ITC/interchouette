@@ -17,6 +17,9 @@ pub fn parse_x(html: &str, profile_url: &str, limit: usize) -> Vec<NewsItem> {
         items = parse_x_dom_legacy(&document, profile_url);
     }
     if items.is_empty() {
+        items = parse_x_embedded(html);
+    }
+    if items.is_empty() {
         items = parse_x_regex(html, profile_url);
     }
     items.retain(|item| !item.text.trim().is_empty());
@@ -143,6 +146,41 @@ fn parse_x_dom_legacy(document: &Html, profile_url: &str) -> Vec<NewsItem> {
     items
 }
 
+/// Parse tweets embedded in X's client payload (`rest_id` + `full_text`).
+fn parse_x_embedded(html: &str) -> Vec<NewsItem> {
+    let mut seen = std::collections::HashSet::new();
+    let mut items = Vec::new();
+    for chunk in html.split("rest_id:\"").skip(1) {
+        let Some((id, rest)) = chunk.split_once('"') else {
+            continue;
+        };
+        if id.is_empty() || !id.chars().all(|ch| ch.is_ascii_digit()) {
+            continue;
+        }
+        if seen.contains(id) {
+            continue;
+        }
+        let Some((_, after_key)) = rest.split_once("full_text:\"") else {
+            continue;
+        };
+        let Some(raw) = take_js_string_body(after_key) else {
+            continue;
+        };
+        let text = unescape_js_string(raw);
+        if text.trim().is_empty() {
+            continue;
+        }
+        seen.insert(id.to_string());
+        items.push(NewsItem {
+            id: id.to_string(),
+            text,
+            url: format!("https://x.com/Interchouette/status/{id}"),
+            published_at: None,
+        });
+    }
+    items
+}
+
 fn parse_x_regex(html: &str, profile_url: &str) -> Vec<NewsItem> {
     let re = regex::Regex::new(STATUS_PATH_RE).expect("valid regex");
     let mut seen = std::collections::HashSet::new();
@@ -161,6 +199,60 @@ fn parse_x_regex(html: &str, profile_url: &str) -> Vec<NewsItem> {
     }
     let _ = profile_url;
     items
+}
+
+fn take_js_string_body(after_opening_quote: &str) -> Option<&str> {
+    let mut end = 0;
+    let bytes = after_opening_quote.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'\\' => {
+                if i + 1 >= bytes.len() {
+                    return None;
+                }
+                i += 2;
+                end = i;
+            }
+            b'"' => return Some(&after_opening_quote[..end]),
+            _ => {
+                i += 1;
+                end = i;
+            }
+        }
+    }
+    None
+}
+
+fn unescape_js_string(raw: &str) -> String {
+    let mut out = String::with_capacity(raw.len());
+    let mut chars = raw.chars();
+    while let Some(ch) = chars.next() {
+        if ch != '\\' {
+            out.push(ch);
+            continue;
+        }
+        match chars.next() {
+            Some('n') => out.push('\n'),
+            Some('r') => out.push('\r'),
+            Some('t') => out.push('\t'),
+            Some('"') => out.push('"'),
+            Some('\\') | None => out.push('\\'),
+            Some('u') => {
+                let hex: String = chars.by_ref().take(4).collect();
+                if let Ok(code) = u32::from_str_radix(&hex, 16) {
+                    if let Some(decoded) = char::from_u32(code) {
+                        out.push(decoded);
+                        continue;
+                    }
+                }
+                out.push('u');
+                out.push_str(&hex);
+            }
+            Some(other) => out.push(other),
+        }
+    }
+    out
 }
 
 fn extract_status_id(href: &str) -> Option<String> {
@@ -193,5 +285,31 @@ mod tests {
             items[0].published_at.as_deref(),
             Some("2026-08-17T10:00:00.000Z")
         );
+    }
+
+    #[test]
+    fn parses_embedded_rest_id_full_text_payload() {
+        let html = r#"
+            rest_id:"9001",legacy:{full_text:"Pinned hello from ITCy."}
+            rest_id:"9002",legacy:{full_text:"Dimforge shipped Nexus GPU physics in Rust.\nMore soon."}
+            rest_id:"9003",legacy:{full_text:"Herdr terminal multiplexer for AI agents."}
+        "#;
+        let items = parse_x(html, "https://x.com/interchouette", 8);
+        assert_eq!(items.len(), 2);
+        assert!(items[0].text.contains("Dimforge"));
+        assert!(items[0].text.contains('\n'));
+        assert_eq!(items[0].url, "https://x.com/Interchouette/status/9002");
+        assert!(items[1].text.contains("Herdr"));
+    }
+
+    #[test]
+    fn unescape_js_string_handles_common_escapes() {
+        assert_eq!(unescape_js_string(r#"a\nb\"c\\d"#), "a\nb\"c\\d");
+    }
+
+    #[test]
+    fn take_js_string_body_stops_at_unescaped_quote() {
+        assert_eq!(take_js_string_body(r#"hi",next"#), Some("hi"));
+        assert_eq!(take_js_string_body(r#"a\"b","#), Some(r#"a\"b"#));
     }
 }
