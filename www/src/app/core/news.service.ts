@@ -128,8 +128,7 @@ export class NewsService {
     if (this.archiveWeekInFlight === weekId) {
       return;
     }
-    const already =
-      this.archiveWeekId() === weekId && this.archiveFeeds() !== null;
+    const already = this.archiveWeekId() === weekId && this.archiveFeeds() !== null;
     // Prerender can bake an empty X/LinkedIn panel; always refetch once in the browser.
     if (already && !isPlatformBrowser(this.platformId)) {
       return;
