@@ -41,6 +41,17 @@ impl NewsState {
         }
     }
 
+    /// Test helper: live fetcher/cache only, archive disabled (`pool = None`).
+    #[cfg(test)]
+    fn without_archive() -> Self {
+        Self {
+            cache: NewsCache::default(),
+            fetcher: NewsFetcher::from_env(),
+            archive: NewsArchive::default(),
+            cache_ttl_secs: 14400,
+        }
+    }
+
     /// Mount news routes on the router.
     pub fn router(self) -> Router {
         Router::new()
@@ -292,7 +303,7 @@ mod tests {
 
     #[tokio::test]
     async fn archive_list_returns_empty_without_database() {
-        let app = NewsState::from_env().await.router();
+        let app = NewsState::without_archive().router();
         let response = app
             .oneshot(
                 Request::builder()
@@ -312,7 +323,7 @@ mod tests {
 
     #[tokio::test]
     async fn archive_week_returns_404_without_database() {
-        let app = NewsState::from_env().await.router();
+        let app = NewsState::without_archive().router();
         let response = app
             .oneshot(
                 Request::builder()
