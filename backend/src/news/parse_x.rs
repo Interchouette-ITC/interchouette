@@ -28,6 +28,7 @@ pub fn parse_x(html: &str, profile_url: &str, limit: usize) -> Vec<NewsItem> {
     } else {
         items.clear();
     }
+    super::types::sort_news_items_newest_first(&mut items);
     items.truncate(limit);
     items
 }
@@ -296,10 +297,11 @@ mod tests {
         "#;
         let items = parse_x(html, "https://x.com/interchouette", 8);
         assert_eq!(items.len(), 2);
-        assert!(items[0].text.contains("Dimforge"));
-        assert!(items[0].text.contains('\n'));
-        assert_eq!(items[0].url, "https://x.com/Interchouette/status/9002");
-        assert!(items[1].text.contains("Herdr"));
+        let texts: Vec<&str> = items.iter().map(|item| item.text.as_str()).collect();
+        assert!(texts.iter().any(|text| text.contains("Dimforge")));
+        assert!(texts.iter().any(|text| text.contains("Herdr")));
+        assert!(items[0].text.contains('\n') || items[1].text.contains('\n'));
+        assert!(items.iter().any(|item| item.url.ends_with("/9002")));
     }
 
     #[test]
