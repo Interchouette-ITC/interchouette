@@ -66,6 +66,8 @@ export class NewsService {
   private archiveLoadedLocale: SiteLocale | null = null;
   private archiveInFlight = false;
   private archiveWeekInFlight: string | null = null;
+  /** Browser-only: week id whose archive payload was fetched in this session. */
+  private archiveWeekClientLoaded: string | null = null;
 
   /**
    * Load news from API `GET /v1/news` (4h server cache).
@@ -126,7 +128,12 @@ export class NewsService {
     if (this.archiveWeekInFlight === weekId) {
       return;
     }
-    if (this.archiveWeekId() === weekId && this.archiveFeeds() !== null) {
+    const already = this.archiveWeekId() === weekId && this.archiveFeeds() !== null;
+    // Prerender can bake an empty X/LinkedIn panel; always refetch once in the browser.
+    if (already && !isPlatformBrowser(this.platformId)) {
+      return;
+    }
+    if (already && this.archiveWeekClientLoaded === weekId) {
       return;
     }
     this.archiveWeekInFlight = weekId;
@@ -228,6 +235,9 @@ export class NewsService {
       }
       this.archiveFeeds.set(body.feeds);
       this.archiveFetchedAt.set(body.fetched_at);
+      if (isPlatformBrowser(this.platformId)) {
+        this.archiveWeekClientLoaded = weekId;
+      }
     } catch {
       if (this.archiveWeekId() === weekId) {
         this.archiveFeeds.set(null);

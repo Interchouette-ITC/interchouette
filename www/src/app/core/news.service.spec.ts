@@ -127,4 +127,64 @@ describe('NewsService', () => {
       expect(news.archiveFeeds()?.itc_x.items[0]?.text).toBe('Archived X');
     });
   });
+
+  it('refetches archive week in the browser after prerender baked empty feeds', async () => {
+    const filledWeek = {
+      fetched_at: '2026-09-07T12:00:00.000Z',
+      cache_ttl_secs: 0,
+      feeds: {
+        itc_linkedin: {
+          items: [{ id: 'li1', text: 'LI', url: 'https://example.com/li1' }],
+          profile_url: 'https://www.linkedin.com/company/interchouette-itc/',
+        },
+        itc_x: {
+          items: [{ id: 'x1', text: 'Live archive X', url: 'https://example.com/x1' }],
+          profile_url: 'https://x.com/interchouette',
+        },
+      },
+    };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/v1/news/archive/2026-W37')) {
+        return new Response(JSON.stringify(filledWeek), { status: 200 });
+      }
+      return new Response('not found', { status: 404 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    TestBed.configureTestingModule({
+      providers: [
+        NewsService,
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        {
+          provide: LocaleService,
+          useValue: {
+            locale: 'en',
+            copy: {
+              news: {
+                updated: 'Updated {time}',
+                error: 'Failed',
+                archiveError: 'Archive failed',
+                archiveSnapshot: 'Snapshot {time}',
+              },
+            },
+          },
+        },
+      ],
+    });
+
+    const news = TestBed.inject(NewsService);
+    // Simulate hydrated prerender state: week already selected, X empty, no browser fetch yet.
+    news.archiveWeekId.set('2026-W37');
+    news.archiveFeeds.set({
+      itc_linkedin: filledWeek.feeds.itc_linkedin,
+      itc_x: { items: [], profile_url: 'https://x.com/interchouette' },
+    });
+
+    news.selectArchiveWeek('2026-W37');
+    await vi.waitFor(() => {
+      expect(news.archiveFeeds()?.itc_x.items[0]?.text).toBe('Live archive X');
+    });
+    expect(fetchMock).toHaveBeenCalled();
+  });
 });
