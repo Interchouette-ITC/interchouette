@@ -15,7 +15,7 @@ use tracing::warn;
 use utoipa::ToSchema;
 
 use super::github_sync::GitHubNewsSync;
-use super::types::{NewsFeed, NewsFeeds, NewsItem, NewsResponse};
+use super::types::{sort_news_items_newest_first, NewsFeed, NewsFeeds, NewsItem, NewsResponse};
 
 const RETENTION_WEEKS: i64 = 52;
 const DEFAULT_NEWS_DB_DEPLOY: &str = "/app/db/news.db";
@@ -215,6 +215,10 @@ impl NewsArchive {
                 _ => {}
             }
         }
+        // Scraped rows often share the same last_seen_at and lack published_at;
+        // rank by snowflake id (and published_at when present), not scrape batch time.
+        sort_news_items_newest_first(&mut linkedin);
+        sort_news_items_newest_first(&mut x);
         Some(NewsResponse {
             fetched_at: if latest_seen.is_empty() {
                 Utc::now().to_rfc3339()
@@ -537,6 +541,86 @@ mod tests {
             .collect();
         assert!(ids.contains(&"111"));
         assert!(ids.contains(&"222"));
+        let _ = tokio::fs::remove_file(&path).await;
+    }
+
+    #[tokio::test]
+    async fn get_week_orders_by_activity_id_when_published_at_missing() {
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!("news-archive-order-{nanos}.db"));
+        let archive = NewsArchive::from_path(&path).await;
+        assert!(archive.pool.is_some());
+
+        let batch = NewsResponse {
+            fetched_at: "2026-09-17T12:00:00Z".into(),
+            cache_ttl_secs: 14400,
+            feeds: NewsFeeds {
+                itc_linkedin: NewsFeed {
+                    items: vec![
+                        NewsItem {
+                            id: "100".into(),
+                            text: "oldest".into(),
+                            url: "https://www.linkedin.com/feed/update/urn:li:activity:100".into(),
+                            published_at: None,
+                        },
+                        NewsItem {
+                            id: "300".into(),
+                            text: "newest".into(),
+                            url: "https://www.linkedin.com/feed/update/urn:li:activity:300".into(),
+                            published_at: None,
+                        },
+                        NewsItem {
+                            id: "200".into(),
+                            text: "mid".into(),
+                            url: "https://www.linkedin.com/feed/update/urn:li:activity:200".into(),
+                            published_at: None,
+                        },
+                    ],
+                    profile_url: PROFILE_LINKEDIN.into(),
+                    error: None,
+                },
+                itc_x: NewsFeed {
+                    items: vec![
+                        NewsItem {
+                            id: "10".into(),
+                            text: "x-old".into(),
+                            url: "https://x.com/interchouette/status/10".into(),
+                            published_at: None,
+                        },
+                        NewsItem {
+                            id: "30".into(),
+                            text: "x-new".into(),
+                            url: "https://x.com/interchouette/status/30".into(),
+                            published_at: None,
+                        },
+                    ],
+                    profile_url: PROFILE_X.into(),
+                    error: None,
+                },
+            },
+        };
+        archive.upsert_week("en", &batch).await;
+
+        let week = archive.get_week("en", "2026-W38").await.expect("week");
+        let li: Vec<_> = week
+            .feeds
+            .itc_linkedin
+            .items
+            .iter()
+            .map(|i| i.id.as_str())
+            .collect();
+        let x: Vec<_> = week
+            .feeds
+            .itc_x
+            .items
+            .iter()
+            .map(|i| i.id.as_str())
+            .collect();
+        assert_eq!(li, vec!["300", "200", "100"]);
+        assert_eq!(x, vec!["30", "10"]);
         let _ = tokio::fs::remove_file(&path).await;
     }
 }
