@@ -87,6 +87,13 @@ impl NewsFetcher {
         {
             Ok(html) => {
                 let items = parse_x(&html, &profile_url, self.fetch_limit);
+                if items.is_empty() {
+                    return NewsFeed {
+                        items,
+                        profile_url,
+                        error: Some("X timeline could not be parsed".into()),
+                    };
+                }
                 NewsFeed {
                     items,
                     profile_url,

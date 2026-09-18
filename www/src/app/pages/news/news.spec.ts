@@ -32,5 +32,9 @@ describe('NewsPage', () => {
     expect(el.querySelector('.news-archive-nav')).toBeTruthy();
     expect(el.querySelector('.news-meta--archive')).toBeTruthy();
     expect(loadSpy).toHaveBeenCalled();
+    const tabs = Array.from(el.querySelectorAll('[role="tab"]')).map((tab) =>
+      tab.textContent?.replace(/\s+/g, ' ').trim(),
+    );
+    expect(tabs[0]).toContain('LinkedIn');
   });
 });

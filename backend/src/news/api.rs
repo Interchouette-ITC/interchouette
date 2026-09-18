@@ -83,8 +83,10 @@ impl NewsState {
     }
 
     async fn refresh(&self, locale: &str) -> Result<NewsResponse, String> {
-        let itc_linkedin = self.fetcher.fetch_itc_linkedin().await;
-        let itc_x = self.fetcher.fetch_itc_x().await;
+        let (itc_linkedin, itc_x) = tokio::join!(
+            self.fetcher.fetch_itc_linkedin(),
+            self.fetcher.fetch_itc_x()
+        );
         let response = NewsResponse {
             fetched_at: Utc::now().to_rfc3339(),
             cache_ttl_secs: self.cache_ttl_secs,
