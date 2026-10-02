@@ -13,7 +13,7 @@ concurrency:
 permissions:
   contents: read
 
-# Action runtimes: Node 24+ (checkout / setup-node v7).
+# Action runtimes: Node 24+ (checkout / setup-node / upload-artifact v7).
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
@@ -83,7 +83,7 @@ jobs:
 
       - name: Upload browser publish dir
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: browser-dist-on-failure
           path: www/dist/interchouette/browser
