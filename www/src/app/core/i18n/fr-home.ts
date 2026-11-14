@@ -10,6 +10,7 @@ export const FR_HOME = {
   cv: 'Ouvrir le CV de Gregory Roussac (PDF)',
   github: "Organisation GitHub Interchouette ITC (s'ouvre dans un nouvel onglet)",
   linkedin: "Profil LinkedIn de Gregory Roussac (s'ouvre dans un nouvel onglet)",
+  rust: "Portfolio Rust rust.contact (s'ouvre dans un nouvel onglet)",
   whatsapp: "WhatsApp Interchouette (s'ouvre dans un nouvel onglet)",
   signal: "Identifiant Signal interchouette.42 (s'ouvre dans un nouvel onglet)",
   slack: "Espace Slack Interchouette (s'ouvre dans un nouvel onglet)",

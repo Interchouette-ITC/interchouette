@@ -671,14 +671,18 @@
   background-color: #3a76f0;
 }
 
+.icons.animated.pulse .fa-crab:hover {
+  background-color: #ce422b;
+}
+
+/* Same box as the font glyphs (2em circle) so the hover disc matches LinkedIn. */
+.icons .fa-stack svg.fa-crab,
 .icons .fa-stack svg.fa-signal-messenger {
-  left: 50%;
-  top: 50%;
-  width: 0.85em;
-  height: 0.85em;
-  margin: 0;
-  transform: translate(-50%, -50%);
-  overflow: visible;
+  top: 0;
+  width: 2em;
+  height: 2em;
+  padding: 0.55em;
+  box-sizing: border-box;
 }
 
 /*---------- ICONS ENDS---------------*/
