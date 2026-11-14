@@ -37,6 +37,7 @@ export const FR: SiteCopy = {
   descHome:
     'Gregory Roussac, développeur freelance Rust et Wasm (Interchouette ITC). Contact, CV et liens.',
   titleNews: 'Actualités - Interchouette',
+  titleRust: 'Portfolio Rust',
   titleArchive: 'Archives des actualités - Interchouette',
   titleSlack: "Rejoindre l'espace Slack Interchouette (s'ouvre dans un nouvel onglet)",
   descNews: 'Actualités Interchouette ITC.',

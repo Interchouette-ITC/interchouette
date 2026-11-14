@@ -25,6 +25,9 @@ describe('SiteHeader', () => {
       COPY.en.headerMenu,
     );
     expect(el.querySelector('a[routerlink="/news"]')?.textContent?.trim()).toBe(COPY.en.headerNews);
+    expect(el.querySelector('a[href="https://rust.contact/"]')?.getAttribute('title')).toBe(
+      COPY.en.titleRust,
+    );
     expect(login?.getAttribute('title')).toBe(COPY.en.titleLogin);
     expect(login?.textContent?.trim()).toBe(COPY.en.headerLogin);
     expect(el.querySelector('a.site-header__slack')?.textContent?.trim()).toBe(COPY.en.headerSlack);
