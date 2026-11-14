@@ -303,13 +303,14 @@
 }
 
 .chat-panel--expanded {
-  top: max(0.75rem, env(safe-area-inset-top));
+  top: max(var(--chat-panel-top-gap), env(safe-area-inset-top));
   right: max(0.75rem, env(safe-area-inset-right));
   bottom: max(0.75rem, env(safe-area-inset-bottom));
   left: max(0.75rem, env(safe-area-inset-left));
   width: auto;
   height: auto;
   max-width: none;
+  max-height: none;
   border-radius: 1.35rem;
   transform: none;
 }
