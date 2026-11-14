@@ -22,5 +22,6 @@ describe('HomePage', () => {
     expect(el.querySelector('a[href="https://github.com/Interchouette-ITC"]')).toBeTruthy();
     expect(el.querySelector('a[href="mailto:contact@interchouette.net"]')).toBeTruthy();
     expect(el.querySelector('svg.fa-signal-messenger')).toBeTruthy();
+    expect(el.querySelector('a[href="https://rust.contact/"] svg.fa-crab')).toBeTruthy();
   });
 });
