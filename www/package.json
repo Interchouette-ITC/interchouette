@@ -40,7 +40,7 @@
     "@angular/build": "^22.2.7",
     "@angular/cli": "^22.2.7",
     "@angular/compiler-cli": "^22.2.6",
-    "@ngx-env/builder": "^22.0.0",
+    "@ngx-env/builder": "^22.1.0",
     "@playwright/test": "^1.65.0",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.6",
