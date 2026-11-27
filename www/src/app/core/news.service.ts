@@ -70,7 +70,7 @@ export class NewsService {
   private archiveWeekClientLoaded: string | null = null;
 
   /**
-   * Load news from API `GET /v1/news` (4h server cache).
+   * Load news from API `GET /v1/news` (24h server cache by default).
    * No static snapshot: browser and future SSR both use the live API.
    */
   load(): void {

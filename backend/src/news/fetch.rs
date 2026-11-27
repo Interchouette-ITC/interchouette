@@ -9,8 +9,7 @@ use super::parse_x::parse_x;
 use super::tor::Tor;
 use super::types::NewsFeed;
 
-const BROWSER_USER_AGENT: &str =
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+const BROWSER_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
 /// Outbound fetch client for news sources.
 #[derive(Clone)]
@@ -184,10 +183,34 @@ impl NewsFetcher {
 #[cfg(test)]
 mod tests {
     use std::io::{Read, Write};
-    use std::net::TcpListener;
+    use std::net::{TcpListener, TcpStream};
     use std::thread;
 
     use super::*;
+
+    fn accept_socks_request(stream: &mut TcpStream, port: u16) {
+        stream
+            .set_read_timeout(Some(Duration::from_secs(5)))
+            .unwrap();
+        let mut handshake = [0; 3];
+        stream.read_exact(&mut handshake).unwrap();
+        assert_eq!(handshake, [5, 1, 0]);
+        stream.write_all(&[5, 0]).unwrap();
+
+        let mut request = [0; 5];
+        stream.read_exact(&mut request).unwrap();
+        assert_eq!(&request[..4], &[5, 1, 0, 3]);
+        let mut host_and_port = vec![0; usize::from(request[4]) + 2];
+        stream.read_exact(&mut host_and_port).unwrap();
+        assert_eq!(&host_and_port[..host_and_port.len() - 2], b"news.invalid");
+        assert_eq!(
+            &host_and_port[host_and_port.len() - 2..],
+            &port.to_be_bytes()
+        );
+        stream
+            .write_all(&[5, 0, 0, 1, 127, 0, 0, 1, 0, 80])
+            .unwrap();
+    }
 
     #[tokio::test]
     async fn linkedin_client_sends_hostname_and_request_through_socks() {
@@ -195,23 +218,7 @@ mod tests {
         let addr = listener.local_addr().unwrap();
         let server = thread::spawn(move || {
             let (mut stream, _) = listener.accept().unwrap();
-            stream
-                .set_read_timeout(Some(Duration::from_secs(5)))
-                .unwrap();
-            let mut handshake = [0; 3];
-            stream.read_exact(&mut handshake).unwrap();
-            assert_eq!(handshake, [5, 1, 0]);
-            stream.write_all(&[5, 0]).unwrap();
-
-            let mut request = [0; 5];
-            stream.read_exact(&mut request).unwrap();
-            assert_eq!(&request[..4], &[5, 1, 0, 3]);
-            let mut host_and_port = vec![0; usize::from(request[4]) + 2];
-            stream.read_exact(&mut host_and_port).unwrap();
-            assert_eq!(&host_and_port[..host_and_port.len() - 2], b"news.invalid");
-            stream
-                .write_all(&[5, 0, 0, 1, 127, 0, 0, 1, 0, 80])
-                .unwrap();
+            accept_socks_request(&mut stream, 80);
 
             let mut http = [0; 2048];
             let count = stream.read(&mut http).unwrap();
@@ -236,6 +243,28 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(body, "ok");
+        server.join().unwrap();
+    }
+
+    #[tokio::test]
+    async fn linkedin_https_uses_socks_before_tls() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            accept_socks_request(&mut stream, 443);
+            let mut tls_record_type = [0; 1];
+            stream.read_exact(&mut tls_record_type).unwrap();
+            assert_eq!(tls_record_type, [0x16]);
+        });
+
+        let http = NewsFetcher::tor_http_client(addr).unwrap();
+        assert!(
+            http.get("https://news.invalid/company")
+                .send()
+                .await
+                .is_err()
+        );
         server.join().unwrap();
     }
 }

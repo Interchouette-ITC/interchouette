@@ -1,14 +1,15 @@
 //! News HTTP routes and refresh orchestration.
 
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use axum::extract::{Path, Query, State};
-use axum::http::{header, HeaderValue, StatusCode};
+use axum::http::{HeaderValue, StatusCode, header};
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::{Json, Router};
 use chrono::Utc;
 use serde::Deserialize;
+use tokio::sync::Mutex;
 use tracing::warn;
 
 use super::archive::{NewsArchive, NewsArchiveIndex};
@@ -17,10 +18,13 @@ use super::feed::{build_atom, build_rss};
 use super::fetch::NewsFetcher;
 use super::types::{NewsFeed, NewsFeeds, NewsResponse};
 
+const DEFAULT_CACHE_TTL_SECS: u64 = 86_400;
+
 /// Shared news runtime state.
 #[derive(Clone)]
 pub struct NewsState {
     cache: NewsCache,
+    refresh_lock: Arc<Mutex<()>>,
     fetcher: NewsFetcher,
     archive: NewsArchive,
     cache_ttl_secs: u64,
@@ -32,9 +36,10 @@ impl NewsState {
         let cache_ttl_secs = std::env::var("NEWS_CACHE_TTL_SECS")
             .ok()
             .and_then(|v| v.parse().ok())
-            .unwrap_or(14400);
+            .unwrap_or(DEFAULT_CACHE_TTL_SECS);
         Self {
             cache: NewsCache::default(),
+            refresh_lock: Arc::new(Mutex::new(())),
             fetcher: NewsFetcher::from_env(),
             archive: NewsArchive::from_env().await,
             cache_ttl_secs,
@@ -46,9 +51,10 @@ impl NewsState {
     fn without_archive() -> Self {
         Self {
             cache: NewsCache::default(),
+            refresh_lock: Arc::new(Mutex::new(())),
             fetcher: NewsFetcher::from_env(),
             archive: NewsArchive::default(),
-            cache_ttl_secs: 14400,
+            cache_ttl_secs: DEFAULT_CACHE_TTL_SECS,
         }
     }
 
@@ -63,27 +69,27 @@ impl NewsState {
             .with_state(self)
     }
 
-    /// Prefetch feeds for all site locales when the process starts.
+    /// Prefetch the shared feed when the process starts.
     pub fn spawn_cache_warmup(self) {
         tokio::spawn(async move {
-            // One scrape + archive merge; news feeds are locale-agnostic.
-            let shared = self.load("en").await;
-            for locale in ["nl", "fr"] {
-                self.cache.put(locale, shared.clone()).await;
-            }
+            self.load("en").await;
             tracing::info!("news cache warmup finished");
         });
     }
 
     async fn load(&self, locale: &str) -> NewsResponse {
         let ttl = Duration::from_secs(self.cache_ttl_secs);
-        if let Some(cached) = self.cache.get_fresh(locale, ttl).await {
+        if let Some(cached) = self.cache.get_fresh(ttl).await {
+            return cached;
+        }
+        let _refresh_guard = self.refresh_lock.lock().await;
+        if let Some(cached) = self.cache.get_fresh(ttl).await {
             return cached;
         }
         match self.refresh(locale).await {
             Ok(response) => response,
             Err(err) => {
-                if let Some(stale) = self.cache.get_stale(locale).await {
+                if let Some(stale) = self.cache.get_stale().await {
                     warn!(error = %err, locale, "news refresh failed; serving stale cache");
                     return stale;
                 }
@@ -107,7 +113,7 @@ impl NewsState {
             },
         };
         self.archive.upsert_week(locale, &response).await;
-        let cached = self.cache.get_stale(locale).await;
+        let cached = self.cache.get_stale().await;
         self.restore_failed_feed(
             "linkedin",
             &mut response.feeds.itc_linkedin,
@@ -120,7 +126,7 @@ impl NewsState {
             cached.as_ref().map(|value| &value.feeds.itc_x),
         )
         .await;
-        self.cache.put(locale, response.clone()).await;
+        self.cache.put(response.clone()).await;
         Ok(response)
     }
 
@@ -173,7 +179,7 @@ pub async fn news_handler(
     Json(state.load(&locale).await)
 }
 
-/// RSS 2.0 from the same 4h news cache as `GET /v1/news`.
+/// RSS 2.0 from the same news cache as `GET /v1/news`.
 #[utoipa::path(
     get,
     path = "/v1/news/rss.xml",
@@ -190,7 +196,7 @@ pub async fn news_rss_handler(
     xml_response("application/rss+xml; charset=utf-8", body)
 }
 
-/// Atom 1.0 from the same 4h news cache as `GET /v1/news`.
+/// Atom 1.0 from the same news cache as `GET /v1/news`.
 #[utoipa::path(
     get,
     path = "/v1/news/atom.xml",
@@ -335,7 +341,7 @@ mod tests {
             error: Some("unavailable".into()),
         };
         state.restore_failed_feed("x", &mut other, None).await;
-        assert!(other.items.is_empty());
+        assert_eq!(other.items, []);
         state
             .restore_failed_feed("x", &mut other, Some(&archived))
             .await;
@@ -350,7 +356,7 @@ mod tests {
         state
             .restore_failed_feed("linkedin", &mut successful, Some(&archived))
             .await;
-        assert!(successful.items.is_empty());
+        assert_eq!(successful.items, []);
         drop(state);
         tokio::fs::remove_file(path).await.expect("remove archive");
     }
@@ -363,11 +369,34 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn concurrent_locales_share_an_in_progress_refresh() {
+        let state = NewsState::without_archive();
+        let guard = state.refresh_lock.lock().await;
+        let en = {
+            let state = state.clone();
+            tokio::spawn(async move { state.load("en").await })
+        };
+        let fr = {
+            let state = state.clone();
+            tokio::spawn(async move { state.load("fr").await })
+        };
+        tokio::task::yield_now().await;
+        let response = empty_response("en", DEFAULT_CACHE_TTL_SECS, None);
+        state.cache.put(response.clone()).await;
+        drop(guard);
+        let (en, fr) = tokio::time::timeout(Duration::from_secs(2), async { tokio::join!(en, fr) })
+            .await
+            .expect("waiting requests should reuse the shared cache");
+        assert_eq!(en.unwrap(), response);
+        assert_eq!(fr.unwrap(), response);
+    }
+
+    #[tokio::test]
     async fn news_endpoint_returns_json_shape() {
         let state = NewsState::without_archive();
         state
             .cache
-            .put("en", empty_response("en", 14400, None))
+            .put(empty_response("en", DEFAULT_CACHE_TTL_SECS, None))
             .await;
         let app = state.router();
         let response = app
@@ -387,7 +416,7 @@ mod tests {
         let state = NewsState::without_archive();
         state
             .cache
-            .put("en", empty_response("en", 14400, None))
+            .put(empty_response("en", DEFAULT_CACHE_TTL_SECS, None))
             .await;
         let app = state.router();
         let response = app

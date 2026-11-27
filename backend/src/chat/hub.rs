@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use tokio::sync::{broadcast, RwLock};
+use tokio::sync::{RwLock, broadcast};
 
 /// Events pushed to the browser over WebSocket.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]

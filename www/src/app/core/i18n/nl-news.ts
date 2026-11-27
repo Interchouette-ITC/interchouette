@@ -9,7 +9,7 @@ export const NL_NEWS = {
   viewOnLinkedIn: 'Bekijk op LinkedIn',
   viewOnX: 'Bekijk op X',
   updated: 'Laatst gecontroleerd {time}',
-  cacheNote: 'Wordt ongeveer elke 4 uur ververst.',
+  cacheNote: 'Wordt ongeveer eenmaal per dag ververst.',
   profileItcLinkedIn: 'Interchouette op LinkedIn',
   profileItcX: '@interchouette op X',
   archiveLink: 'Archief',

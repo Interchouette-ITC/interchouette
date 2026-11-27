@@ -1,7 +1,7 @@
 # interchouette-chat - WebSocket chat on :8080
 # Build context: repo root (needs backend/)
 
-ARG RUST_IMAGE=rust:1.97-bookworm
+ARG RUST_IMAGE=rust:bookworm
 ARG RUNTIME_IMAGE=debian:bookworm-slim
 
 FROM ${RUST_IMAGE} AS builder

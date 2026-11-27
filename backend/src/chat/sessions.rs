@@ -123,8 +123,7 @@ impl SessionRegistry {
             .read()
             .await
             .get(id)
-            .map(|s| s.lines.clone())
-            .unwrap_or_default()
+            .map_or_default(|s| s.lines.clone())
     }
 
     /// Bind Slack DM channel + thread parent ts.

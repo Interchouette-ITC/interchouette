@@ -48,7 +48,7 @@ pub fn week_id_from_slug(slug: &str) -> Option<&str> {
 #[must_use]
 pub fn format_news_snapshot(body: &Value) -> String {
     let mut out = String::from(
-        "Interchouette News (API cache, about every 4 hours)\n\
+        "Interchouette News (API cache, about once a day by default)\n\
          Page: https://interchouette.net/news\n\
          JSON: https://api.interchouette.net/v1/news\n\
          RSS: https://api.interchouette.net/v1/news/rss.xml\n\

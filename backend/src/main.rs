@@ -4,7 +4,7 @@ use std::path::Path;
 
 use anyhow::Result;
 use clap::Parser;
-use interchouette_chat::server::{run_http, DEFAULT_HTTP_LISTEN};
+use interchouette_chat::server::{DEFAULT_HTTP_LISTEN, run_http};
 
 #[derive(Debug, Parser)]
 #[command(
@@ -50,12 +50,11 @@ async fn main() -> Result<()> {
     load_dotenv();
     init_logging();
     let mut cli = Cli::parse();
-    if std::env::var("CHAT_LISTEN").is_err() {
-        if let Ok(port) = std::env::var("PORT") {
-            if !port.is_empty() {
-                cli.listen = format!("0.0.0.0:{port}");
-            }
-        }
+    if std::env::var("CHAT_LISTEN").is_err()
+        && let Ok(port) = std::env::var("PORT")
+        && !port.is_empty()
+    {
+        cli.listen = format!("0.0.0.0:{port}");
     }
     tracing::info!(addr = %cli.listen, "interchouette-chat starting");
     run_http(&cli.listen, cli.cors_origin).await?;

@@ -1,11 +1,11 @@
 //! Chat HTTP listener (`/v1/sessions`, `/health`, `/openapi.json`).
 
 use anyhow::Result;
-use axum::routing::get;
 use axum::Router;
+use axum::routing::get;
 use tower_http::cors::{Any, CorsLayer};
 
-use crate::chat::{chat_router, AwayBrain, ChatState};
+use crate::chat::{AwayBrain, ChatState, chat_router};
 use crate::news::NewsState;
 use crate::openapi::{health, openapi_router};
 
@@ -46,10 +46,10 @@ fn build_cors(cors_origin: &str) -> CorsLayer {
         HeaderValue::from_static("http://127.0.0.1:4201"),
         HeaderValue::from_static("http://localhost:4201"),
     ];
-    if let Ok(extra) = cors_origin.parse::<HeaderValue>() {
-        if !origins.contains(&extra) {
-            origins.push(extra);
-        }
+    if let Ok(extra) = cors_origin.parse::<HeaderValue>()
+        && !origins.contains(&extra)
+    {
+        origins.push(extra);
     }
     CorsLayer::new()
         .allow_origin(origins)

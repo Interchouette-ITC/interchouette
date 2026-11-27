@@ -9,7 +9,7 @@ export const FR_NEWS = {
   viewOnLinkedIn: 'Voir sur LinkedIn',
   viewOnX: 'Voir sur X',
   updated: 'Dernière vérification {time}',
-  cacheNote: 'Actualisation environ toutes les 4 heures.',
+  cacheNote: 'Actualisation environ une fois par jour.',
   profileItcLinkedIn: 'Interchouette sur LinkedIn',
   profileItcX: '@interchouette sur X',
   archiveLink: 'Archives',

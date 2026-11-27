@@ -285,7 +285,7 @@ impl SlackPresence {
 
 #[cfg(test)]
 mod tests {
-    use super::{dnd_info_is_on, resolve_slack_mode, status_text_means_away, PresenceMode};
+    use super::{PresenceMode, dnd_info_is_on, resolve_slack_mode, status_text_means_away};
     use serde_json::json;
 
     #[test]

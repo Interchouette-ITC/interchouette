@@ -2,7 +2,7 @@ name: Nightly www deploy
 
 on:
   schedule:
-    # 04:00 Europe/Paris - refresh prerendered /news and /archive after API cache (~4h).
+    # 04:00 Europe/Paris - refresh prerendered /news and /archive.
     - cron: '0 4 * * *'
       timezone: Europe/Paris
   workflow_dispatch:

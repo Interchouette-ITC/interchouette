@@ -17,7 +17,7 @@ mod sessions;
 mod slack;
 mod socket;
 
-pub use api::{chat_router, ChatState};
+pub use api::{ChatState, chat_router};
 pub use calendar::CalendarClient;
 pub use env_label::chat_env_label;
 pub use llm::AwayBrain;

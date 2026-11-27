@@ -3,12 +3,12 @@
 use std::time::Duration;
 
 use futures_util::{SinkExt, StreamExt};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
+use crate::chat::ChatState;
 use crate::chat::reply_parse::{parse_session_header, parse_session_reply};
 use crate::chat::sessions::Session;
-use crate::chat::ChatState;
 
 /// Apply a Greg Slack message to a live session.
 ///
@@ -33,17 +33,17 @@ pub async fn forward_greg_reply(
             );
             return true;
         }
-        if let (Some(ch), Some(ts)) = (channel.filter(|c| !c.is_empty()), Some(ts)) {
-            if let Some(session) = resolve_session_via_slack_thread(state, ch, ts).await {
-                publish_greg(state, &session.id, text).await;
-                tracing::info!(
-                    code = %session.short_code,
-                    session = %session.id,
-                    %ts,
-                    "forwarded Greg reply via Slack thread header lookup"
-                );
-                return true;
-            }
+        if let (Some(ch), Some(ts)) = (channel.filter(|c| !c.is_empty()), Some(ts))
+            && let Some(session) = resolve_session_via_slack_thread(state, ch, ts).await
+        {
+            publish_greg(state, &session.id, text).await;
+            tracing::info!(
+                code = %session.short_code,
+                session = %session.id,
+                %ts,
+                "forwarded Greg reply via Slack thread header lookup"
+            );
+            return true;
         }
     }
 
