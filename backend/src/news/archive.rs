@@ -3,6 +3,7 @@
 //! Items merge by `(source, item_id)` and bucket into ISO weeks from `published_at`.
 //! Live `/v1/news` stays an in-memory top-N snapshot; archive GETs rebuild from rows.
 
+use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -500,7 +501,11 @@ fn content_hash(source: &str, item_id: &str, url: &str) -> String {
     hasher.update(item_id.as_bytes());
     hasher.update([0]);
     hasher.update(url.as_bytes());
-    format!("{:x}", hasher.finalize())
+    let mut output = String::with_capacity(32);
+    for byte in hasher.finalize() {
+        write!(&mut output, "{byte:02x}").expect("writing to a String cannot fail");
+    }
+    output
 }
 
 /// ISO week id `YYYY-Www` from an RFC3339 timestamp (UTC).
@@ -569,7 +574,7 @@ mod tests {
     fn content_hash_is_stable() {
         assert_eq!(
             content_hash("x", "1", "https://example.com/1"),
-            content_hash("x", "1", "https://example.com/1")
+            "f7c81f4e0880e49060030efecc8bf2b8"
         );
         assert_ne!(
             content_hash("x", "1", "https://example.com/1"),
