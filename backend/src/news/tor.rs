@@ -1,4 +1,4 @@
-//! A separate Tor process and data directory for each LinkedIn refresh.
+//! A separate Tor process and data directory for each `LinkedIn` refresh.
 
 use std::net::SocketAddr;
 use std::process::Stdio;
@@ -7,7 +7,7 @@ use std::time::Duration;
 use tokio::io::{AsyncBufRead, AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
 
-const BOOTSTRAP_TIMEOUT: Duration = Duration::from_secs(120);
+const BOOTSTRAP_TIMEOUT: Duration = Duration::from_mins(2);
 
 pub(super) struct Tor {
     child: Child,
@@ -61,7 +61,7 @@ impl Tor {
         })
     }
 
-    pub(super) fn socks_addr(&self) -> SocketAddr {
+    pub(super) const fn socks_addr(&self) -> SocketAddr {
         self.socks_addr
     }
 

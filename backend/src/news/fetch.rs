@@ -27,7 +27,7 @@ impl Default for NewsFetcher {
 }
 
 impl NewsFetcher {
-    pub fn fetch_limit(&self) -> usize {
+    pub const fn fetch_limit(&self) -> usize {
         self.fetch_limit
     }
 
