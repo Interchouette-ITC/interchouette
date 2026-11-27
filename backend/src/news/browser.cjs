@@ -19,6 +19,7 @@ async function main() {
     ],
   });
   try {
+    console.error('Puppeteer: Chromium launched');
     const page = await browser.newPage();
     if (cookie) {
       await browser.setCookie({ name: 'li_at', value: cookie, domain: '.linkedin.com', path: '/', secure: true });
@@ -27,6 +28,7 @@ async function main() {
     page.on('response', (response) => {
       if (response.request().isNavigationRequest() && response.frame() === page.mainFrame()) {
         status = response.status();
+        console.error(`Puppeteer: LinkedIn navigation HTTP ${status}`);
       }
     });
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -41,6 +43,7 @@ async function main() {
       if (!(error instanceof puppeteer.TimeoutError)) throw error;
       throw new Error(`LinkedIn page contains no posts (HTTP ${status ?? 'unknown'}, title: ${await page.title()})`);
     }
+    console.error('Puppeteer: LinkedIn post content detected');
     process.stdout.write(await page.content());
   } finally {
     await browser.close();

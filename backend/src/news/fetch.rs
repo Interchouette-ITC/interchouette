@@ -3,7 +3,10 @@
 use std::{process::Stdio, time::Duration};
 
 use reqwest::Client;
-use tokio::{io::AsyncWriteExt, process::Command};
+use tokio::{
+    io::{AsyncBufRead, AsyncBufReadExt, AsyncWriteExt, BufReader},
+    process::Command,
+};
 
 use super::parse_linkedin::{is_linkedin_authwall, parse_linkedin};
 use super::parse_x::parse_x;
@@ -61,7 +64,13 @@ impl NewsFetcher {
             "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all".into();
         let fetch_url = "https://www.linkedin.com/company/interchouette-itc";
         match self.fetch_linkedin_html(fetch_url).await {
-            Ok(html) => linkedin_feed(&html, profile_url, self.fetch_limit),
+            Ok(html) => {
+                let feed = linkedin_feed(&html, profile_url, self.fetch_limit);
+                if feed.error.is_none() {
+                    tracing::info!(posts = feed.items.len(), "LinkedIn refresh succeeded");
+                }
+                feed
+            }
             Err(err) => NewsFeed {
                 items: vec![],
                 profile_url,
@@ -98,7 +107,9 @@ impl NewsFetcher {
     }
 
     async fn fetch_linkedin_html(&self, url: &str) -> Result<String, String> {
+        tracing::info!("starting fresh Tor for LinkedIn refresh");
         let mut tor = Tor::start().await?;
+        tracing::info!("Tor bootstrapped for LinkedIn refresh");
         let result = self.fetch_with_browser(url, tor.socks_addr()).await;
         match (result, tor.stop().await) {
             (result, Ok(())) => result,
@@ -113,6 +124,11 @@ impl NewsFetcher {
         socks_addr: std::net::SocketAddr,
     ) -> Result<String, String> {
         let display = std::env::var_os("DISPLAY").filter(|value| !value.is_empty());
+        let virtual_display = display.is_none();
+        tracing::info!(
+            virtual_display,
+            "starting Puppeteer for LinkedIn through Tor"
+        );
         let mut command = if display.is_some() {
             Command::new("node")
         } else {
@@ -149,6 +165,11 @@ impl NewsFetcher {
             .kill_on_drop(true)
             .spawn()
             .map_err(|err| format!("LinkedIn browser start failed: {err}"))?;
+        let stderr = child
+            .stderr
+            .take()
+            .ok_or_else(|| "LinkedIn browser stderr unavailable".to_string())?;
+        let stderr_task = tokio::spawn(Self::collect_browser_stderr(BufReader::new(stderr)));
         let mut stdin = child
             .stdin
             .take()
@@ -158,19 +179,40 @@ impl NewsFetcher {
             .await
             .map_err(|err| format!("LinkedIn browser input failed: {err}"))?;
         drop(stdin);
-        let output = child
-            .wait_with_output()
+        let output = child.wait_with_output().await;
+        let stderr = stderr_task
             .await
-            .map_err(|err| format!("LinkedIn browser process failed: {err}"))?;
+            .map_err(|err| format!("LinkedIn browser log task failed: {err}"))??;
+        let output = output.map_err(|err| format!("LinkedIn browser process failed: {err}"))?;
         if !output.status.success() {
             return Err(format!(
                 "LinkedIn browser exited with {}: {}",
                 output.status,
-                String::from_utf8_lossy(&output.stderr).trim()
+                stderr.trim()
             ));
         }
         String::from_utf8(output.stdout)
             .map_err(|err| format!("LinkedIn browser returned invalid UTF-8: {err}"))
+    }
+
+    async fn collect_browser_stderr<R: AsyncBufRead + Unpin>(reader: R) -> Result<String, String> {
+        let mut lines = reader.lines();
+        let mut errors = String::new();
+        while let Some(line) = lines
+            .next_line()
+            .await
+            .map_err(|err| format!("LinkedIn browser log read failed: {err}"))?
+        {
+            if let Some(message) = line.strip_prefix("Puppeteer: ") {
+                tracing::info!(message, "LinkedIn Puppeteer");
+            } else {
+                if !errors.is_empty() {
+                    errors.push('\n');
+                }
+                errors.push_str(&line);
+            }
+        }
+        Ok(errors)
     }
 
     async fn fetch_html(&self, url: &str) -> Result<String, String> {
@@ -221,6 +263,15 @@ fn linkedin_feed(html: &str, profile_url: String, limit: usize) -> NewsFeed {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn browser_progress_is_separate_from_failure_details() {
+        let logs = b"Puppeteer: Chromium launched\nPuppeteer: LinkedIn navigation HTTP 403\nLinkedIn browser fetch failed: blocked\n";
+        let errors = NewsFetcher::collect_browser_stderr(BufReader::new(&logs[..]))
+            .await
+            .expect("read browser logs");
+        assert_eq!(errors, "LinkedIn browser fetch failed: blocked");
+    }
 
     #[test]
     fn linkedin_empty_or_authwall_page_reports_failure() {

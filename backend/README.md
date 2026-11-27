@@ -57,6 +57,9 @@ provide `tor` on `PATH` and Chromium at `/usr/bin/chromium`. Set
 `PUPPETEER_EXECUTABLE_PATH` to use another Chromium executable. Without `DISPLAY`, `xvfb-run` and
 `xauth` are required. If the browser or Tor fails, LinkedIn reports an error
 rather than fetching directly. Cloudflare may still block browser requests.
+The API logs the start of each refresh, Tor bootstrap, Puppeteer launch and
+navigation status, and the number of successfully parsed LinkedIn posts.
+Failed refreshes log the error and whether cached or archived posts were used.
 Chromium's sandbox requires user namespaces. A local Docker test succeeded
 with `--security-opt seccomp=unconfined`, which disables Docker's seccomp
 filter for the whole container; the default Docker profile blocked the browser.
