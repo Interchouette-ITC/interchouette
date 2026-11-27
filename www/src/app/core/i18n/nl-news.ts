@@ -5,7 +5,6 @@ export const NL_NEWS = {
   tabItcX: 'Interchouette · X',
   loading: 'Berichten laden…',
   error: 'Berichten konden nu niet worden geladen.',
-  stale: 'Live updates zijn niet beschikbaar. Eerder opgehaalde berichten worden getoond.',
   empty: 'Nog geen berichten.',
   viewOnLinkedIn: 'Bekijk op LinkedIn',
   viewOnX: 'Bekijk op X',

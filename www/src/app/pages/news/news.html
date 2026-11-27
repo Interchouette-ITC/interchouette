@@ -86,9 +86,6 @@
               </p>
             }
           } @else {
-            @if (feedFor(tab)?.error) {
-              <p class="news-empty">{{ copy.news.stale }}</p>
-            }
             <ul class="news-list">
               @for (item of feedFor(tab)?.items ?? []; track item.id) {
                 <li class="news-item">

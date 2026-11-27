@@ -5,7 +5,6 @@ export const EN_NEWS = {
   tabItcX: 'Interchouette · X',
   loading: 'Loading posts…',
   error: 'Could not load posts right now.',
-  stale: 'Live updates are unavailable. Showing previously retrieved posts.',
   empty: 'No posts yet.',
   viewOnLinkedIn: 'View on LinkedIn',
   viewOnX: 'View on X',
