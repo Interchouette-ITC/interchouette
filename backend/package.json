@@ -1,0 +1,7 @@
+{
+  "name": "interchouette-news-browser",
+  "private": true,
+  "dependencies": {
+    "puppeteer-core": "25.19.0"
+  }
+}

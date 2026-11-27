@@ -1,8 +1,9 @@
 //! HTTP fetch helpers for public social profile pages.
 
-use std::{net::SocketAddr, time::Duration};
+use std::{process::Stdio, time::Duration};
 
 use reqwest::Client;
+use tokio::{io::AsyncWriteExt, process::Command};
 
 use super::parse_linkedin::{is_linkedin_authwall, parse_linkedin};
 use super::parse_x::parse_x;
@@ -10,6 +11,7 @@ use super::tor::Tor;
 use super::types::NewsFeed;
 
 const BROWSER_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+const BROWSER_SCRIPT: &str = include_str!("browser.cjs");
 
 /// Outbound fetch client for news sources.
 #[derive(Clone)]
@@ -59,21 +61,7 @@ impl NewsFetcher {
             "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all".into();
         let fetch_url = "https://www.linkedin.com/company/interchouette-itc";
         match self.fetch_linkedin_html(fetch_url).await {
-            Ok(html) => {
-                if is_linkedin_authwall(&html) {
-                    return NewsFeed {
-                        items: vec![],
-                        profile_url,
-                        error: Some("LinkedIn session expired or unavailable".into()),
-                    };
-                }
-                let items = parse_linkedin(&html, &profile_url, self.fetch_limit);
-                NewsFeed {
-                    items,
-                    profile_url,
-                    error: None,
-                }
-            }
+            Ok(html) => linkedin_feed(&html, profile_url, self.fetch_limit),
             Err(err) => NewsFeed {
                 items: vec![],
                 profile_url,
@@ -85,10 +73,7 @@ impl NewsFetcher {
     /// Fetch and parse the ITC X timeline (pinned tweet skipped by parser).
     pub async fn fetch_itc_x(&self) -> NewsFeed {
         let profile_url: String = "https://x.com/interchouette".into();
-        match self
-            .fetch_html(&self.http, &profile_url, false, BROWSER_USER_AGENT)
-            .await
-        {
+        match self.fetch_html(&profile_url).await {
             Ok(html) => {
                 let items = parse_x(&html, &profile_url, self.fetch_limit);
                 if items.is_empty() {
@@ -114,11 +99,7 @@ impl NewsFetcher {
 
     async fn fetch_linkedin_html(&self, url: &str) -> Result<String, String> {
         let mut tor = Tor::start().await?;
-        let result = async {
-            let http = Self::tor_http_client(tor.socks_addr())?;
-            self.fetch_html(&http, url, true, BROWSER_USER_AGENT).await
-        }
-        .await;
+        let result = self.fetch_with_browser(url, tor.socks_addr()).await;
         match (result, tor.stop().await) {
             (result, Ok(())) => result,
             (Ok(_), Err(err)) => Err(err),
@@ -126,42 +107,76 @@ impl NewsFetcher {
         }
     }
 
-    fn tor_http_client(socks_addr: SocketAddr) -> Result<Client, String> {
-        let proxy = reqwest::Proxy::all(format!("socks5h://{socks_addr}"))
-            .map_err(|err| format!("Tor proxy configuration failed: {err}"))?;
-        Client::builder()
-            .no_proxy()
-            .proxy(proxy)
-            .user_agent(BROWSER_USER_AGENT)
-            .timeout(Duration::from_secs(25))
-            .build()
-            .map_err(|err| format!("Tor HTTP client creation failed: {err}"))
-    }
-
-    async fn fetch_html(
+    async fn fetch_with_browser(
         &self,
-        http: &Client,
         url: &str,
-        linkedin: bool,
-        user_agent: &str,
+        socks_addr: std::net::SocketAddr,
     ) -> Result<String, String> {
-        let mut req = http.get(url).header("User-Agent", user_agent);
-        if linkedin {
-            req = req
-                .header(
-                    "Accept",
-                    "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                )
-                .header("Accept-Language", "en-US,en;q=0.9")
-                .header("Sec-Fetch-Dest", "document")
-                .header("Sec-Fetch-Mode", "navigate")
-                .header("Sec-Fetch-Site", "none")
-                .header("Upgrade-Insecure-Requests", "1");
-            if let Some(token) = &self.linkedin_li_at {
-                req = req.header("Cookie", format!("li_at={token}"));
+        let display = std::env::var_os("DISPLAY").filter(|value| !value.is_empty());
+        let mut command = if display.is_some() {
+            Command::new("node")
+        } else {
+            let mut command = Command::new("xvfb-run");
+            command.args(["-a", "node"]);
+            command
+        };
+        command.env_clear();
+        for key in [
+            "PATH",
+            "HOME",
+            "DISPLAY",
+            "XAUTHORITY",
+            "XDG_RUNTIME_DIR",
+            "WAYLAND_DISPLAY",
+            "PUPPETEER_EXECUTABLE_PATH",
+        ] {
+            if let Some(value) = std::env::var_os(key) {
+                command.env(key, value);
             }
         }
-        let resp = req
+        command.env("NEWS_BROWSER_MODULE_DIR", env!("CARGO_MANIFEST_DIR"));
+        let input = serde_json::to_vec(&serde_json::json!({
+            "url": url,
+            "socksAddr": socks_addr.to_string(),
+            "cookie": self.linkedin_li_at,
+        }))
+        .map_err(|err| format!("LinkedIn browser input failed: {err}"))?;
+        let mut child = command
+            .args(["-e", BROWSER_SCRIPT])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .kill_on_drop(true)
+            .spawn()
+            .map_err(|err| format!("LinkedIn browser start failed: {err}"))?;
+        let mut stdin = child
+            .stdin
+            .take()
+            .ok_or_else(|| "LinkedIn browser stdin unavailable".to_string())?;
+        stdin
+            .write_all(&input)
+            .await
+            .map_err(|err| format!("LinkedIn browser input failed: {err}"))?;
+        drop(stdin);
+        let output = child
+            .wait_with_output()
+            .await
+            .map_err(|err| format!("LinkedIn browser process failed: {err}"))?;
+        if !output.status.success() {
+            return Err(format!(
+                "LinkedIn browser exited with {}: {}",
+                output.status,
+                String::from_utf8_lossy(&output.stderr).trim()
+            ));
+        }
+        String::from_utf8(output.stdout)
+            .map_err(|err| format!("LinkedIn browser returned invalid UTF-8: {err}"))
+    }
+
+    async fn fetch_html(&self, url: &str) -> Result<String, String> {
+        let resp = self
+            .http
+            .get(url)
             .send()
             .await
             .map_err(|err| format!("fetch failed: {err}"))?;
@@ -180,91 +195,56 @@ impl NewsFetcher {
     }
 }
 
+fn linkedin_feed(html: &str, profile_url: String, limit: usize) -> NewsFeed {
+    let error = if is_linkedin_authwall(html) {
+        Some("LinkedIn session expired or unavailable".into())
+    } else {
+        None
+    };
+    let items = if error.is_none() {
+        parse_linkedin(html, &profile_url, limit)
+    } else {
+        Vec::new()
+    };
+    let error = error.or_else(|| {
+        items
+            .is_empty()
+            .then(|| "LinkedIn posts could not be parsed".into())
+    });
+    NewsFeed {
+        items,
+        profile_url,
+        error,
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use std::io::{Read, Write};
-    use std::net::{TcpListener, TcpStream};
-    use std::thread;
-
     use super::*;
 
-    fn accept_socks_request(stream: &mut TcpStream, port: u16) {
-        stream
-            .set_read_timeout(Some(Duration::from_secs(5)))
-            .unwrap();
-        let mut handshake = [0; 3];
-        stream.read_exact(&mut handshake).unwrap();
-        assert_eq!(handshake, [5, 1, 0]);
-        stream.write_all(&[5, 0]).unwrap();
-
-        let mut request = [0; 5];
-        stream.read_exact(&mut request).unwrap();
-        assert_eq!(&request[..4], &[5, 1, 0, 3]);
-        let mut host_and_port = vec![0; usize::from(request[4]) + 2];
-        stream.read_exact(&mut host_and_port).unwrap();
-        assert_eq!(&host_and_port[..host_and_port.len() - 2], b"news.invalid");
+    #[test]
+    fn linkedin_empty_or_authwall_page_reports_failure() {
+        let profile = "https://www.linkedin.com/company/interchouette-itc".to_string();
+        let empty = linkedin_feed("<html></html>", profile.clone(), 8);
         assert_eq!(
-            &host_and_port[host_and_port.len() - 2..],
-            &port.to_be_bytes()
+            empty.error.as_deref(),
+            Some("LinkedIn posts could not be parsed")
         );
-        stream
-            .write_all(&[5, 0, 0, 1, 127, 0, 0, 1, 0, 80])
-            .unwrap();
+        let authwall = linkedin_feed(include_str!("fixtures/linkedin_authwall.html"), profile, 8);
+        assert_eq!(
+            authwall.error.as_deref(),
+            Some("LinkedIn session expired or unavailable")
+        );
     }
 
-    #[tokio::test]
-    async fn linkedin_client_sends_hostname_and_request_through_socks() {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        let addr = listener.local_addr().unwrap();
-        let server = thread::spawn(move || {
-            let (mut stream, _) = listener.accept().unwrap();
-            accept_socks_request(&mut stream, 80);
-
-            let mut http = [0; 2048];
-            let count = stream.read(&mut http).unwrap();
-            assert!(http[..count].starts_with(b"GET /company HTTP/1.1\r\n"));
-            stream
-                .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nok")
-                .unwrap();
-        });
-        let fetcher = NewsFetcher {
-            http: Client::new(),
-            linkedin_li_at: None,
-            fetch_limit: 8,
-        };
-        let http = NewsFetcher::tor_http_client(addr).unwrap();
-        let body = fetcher
-            .fetch_html(
-                &http,
-                "http://news.invalid/company",
-                true,
-                BROWSER_USER_AGENT,
-            )
-            .await
-            .unwrap();
-        assert_eq!(body, "ok");
-        server.join().unwrap();
-    }
-
-    #[tokio::test]
-    async fn linkedin_https_uses_socks_before_tls() {
-        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-        let addr = listener.local_addr().unwrap();
-        let server = thread::spawn(move || {
-            let (mut stream, _) = listener.accept().unwrap();
-            accept_socks_request(&mut stream, 443);
-            let mut tls_record_type = [0; 1];
-            stream.read_exact(&mut tls_record_type).unwrap();
-            assert_eq!(tls_record_type, [0x16]);
-        });
-
-        let http = NewsFetcher::tor_http_client(addr).unwrap();
-        assert!(
-            http.get("https://news.invalid/company")
-                .send()
-                .await
-                .is_err()
+    #[test]
+    fn linkedin_company_page_returns_posts() {
+        let feed = linkedin_feed(
+            include_str!("fixtures/linkedin_itc_company.html"),
+            "https://www.linkedin.com/company/interchouette-itc".into(),
+            8,
         );
-        server.join().unwrap();
+        assert_eq!(feed.items.len(), 1);
+        assert!(feed.error.is_none());
     }
 }

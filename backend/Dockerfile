@@ -2,7 +2,7 @@
 # Build context: repo root (needs backend/)
 
 ARG RUST_IMAGE=rust:bookworm
-ARG RUNTIME_IMAGE=debian:bookworm-slim
+ARG RUNTIME_IMAGE=node:24-bookworm-slim
 
 FROM ${RUST_IMAGE} AS builder
 
@@ -20,11 +20,13 @@ RUN cargo build --release \
 FROM ${RUNTIME_IMAGE} AS runtime
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates tor \
+  && apt-get install -y --no-install-recommends ca-certificates tor chromium chromium-sandbox xvfb xauth \
   && rm -rf /var/lib/apt/lists/* \
   && useradd --system --uid 10001 --home /app --shell /usr/sbin/nologin chat
 
 WORKDIR /app
+COPY backend/package.json backend/package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 COPY --from=builder /interchouette-chat /usr/local/bin/interchouette-chat
 COPY db/news.db /app/db/news.db
 

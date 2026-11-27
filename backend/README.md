@@ -49,10 +49,18 @@ Session, WebSocket, and `/v1/book` stay implemented but are omitted from the pub
 
 `GET /v1/news` (and RSS/Atom siblings) share one in-memory cache across locales (default 24 hours). A refresh occurs on startup and, after expiry, when news is requested; concurrent requests share that refresh. Restarting the process refreshes again. Successful refreshes **merge** scraped items into SQLite (by stable post id; ISO week from `published_at`; keep 52 weeks). When `NEWS_GITHUB_TOKEN` is set on the API, it **pulls** `db/news.db` on boot and **pushes** after a merge that changed rows. The `/news` page and `/archive` call this API. `LINKEDIN_LI_AT` optionally supplies a server-side LinkedIn session cookie; it does not guarantee access.
 
-Each LinkedIn refresh starts a fresh Tor process and sends the request through
-its local SOCKS proxy; X continues to use the normal HTTP client. The Docker
-image includes Tor; local backend runs require `tor` on `PATH`. If Tor cannot
-start or bootstrap, LinkedIn reports an error rather than fetching directly.
+Each LinkedIn refresh starts a fresh Tor process and uses Puppeteer with a
+visible Chromium session through its local SOCKS proxy; X continues to use the
+normal HTTP client. The Docker image includes Tor, Chromium, and Xvfb. For
+local runs, install Node.js 22.12 or newer, run `npm ci` in `backend`, and
+provide `tor` on `PATH` and Chromium at `/usr/bin/chromium`. Set
+`PUPPETEER_EXECUTABLE_PATH` to use another Chromium executable. Without `DISPLAY`, `xvfb-run` and
+`xauth` are required. If the browser or Tor fails, LinkedIn reports an error
+rather than fetching directly. Cloudflare may still block browser requests.
+Chromium's sandbox requires user namespaces. A local Docker test succeeded
+with `--security-opt seccomp=unconfined`, which disables Docker's seccomp
+filter for the whole container; the default Docker profile blocked the browser.
+Render support for this setting has not been verified.
 
 When a source fails, the API keeps its most recent cached posts or restores its
 latest archived posts, retaining the source error so clients can identify stale
