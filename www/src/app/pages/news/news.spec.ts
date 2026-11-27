@@ -38,7 +38,7 @@ describe('NewsPage', () => {
     expect(tabs[0]).toContain('LinkedIn');
   });
 
-  it('shows a friendly warning with retained posts and hides raw source errors', () => {
+  it('shows retained posts without a warning and hides raw source errors', () => {
     const news = TestBed.inject(NewsService);
     vi.spyOn(news, 'load').mockImplementation(() => undefined);
     news.feeds.set({
@@ -56,7 +56,7 @@ describe('NewsPage', () => {
     const fixture = TestBed.createComponent(NewsPage);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
-    expect(el.textContent).toContain(COPY.en.news.stale);
+    expect(el.querySelector('#news-panel-itcLinkedIn .news-empty')).toBeNull();
     expect(el.textContent).toContain('Previous post');
     expect(el.textContent).toContain(COPY.en.news.error);
     expect(el.textContent).not.toContain('403 Forbidden');

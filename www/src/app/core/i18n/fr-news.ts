@@ -5,7 +5,6 @@ export const FR_NEWS = {
   tabItcX: 'Interchouette · X',
   loading: 'Chargement des publications…',
   error: 'Impossible de charger les publications pour le moment.',
-  stale: 'Les mises à jour sont indisponibles. Voici les publications précédemment récupérées.',
   empty: "Pas encore d'articles.",
   viewOnLinkedIn: 'Voir sur LinkedIn',
   viewOnX: 'Voir sur X',

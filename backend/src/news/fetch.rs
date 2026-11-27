@@ -58,7 +58,7 @@ impl NewsFetcher {
     pub async fn fetch_itc_linkedin(&self) -> NewsFeed {
         let profile_url: String =
             "https://www.linkedin.com/company/interchouette-itc/posts/?feedView=all".into();
-        let fetch_url = "https://fr.linkedin.com/company/interchouette-itc";
+        let fetch_url = "https://www.linkedin.com/company/interchouette-itc";
         match self.fetch_linkedin_html(fetch_url).await {
             Ok(html) => {
                 if is_linkedin_authwall(&html) {
@@ -153,7 +153,7 @@ impl NewsFetcher {
                     "Accept",
                     "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                 )
-                .header("Accept-Language", "fr-FR,fr;q=0.9,en;q=0.8")
+                .header("Accept-Language", "en-US,en;q=0.9")
                 .header("Sec-Fetch-Dest", "document")
                 .header("Sec-Fetch-Mode", "navigate")
                 .header("Sec-Fetch-Site", "none")
