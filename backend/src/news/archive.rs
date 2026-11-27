@@ -173,6 +173,38 @@ impl NewsArchive {
         }
     }
 
+    /// Return the newest archived items for one source across all weeks.
+    pub async fn latest_items(&self, source: &str, limit: usize) -> Vec<NewsItem> {
+        let Some(pool) = &self.pool else {
+            return Vec::new();
+        };
+        let rows = match sqlx::query(
+            "SELECT item_id, url, text, published_at FROM news_items WHERE source = ?",
+        )
+        .bind(source)
+        .fetch_all(pool)
+        .await
+        {
+            Ok(rows) => rows,
+            Err(err) => {
+                warn!(error = %err, source, "news archive latest items failed");
+                return Vec::new();
+            }
+        };
+        let mut items: Vec<_> = rows
+            .into_iter()
+            .map(|row| NewsItem {
+                id: row.get("item_id"),
+                text: sanitize_public_text(&row.get::<String, _>("text")),
+                url: row.get("url"),
+                published_at: row.get("published_at"),
+            })
+            .collect();
+        sort_news_items_newest_first(&mut items);
+        items.truncate(limit);
+        items
+    }
+
     /// Rebuild one week as a `NewsResponse`, or `None` when missing / disabled.
     pub async fn get_week(&self, locale: &str, week_id: &str) -> Option<NewsResponse> {
         let pool = self.pool.as_ref()?;
@@ -619,6 +651,10 @@ mod tests {
             .collect();
         assert!(ids.contains(&"111"));
         assert!(ids.contains(&"222"));
+        let latest = archive.latest_items("linkedin", 1).await;
+        assert_eq!(latest.len(), 1);
+        assert_eq!(latest[0].id, "222");
+        assert!(archive.latest_items("x", 8).await.is_empty());
         let _ = tokio::fs::remove_file(&path).await;
     }
 

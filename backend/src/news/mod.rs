@@ -8,6 +8,7 @@ mod fetch;
 mod github_sync;
 mod parse_linkedin;
 mod parse_x;
+mod tor;
 pub(crate) mod types;
 
 pub use api::{news_handler, NewsState};

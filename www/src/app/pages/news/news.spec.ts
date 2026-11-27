@@ -37,4 +37,29 @@ describe('NewsPage', () => {
     );
     expect(tabs[0]).toContain('LinkedIn');
   });
+
+  it('shows a friendly warning with retained posts and hides raw source errors', () => {
+    const news = TestBed.inject(NewsService);
+    vi.spyOn(news, 'load').mockImplementation(() => undefined);
+    news.feeds.set({
+      itc_linkedin: {
+        profile_url: 'https://www.linkedin.com/company/interchouette-itc/',
+        error: 'fetch returned HTTP 403 Forbidden',
+        items: [{ id: '1', text: 'Previous post', url: 'https://example.com/post' }],
+      },
+      itc_x: {
+        profile_url: 'https://x.com/interchouette',
+        error: 'X timeline could not be parsed',
+        items: [],
+      },
+    });
+    const fixture = TestBed.createComponent(NewsPage);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain(COPY.en.news.stale);
+    expect(el.textContent).toContain('Previous post');
+    expect(el.textContent).toContain(COPY.en.news.error);
+    expect(el.textContent).not.toContain('403 Forbidden');
+    expect(el.textContent).not.toContain('could not be parsed');
+  });
 });

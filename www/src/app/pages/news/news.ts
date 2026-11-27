@@ -125,7 +125,7 @@ export class NewsPage {
       return null;
     }
     if (feed.error != null && feed.error.length > 0) {
-      return feed.error;
+      return this.copy.news.error;
     }
     return this.copy.news.empty;
   }
