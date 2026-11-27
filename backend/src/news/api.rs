@@ -100,6 +100,7 @@ impl NewsState {
     }
 
     async fn refresh(&self, locale: &str) -> Result<NewsResponse, String> {
+        tracing::info!(cache_ttl_secs = self.cache_ttl_secs, "news refresh started");
         let (itc_linkedin, itc_x) = tokio::join!(
             self.fetcher.fetch_itc_linkedin(),
             self.fetcher.fetch_itc_x()
@@ -145,11 +146,21 @@ impl NewsState {
         }
         if let Some(previous) = cached.filter(|value| !value.items.is_empty()) {
             feed.items.clone_from(&previous.items);
+            tracing::info!(
+                source,
+                posts = feed.items.len(),
+                "serving cached news after refresh failure"
+            );
         } else {
             feed.items = self
                 .archive
                 .latest_items(source, self.fetcher.fetch_limit())
                 .await;
+            tracing::info!(
+                source,
+                posts = feed.items.len(),
+                "serving archived news after refresh failure"
+            );
         }
     }
 }
