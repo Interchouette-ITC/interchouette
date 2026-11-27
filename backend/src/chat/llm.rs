@@ -6,7 +6,7 @@
 
 use std::collections::BTreeSet;
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 use crate::chat::calendar::slot_minutes;
 use crate::chat::guard::{refusal_message, scan_model_output, scan_user_input};
@@ -397,10 +397,10 @@ fn parse_sse_jsonrpc(body: &str) -> anyhow::Result<Value> {
         if data.is_empty() {
             continue;
         }
-        if let Ok(v) = serde_json::from_str::<Value>(data) {
-            if v.get("jsonrpc").is_some() {
-                return Ok(v);
-            }
+        if let Ok(v) = serde_json::from_str::<Value>(data)
+            && v.get("jsonrpc").is_some()
+        {
+            return Ok(v);
         }
     }
     if let Ok(v) = serde_json::from_str::<Value>(body) {
@@ -921,10 +921,12 @@ mod tests {
         assert_eq!(messages[0]["role"], "system");
         assert_eq!(messages[1]["content"], "Public notes:\nnotes");
         assert_eq!(messages[2]["role"], "system");
-        assert!(messages[2]["content"]
-            .as_str()
-            .unwrap()
-            .contains("has not saved an email"));
+        assert!(
+            messages[2]["content"]
+                .as_str()
+                .unwrap()
+                .contains("has not saved an email")
+        );
         assert_eq!(messages[3]["role"], "user");
         assert_eq!(messages[3]["content"], "i want to book a meeting");
         assert_eq!(messages[4]["role"], "assistant");
@@ -939,10 +941,12 @@ mod tests {
             &[],
             Some("ada@example.com"),
         );
-        assert!(with_email[2]["content"]
-            .as_str()
-            .unwrap()
-            .contains("ada@example.com"));
+        assert!(
+            with_email[2]["content"]
+                .as_str()
+                .unwrap()
+                .contains("ada@example.com")
+        );
     }
 
     fn line(role: &str, text: &str) -> ChatLine {

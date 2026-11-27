@@ -410,7 +410,7 @@ impl InterchouetteMcp {
     }
 
     #[tool(description = "ITC LinkedIn and X posts from API GET /v1/news \
-                       (JSON cached about every 4 hours on api.interchouette.net).")]
+                       (JSON cached for 24 hours by default on api.interchouette.net).")]
     async fn get_news(&self) -> Result<CallToolResult, McpError> {
         let base = self
             .chat_backend_url

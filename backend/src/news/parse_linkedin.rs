@@ -117,10 +117,10 @@ fn parse_linkedin_embedded_json(html: &str) -> Vec<NewsItem> {
 fn collect_json_updates(value: &Value, items: &mut Vec<NewsItem>, seen: &mut HashSet<String>) {
     match value {
         Value::Object(map) => {
-            if let Some(item) = update_from_object(map) {
-                if seen.insert(item.id.clone()) {
-                    items.push(item);
-                }
+            if let Some(item) = update_from_object(map)
+                && seen.insert(item.id.clone())
+            {
+                items.push(item);
             }
             for child in map.values() {
                 collect_json_updates(child, items, seen);

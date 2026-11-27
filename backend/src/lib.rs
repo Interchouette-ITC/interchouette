@@ -5,4 +5,4 @@ pub mod news;
 pub mod openapi;
 pub mod server;
 
-pub use server::{build_app, run_http, DEFAULT_HTTP_LISTEN};
+pub use server::{DEFAULT_HTTP_LISTEN, build_app, run_http};

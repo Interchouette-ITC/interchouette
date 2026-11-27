@@ -11,6 +11,6 @@ mod parse_x;
 mod tor;
 pub(crate) mod types;
 
-pub use api::{news_handler, NewsState};
+pub use api::{NewsState, news_handler};
 pub use archive::{NewsArchiveIndex, NewsArchiveWeek};
 pub use types::{NewsFeed, NewsFeeds, NewsItem, NewsResponse};

@@ -71,6 +71,11 @@ struct CalendarInner {
 }
 
 impl CalendarClient {
+    #[cfg(test)]
+    pub(super) const fn disabled() -> Self {
+        Self { inner: None }
+    }
+
     /// Construct from env vars. Returns a disabled client when any var is missing.
     #[must_use]
     pub fn from_env() -> Self {
@@ -145,8 +150,7 @@ impl CalendarClient {
         let busy = resp
             .calendars
             .get(&inner.calendar_id)
-            .map(|c| c.busy.clone())
-            .unwrap_or_default();
+            .map_or_default(|c| c.busy.clone());
         Ok(busy)
     }
 
@@ -511,8 +515,7 @@ mod tests {
 
     #[test]
     fn test_strip_booking_tag_middle() {
-        let reply =
-            "Great. [[BOOKING: first=A|last=B|email=c@d.com|start=2026-01-01T10:00:00]] I will confirm.";
+        let reply = "Great. [[BOOKING: first=A|last=B|email=c@d.com|start=2026-01-01T10:00:00]] I will confirm.";
         assert_eq!(strip_booking_tag(reply), "Great. I will confirm.");
     }
 

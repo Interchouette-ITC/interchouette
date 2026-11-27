@@ -90,10 +90,17 @@ pub fn visitor_turn_count(lines: &[crate::chat::sessions::ChatLine]) -> usize {
 /// Extra system note when the away turn should invite Play ITC radio once.
 #[must_use]
 pub fn playlist_nudge_note(lines: &[crate::chat::sessions::ChatLine]) -> Option<&'static str> {
+    playlist_nudge_note_after(lines, playlist_after_turns())
+}
+
+fn playlist_nudge_note_after(
+    lines: &[crate::chat::sessions::ChatLine],
+    threshold: usize,
+) -> Option<&'static str> {
     if history_has_playlist_tag(lines) {
         return None;
     }
-    if visitor_turn_count(lines) < playlist_after_turns() {
+    if visitor_turn_count(lines) < threshold {
         return None;
     }
     Some(
@@ -119,7 +126,6 @@ mod tests {
 
     #[test]
     fn nudge_after_configured_turns() {
-        std::env::set_var("CHAT_PLAYLIST_AFTER_TURNS", "2");
         let lines = vec![
             ChatLine {
                 id: "1".into(),
@@ -137,7 +143,6 @@ mod tests {
                 text: "rust?".into(),
             },
         ];
-        assert!(playlist_nudge_note(&lines).is_some());
-        std::env::remove_var("CHAT_PLAYLIST_AFTER_TURNS");
+        assert!(playlist_nudge_note_after(&lines, 2).is_some());
     }
 }

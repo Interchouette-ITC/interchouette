@@ -12,8 +12,8 @@ use serde_json::json;
 use uuid::Uuid;
 
 use crate::chat::calendar::{
-    extract_booking_tag, format_busy_snippet, looks_like_scheduling_intent, strip_booking_tag,
-    upcoming_freebusy_window, BookingRequest, CalendarClient, SLOT_TAKEN_ERROR_PREFIX,
+    BookingRequest, CalendarClient, SLOT_TAKEN_ERROR_PREFIX, extract_booking_tag,
+    format_busy_snippet, looks_like_scheduling_intent, strip_booking_tag, upcoming_freebusy_window,
 };
 use crate::chat::hub::{ChatEvent, Hub};
 use crate::chat::llm::AwayBrain;
@@ -32,6 +32,8 @@ pub struct ChatState {
     pub slack: SlackRelay,
     pub away: AwayBrain,
     pub calendar: CalendarClient,
+    #[cfg(test)]
+    test_mcp_chat_token: Option<String>,
 }
 
 impl ChatState {
@@ -45,7 +47,22 @@ impl ChatState {
             slack: SlackRelay::from_env(),
             away,
             calendar: CalendarClient::from_env(),
+            #[cfg(test)]
+            test_mcp_chat_token: None,
         }
+    }
+
+    #[cfg(not(test))]
+    fn mcp_chat_token(_state: &Self) -> String {
+        std::env::var("MCP_CHAT_TOKEN").unwrap_or_default()
+    }
+
+    #[cfg(test)]
+    fn mcp_chat_token(state: &Self) -> String {
+        state
+            .test_mcp_chat_token
+            .clone()
+            .unwrap_or_else(|| std::env::var("MCP_CHAT_TOKEN").unwrap_or_default())
     }
 
     /// Slack inbound: Socket Mode on prod, HTTP thread read on local.
@@ -185,7 +202,7 @@ async fn book_handler(
     State(state): State<ChatState>,
     Json(payload): Json<BookPayload>,
 ) -> impl IntoResponse {
-    let expected = std::env::var("MCP_CHAT_TOKEN").unwrap_or_default();
+    let expected = ChatState::mcp_chat_token(&state);
     if expected.is_empty() || payload.token != expected {
         return (
             axum::http::StatusCode::UNAUTHORIZED,
@@ -290,7 +307,7 @@ async fn freebusy_handler(
     State(state): State<ChatState>,
     Json(payload): Json<FreeBusyPayload>,
 ) -> impl IntoResponse {
-    let expected = std::env::var("MCP_CHAT_TOKEN").unwrap_or_default();
+    let expected = ChatState::mcp_chat_token(&state);
     if expected.is_empty() || payload.token != expected {
         return (
             axum::http::StatusCode::UNAUTHORIZED,
@@ -620,10 +637,10 @@ async fn ensure_session_thread(state: &ChatState, session: &Session) -> Option<(
     // Re-read from registry to avoid a race where two concurrent messages both
     // see no thread and each create one.
     let fresh = state.sessions.get(&session.id).await;
-    if let Some(s) = &fresh {
-        if let (Some(channel), Some(ts)) = (&s.slack_channel, &s.slack_thread_ts) {
-            return Some((channel.clone(), ts.clone()));
-        }
+    if let Some(s) = &fresh
+        && let (Some(channel), Some(ts)) = (&s.slack_channel, &s.slack_thread_ts)
+    {
+        return Some((channel.clone(), ts.clone()));
     }
     if !state.slack.enabled() {
         return None;
@@ -846,7 +863,8 @@ mod tests {
             away: AwayBrain::with_static_context(
                 "### Test\nInterchouette Rust chat test MCP context.",
             ),
-            calendar: CalendarClient::from_env(),
+            calendar: CalendarClient::disabled(),
+            test_mcp_chat_token: Some(String::new()),
         }
     }
 
@@ -975,9 +993,8 @@ mod tests {
 
     #[tokio::test]
     async fn book_endpoint_rejects_wrong_token() {
-        // Set a known token in the env; the request sends a wrong one.
-        std::env::set_var("MCP_CHAT_TOKEN", "correct-secret");
-        let state = test_state();
+        let mut state = test_state();
+        state.test_mcp_chat_token = Some("correct-secret".into());
         let app = chat_router(state);
         let response = app
             .oneshot(
@@ -1000,15 +1017,12 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-        std::env::remove_var("MCP_CHAT_TOKEN");
     }
 
     #[tokio::test]
     async fn book_endpoint_requires_calendar_configured() {
-        // Correct token, but CalendarClient not configured => SERVICE_UNAVAILABLE.
-        std::env::set_var("MCP_CHAT_TOKEN", "test-token");
-        // CalendarClient::from_env() will be unconfigured because GCAL_* are absent.
-        let state = test_state();
+        let mut state = test_state();
+        state.test_mcp_chat_token = Some("test-token".into());
         let app = chat_router(state);
         let response = app
             .oneshot(
@@ -1030,13 +1044,7 @@ mod tests {
             )
             .await
             .unwrap();
-        // Either 503 (calendar not configured) or 401 (token env race) is acceptable,
-        // but it must not be 200 or 500.
-        assert!(
-            response.status() == StatusCode::SERVICE_UNAVAILABLE
-                || response.status() == StatusCode::UNAUTHORIZED,
-        );
-        std::env::remove_var("MCP_CHAT_TOKEN");
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
     }
 
     #[tokio::test]
@@ -1066,8 +1074,8 @@ mod tests {
 
     #[tokio::test]
     async fn freebusy_endpoint_requires_calendar_configured() {
-        std::env::set_var("MCP_CHAT_TOKEN", "test-token");
-        let state = test_state();
+        let mut state = test_state();
+        state.test_mcp_chat_token = Some("test-token".into());
         let app = chat_router(state);
         let response = app
             .oneshot(
@@ -1087,11 +1095,7 @@ mod tests {
             )
             .await
             .unwrap();
-        assert!(
-            response.status() == StatusCode::SERVICE_UNAVAILABLE
-                || response.status() == StatusCode::UNAUTHORIZED,
-        );
-        std::env::remove_var("MCP_CHAT_TOKEN");
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
     }
 
     #[tokio::test]

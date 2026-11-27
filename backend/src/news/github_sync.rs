@@ -7,8 +7,8 @@ use std::fmt::Write as _;
 use std::path::Path;
 
 use base64::Engine;
-use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use reqwest::StatusCode;
+use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use serde::Deserialize;
 use serde_json::json;
 use sqlx::SqlitePool;

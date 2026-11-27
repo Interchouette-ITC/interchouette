@@ -71,7 +71,7 @@ export function listPagesText(): string {
   return pages.join('\n');
 }
 
-/** Format API `/v1/news` JSON for agents (4h server cache). */
+/** Format API `/v1/news` JSON for agents. */
 export function formatNewsSnapshotText(raw: unknown): string {
   const body = raw as {
     fetched_at?: string;
@@ -82,7 +82,7 @@ export function formatNewsSnapshotText(raw: unknown): string {
     };
   };
   const lines: string[] = [
-    'Interchouette News (API cache, about every 4 hours)',
+    'Interchouette News (API cache, about once a day by default)',
     `Page: ${SITE_ORIGIN}/news`,
     `JSON: ${API_ORIGIN}/v1/news`,
     `RSS: ${API_ORIGIN}/v1/news/rss.xml`,
@@ -213,7 +213,7 @@ export function createSiteInfoWebMcpTools() {
     {
       name: 'get_news',
       description:
-        'Returns ITC LinkedIn and X posts from API GET /v1/news (JSON cached about every 4 hours).',
+        'Returns ITC LinkedIn and X posts from API GET /v1/news (cached for 24 hours by default).',
       inputSchema: EMPTY_INPUT_SCHEMA,
       execute: () => fetchNewsSnapshotText(),
     },

@@ -67,13 +67,12 @@ fn parse_x_relay(html: &str) -> Option<Vec<NewsItem>> {
         };
         let mut pinned = std::collections::HashSet::new();
         for instruction in instructions {
-            if instruction.get("__typename").and_then(Value::as_str) == Some("TimelinePinEntry") {
-                if let Some(id) = instruction
+            if instruction.get("__typename").and_then(Value::as_str) == Some("TimelinePinEntry")
+                && let Some(id) = instruction
                     .pointer("/entry/content/content/tweet_results/result/rest_id")
                     .and_then(Value::as_str)
-                {
-                    pinned.insert(id.to_owned());
-                }
+            {
+                pinned.insert(id.to_owned());
             }
         }
         let mut seen = std::collections::HashSet::new();
@@ -153,8 +152,7 @@ fn parse_x_schema(document: &Html) -> Vec<NewsItem> {
             .next()
             .and_then(|el| el.value().attr("content"))
             .map(decode_html_entities)
-            .map(|value| value.trim().to_string())
-            .unwrap_or_default();
+            .map_or_default(|value| value.trim().to_string());
         if text.is_empty() {
             continue;
         }
@@ -327,11 +325,11 @@ fn unescape_js_string(raw: &str) -> String {
             Some('\\') | None => out.push('\\'),
             Some('u') => {
                 let hex: String = chars.by_ref().take(4).collect();
-                if let Ok(code) = u32::from_str_radix(&hex, 16) {
-                    if let Some(decoded) = char::from_u32(code) {
-                        out.push(decoded);
-                        continue;
-                    }
+                if let Ok(code) = u32::from_str_radix(&hex, 16)
+                    && let Some(decoded) = char::from_u32(code)
+                {
+                    out.push(decoded);
+                    continue;
                 }
                 out.push('u');
                 out.push_str(&hex);

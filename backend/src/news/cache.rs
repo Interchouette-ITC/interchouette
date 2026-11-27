@@ -1,6 +1,5 @@
 //! In-memory TTL cache for parsed news feeds.
 
-use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -14,18 +13,18 @@ struct CacheEntry {
     stored_at: Instant,
 }
 
-/// Thread-safe news cache keyed by site locale.
+/// Thread-safe cache for locale-independent news feeds.
 #[derive(Clone, Default)]
 pub struct NewsCache {
-    inner: Arc<RwLock<HashMap<String, CacheEntry>>>,
+    inner: Arc<RwLock<Option<CacheEntry>>>,
 }
 
 impl NewsCache {
     /// Return a fresh cached response when TTL has not expired.
-    pub async fn get_fresh(&self, locale: &str, ttl: Duration) -> Option<NewsResponse> {
+    pub async fn get_fresh(&self, ttl: Duration) -> Option<NewsResponse> {
         let entry = {
             let guard = self.inner.read().await;
-            guard.get(locale).cloned()
+            guard.clone()
         }?;
         if entry.stored_at.elapsed() <= ttl {
             return Some(entry.response);
@@ -34,21 +33,18 @@ impl NewsCache {
     }
 
     /// Return any cached response regardless of age.
-    pub async fn get_stale(&self, locale: &str) -> Option<NewsResponse> {
+    pub async fn get_stale(&self) -> Option<NewsResponse> {
         let guard = self.inner.read().await;
-        guard.get(locale).map(|entry| entry.response.clone())
+        guard.as_ref().map(|entry| entry.response.clone())
     }
 
-    /// Store a response for the locale.
-    pub async fn put(&self, locale: &str, response: NewsResponse) {
+    /// Store a response.
+    pub async fn put(&self, response: NewsResponse) {
         let mut guard = self.inner.write().await;
-        guard.insert(
-            locale.to_string(),
-            CacheEntry {
-                response,
-                stored_at: Instant::now(),
-            },
-        );
+        *guard = Some(CacheEntry {
+            response,
+            stored_at: Instant::now(),
+        });
     }
 }
 
@@ -76,34 +72,32 @@ mod tests {
     #[tokio::test]
     async fn fresh_entry_is_returned_within_ttl() {
         let cache = NewsCache::default();
-        cache.put("en", empty_response()).await;
-        assert!(cache
-            .get_fresh("en", Duration::from_mins(1))
-            .await
-            .is_some());
+        cache.put(empty_response()).await;
+        assert!(cache.get_fresh(Duration::from_mins(1)).await.is_some());
     }
 
     #[tokio::test]
-    async fn stale_entry_is_not_fresh_after_ttl() {
+    async fn daily_ttl_expires_after_24_hours() {
         let cache = NewsCache {
-            inner: Arc::new(RwLock::new(HashMap::new())),
+            inner: Arc::new(RwLock::new(None)),
         };
         {
             let mut guard = cache.inner.write().await;
-            guard.insert(
-                "en".into(),
-                CacheEntry {
-                    response: empty_response(),
-                    stored_at: Instant::now()
-                        .checked_sub(Duration::from_hours(2))
-                        .unwrap_or_else(Instant::now),
-                },
-            );
+            *guard = Some(CacheEntry {
+                response: empty_response(),
+                stored_at: Instant::now()
+                    .checked_sub(Duration::from_hours(23))
+                    .unwrap_or_else(Instant::now),
+            });
         }
-        assert!(cache
-            .get_fresh("en", Duration::from_hours(1))
-            .await
-            .is_none());
-        assert!(cache.get_stale("en").await.is_some());
+        assert!(cache.get_fresh(Duration::from_hours(24)).await.is_some());
+        {
+            let mut guard = cache.inner.write().await;
+            guard.as_mut().unwrap().stored_at = Instant::now()
+                .checked_sub(Duration::from_hours(25))
+                .unwrap_or_else(Instant::now);
+        }
+        assert!(cache.get_fresh(Duration::from_hours(24)).await.is_none());
+        assert!(cache.get_stale().await.is_some());
     }
 }

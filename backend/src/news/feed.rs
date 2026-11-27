@@ -96,8 +96,9 @@ pub fn build_rss(response: &NewsResponse) -> String {
             .published_at
             .as_deref()
             .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
-            .map(|d| format!("\n      <pubDate>{}</pubDate>", xml_escape(&d.to_rfc2822())))
-            .unwrap_or_default();
+            .map_or_default(|d| {
+                format!("\n      <pubDate>{}</pubDate>", xml_escape(&d.to_rfc2822()))
+            });
         let _ = write!(
             body,
             r#"    <item>

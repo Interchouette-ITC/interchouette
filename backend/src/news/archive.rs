@@ -3,6 +3,7 @@
 //! Items merge by `(source, item_id)` and bucket into ISO weeks from `published_at`.
 //! Live `/v1/news` stays an in-memory top-N snapshot; archive GETs rebuild from rows.
 
+use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -16,8 +17,8 @@ use utoipa::ToSchema;
 
 use super::github_sync::GitHubNewsSync;
 use super::types::{
-    published_at_from_snowflake_id, sort_news_items_newest_first, NewsFeed, NewsFeeds, NewsItem,
-    NewsResponse,
+    NewsFeed, NewsFeeds, NewsItem, NewsResponse, published_at_from_snowflake_id,
+    sort_news_items_newest_first,
 };
 
 const RETENTION_WEEKS: i64 = 52;
@@ -54,10 +55,10 @@ impl NewsArchive {
     pub async fn from_env() -> Self {
         let path = resolve_news_db_path();
         let sync = GitHubNewsSync::from_env();
-        if let Some(ref sync) = sync {
-            if let Err(err) = sync.pull_to(&path).await {
-                warn!(error = %err, "news archive GitHub pull failed; opening local file");
-            }
+        if let Some(ref sync) = sync
+            && let Err(err) = sync.pull_to(&path).await
+        {
+            warn!(error = %err, "news archive GitHub pull failed; opening local file");
         }
         let mut archive = Self::from_path(&path).await;
         archive.path = Some(path);
@@ -67,11 +68,11 @@ impl NewsArchive {
 
     /// Open (and migrate) the archive database at `path`.
     pub async fn from_path(path: &Path) -> Self {
-        if let Some(parent) = path.parent() {
-            if let Err(err) = tokio::fs::create_dir_all(parent).await {
-                warn!(error = %err, path = %path.display(), "news archive mkdir failed");
-                return Self::default();
-            }
+        if let Some(parent) = path.parent()
+            && let Err(err) = tokio::fs::create_dir_all(parent).await
+        {
+            warn!(error = %err, path = %path.display(), "news archive mkdir failed");
+            return Self::default();
         }
         let options = SqliteConnectOptions::new()
             .filename(path)
@@ -500,7 +501,11 @@ fn content_hash(source: &str, item_id: &str, url: &str) -> String {
     hasher.update(item_id.as_bytes());
     hasher.update([0]);
     hasher.update(url.as_bytes());
-    format!("{:x}", hasher.finalize())
+    let mut output = String::with_capacity(32);
+    for byte in hasher.finalize() {
+        write!(&mut output, "{byte:02x}").expect("writing to a String cannot fail");
+    }
+    output
 }
 
 /// ISO week id `YYYY-Www` from an RFC3339 timestamp (UTC).
@@ -569,7 +574,7 @@ mod tests {
     fn content_hash_is_stable() {
         assert_eq!(
             content_hash("x", "1", "https://example.com/1"),
-            content_hash("x", "1", "https://example.com/1")
+            "f7c81f4e0880e49060030efecc8bf2b8"
         );
         assert_ne!(
             content_hash("x", "1", "https://example.com/1"),
@@ -654,7 +659,7 @@ mod tests {
         let latest = archive.latest_items("linkedin", 1).await;
         assert_eq!(latest.len(), 1);
         assert_eq!(latest[0].id, "222");
-        assert!(archive.latest_items("x", 8).await.is_empty());
+        assert_eq!(archive.latest_items("x", 8).await, []);
         let _ = tokio::fs::remove_file(&path).await;
     }
 
