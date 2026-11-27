@@ -49,6 +49,16 @@ Session, WebSocket, and `/v1/book` stay implemented but are omitted from the pub
 
 `GET /v1/news` (and RSS/Atom siblings) share one in-memory cache (default 4 hours). Successful refreshes **merge** scraped items into SQLite (by stable post id; ISO week from `published_at`; keep 52 weeks). When `NEWS_GITHUB_TOKEN` is set on the API, it **pulls** `db/news.db` on boot and **pushes** after a merge that changed rows (~4h cadence). The `/news` page and `/archive` call this API. Set `LINKEDIN_LI_AT` from your browser LinkedIn cookies when the ITC LinkedIn feed should populate; rotate it when LinkedIn returns an authwall.
 
+Each LinkedIn refresh starts a fresh Tor process and sends the request through
+its local SOCKS proxy; X continues to use the normal HTTP client. The Docker
+image includes Tor; local backend runs require `tor` on `PATH`. If Tor cannot
+start or bootstrap, LinkedIn reports an error rather than fetching directly.
+
+When a source fails, the API keeps its most recent cached posts or restores its
+latest archived posts, retaining the source error so clients can identify stale
+content. A successful refresh of the other source remains independent. This
+fallback does not restore live access to LinkedIn or X.
+
 ### Local news archive
 
 ```bash

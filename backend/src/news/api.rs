@@ -15,7 +15,7 @@ use super::archive::{NewsArchive, NewsArchiveIndex};
 use super::cache::NewsCache;
 use super::feed::{build_atom, build_rss};
 use super::fetch::NewsFetcher;
-use super::types::{NewsFeeds, NewsResponse};
+use super::types::{NewsFeed, NewsFeeds, NewsResponse};
 
 /// Shared news runtime state.
 #[derive(Clone)]
@@ -98,7 +98,7 @@ impl NewsState {
             self.fetcher.fetch_itc_linkedin(),
             self.fetcher.fetch_itc_x()
         );
-        let response = NewsResponse {
+        let mut response = NewsResponse {
             fetched_at: Utc::now().to_rfc3339(),
             cache_ttl_secs: self.cache_ttl_secs,
             feeds: NewsFeeds {
@@ -106,9 +106,45 @@ impl NewsState {
                 itc_x,
             },
         };
-        self.cache.put(locale, response.clone()).await;
         self.archive.upsert_week(locale, &response).await;
+        let cached = self.cache.get_stale(locale).await;
+        self.restore_failed_feed(
+            "linkedin",
+            &mut response.feeds.itc_linkedin,
+            cached.as_ref().map(|value| &value.feeds.itc_linkedin),
+        )
+        .await;
+        self.restore_failed_feed(
+            "x",
+            &mut response.feeds.itc_x,
+            cached.as_ref().map(|value| &value.feeds.itc_x),
+        )
+        .await;
+        self.cache.put(locale, response.clone()).await;
         Ok(response)
+    }
+
+    async fn restore_failed_feed(
+        &self,
+        source: &str,
+        feed: &mut NewsFeed,
+        cached: Option<&NewsFeed>,
+    ) {
+        let Some(error) = &feed.error else {
+            return;
+        };
+        warn!(source, error, "news source refresh failed");
+        if !feed.items.is_empty() {
+            return;
+        }
+        if let Some(previous) = cached.filter(|value| !value.items.is_empty()) {
+            feed.items.clone_from(&previous.items);
+        } else {
+            feed.items = self
+                .archive
+                .latest_items(source, self.fetcher.fetch_limit())
+                .await;
+        }
     }
 }
 
@@ -258,6 +294,67 @@ mod tests {
     use axum::http::{Request, StatusCode};
     use tower::ServiceExt;
 
+    #[tokio::test]
+    async fn failed_source_restores_cached_or_archived_posts_without_hiding_error() {
+        let path = std::env::temp_dir().join(format!(
+            "news-fallback-{}-{}.db",
+            std::process::id(),
+            Utc::now().timestamp_nanos_opt().unwrap()
+        ));
+        let mut state = NewsState::without_archive();
+        state.archive = NewsArchive::from_path(&path).await;
+        let post = super::super::types::NewsItem {
+            id: "123".into(),
+            text: "Archived post".into(),
+            url: "https://example.com/post".into(),
+            published_at: Some(Utc::now().to_rfc3339()),
+        };
+        let archived = NewsFeed {
+            items: vec![post.clone()],
+            profile_url: "https://example.com".into(),
+            error: None,
+        };
+        let mut response = empty_response("en", 14400, None);
+        response.feeds.itc_linkedin = archived.clone();
+        state.archive.upsert_week("en", &response).await;
+
+        let mut failed = NewsFeed {
+            items: vec![],
+            profile_url: archived.profile_url.clone(),
+            error: Some("HTTP 403".into()),
+        };
+        state
+            .restore_failed_feed("linkedin", &mut failed, None)
+            .await;
+        assert_eq!(failed.items, vec![post.clone()]);
+        assert_eq!(failed.error.as_deref(), Some("HTTP 403"));
+
+        let mut other = NewsFeed {
+            items: vec![],
+            profile_url: archived.profile_url.clone(),
+            error: Some("unavailable".into()),
+        };
+        state.restore_failed_feed("x", &mut other, None).await;
+        assert!(other.items.is_empty());
+        state
+            .restore_failed_feed("x", &mut other, Some(&archived))
+            .await;
+        assert_eq!(other.items, vec![post.clone()]);
+        assert_eq!(other.error.as_deref(), Some("unavailable"));
+
+        let mut successful = NewsFeed {
+            items: vec![],
+            profile_url: archived.profile_url.clone(),
+            error: None,
+        };
+        state
+            .restore_failed_feed("linkedin", &mut successful, Some(&archived))
+            .await;
+        assert!(successful.items.is_empty());
+        drop(state);
+        tokio::fs::remove_file(path).await.expect("remove archive");
+    }
+
     #[test]
     fn normalize_locale_accepts_known_values() {
         assert_eq!(normalize_locale(Some("nl")), "nl");
@@ -267,7 +364,12 @@ mod tests {
 
     #[tokio::test]
     async fn news_endpoint_returns_json_shape() {
-        let app = NewsState::from_env().await.router();
+        let state = NewsState::without_archive();
+        state
+            .cache
+            .put("en", empty_response("en", 14400, None))
+            .await;
+        let app = state.router();
         let response = app
             .oneshot(
                 Request::builder()
@@ -282,7 +384,12 @@ mod tests {
 
     #[tokio::test]
     async fn news_rss_endpoint_returns_xml() {
-        let app = NewsState::from_env().await.router();
+        let state = NewsState::without_archive();
+        state
+            .cache
+            .put("en", empty_response("en", 14400, None))
+            .await;
+        let app = state.router();
         let response = app
             .oneshot(
                 Request::builder()

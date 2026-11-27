@@ -20,7 +20,7 @@ RUN cargo build --release \
 FROM ${RUNTIME_IMAGE} AS runtime
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates \
+  && apt-get install -y --no-install-recommends ca-certificates tor \
   && rm -rf /var/lib/apt/lists/* \
   && useradd --system --uid 10001 --home /app --shell /usr/sbin/nologin chat
 

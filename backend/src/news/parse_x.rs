@@ -2,6 +2,7 @@
 
 use html_escape::decode_html_entities;
 use scraper::{Html, Selector};
+use serde_json::Value;
 
 use super::types::NewsItem;
 
@@ -11,6 +12,15 @@ const SCHEMA_POSTING: &str = "https://schema.org/SocialMediaPosting";
 /// Extract timeline posts from an X profile page. Skips the first item (pinned).
 #[must_use]
 pub fn parse_x(html: &str, profile_url: &str, limit: usize) -> Vec<NewsItem> {
+    if let Some(mut items) = parse_x_relay(html) {
+        for item in &mut items {
+            item.ensure_published_at_from_id("x");
+        }
+        super::types::sort_news_items_newest_first(&mut items);
+        items.truncate(limit);
+        return items;
+    }
+
     let document = Html::parse_document(html);
     let mut items = parse_x_schema(&document);
     if items.is_empty() {
@@ -34,6 +44,79 @@ pub fn parse_x(html: &str, profile_url: &str, limit: usize) -> Vec<NewsItem> {
     super::types::sort_news_items_newest_first(&mut items);
     items.truncate(limit);
     items
+}
+
+fn parse_x_relay(html: &str) -> Option<Vec<NewsItem>> {
+    let strings = regex::Regex::new(r#""(?:\\.|[^"\\])*""#).expect("valid string regex");
+    for candidate in strings.find_iter(html) {
+        let raw = candidate.as_str();
+        if !raw.contains("profile_user_originals_timeline") {
+            continue;
+        }
+        let Ok(payload) = serde_json::from_str::<String>(raw) else {
+            continue;
+        };
+        let Ok(value) = serde_json::from_str::<Value>(&payload) else {
+            continue;
+        };
+        let Some(instructions) = value
+            .pointer("/data/user_result_by_screen_name/result/profile_user_originals_timeline/timeline/instructions")
+            .and_then(Value::as_array)
+        else {
+            continue;
+        };
+        let mut pinned = std::collections::HashSet::new();
+        for instruction in instructions {
+            if instruction.get("__typename").and_then(Value::as_str) == Some("TimelinePinEntry") {
+                if let Some(id) = instruction
+                    .pointer("/entry/content/content/tweet_results/result/rest_id")
+                    .and_then(Value::as_str)
+                {
+                    pinned.insert(id.to_owned());
+                }
+            }
+        }
+        let mut seen = std::collections::HashSet::new();
+        let mut items = Vec::new();
+        for instruction in instructions {
+            if instruction.get("__typename").and_then(Value::as_str) != Some("TimelineAddEntries") {
+                continue;
+            }
+            let Some(entries) = instruction.get("entries").and_then(Value::as_array) else {
+                continue;
+            };
+            for entry in entries {
+                let Some(tweet) = entry.pointer("/content/content/tweet_results/result") else {
+                    continue;
+                };
+                let Some(id) = tweet.get("rest_id").and_then(Value::as_str) else {
+                    continue;
+                };
+                if id.is_empty()
+                    || !id.bytes().all(|byte| byte.is_ascii_digit())
+                    || pinned.contains(id)
+                    || !seen.insert(id.to_owned())
+                {
+                    continue;
+                }
+                let Some(text) = tweet
+                    .pointer("/details/full_text")
+                    .and_then(Value::as_str)
+                    .filter(|text| !text.trim().is_empty())
+                else {
+                    continue;
+                };
+                items.push(NewsItem {
+                    id: id.to_owned(),
+                    text: text.to_owned(),
+                    url: format!("https://x.com/Interchouette/status/{id}"),
+                    published_at: None,
+                });
+            }
+        }
+        return Some(items);
+    }
+    None
 }
 
 fn parse_x_schema(document: &Html) -> Vec<NewsItem> {
@@ -267,6 +350,36 @@ fn extract_status_id(href: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn parses_relay_timeline_skipping_pinned_and_quoted_posts() {
+        let tweet = |id: &str, text: &str| {
+            serde_json::json!({
+                "content": { "content": { "tweet_results": { "result": {
+                    "rest_id": id, "details": { "full_text": text },
+                    "quoted_tweet_results": { "result": { "rest_id": "999", "details": { "full_text": "quoted" } } }
+                } } } }
+            })
+        };
+        let payload = serde_json::json!({
+            "data": { "user_result_by_screen_name": { "result": {
+                "profile_user_originals_timeline": { "timeline": { "instructions": [
+                    { "__typename": "TimelinePinEntry", "entry": tweet("1", "Pinned") },
+                    { "__typename": "TimelineAddEntries", "entries": [
+                        tweet("1", "Pinned"), tweet("2", "Only new post")
+                    ] }
+                ] } }
+            } } }
+        });
+        let html = format!(
+            "<script>data={}</script>",
+            serde_json::to_string(&payload.to_string()).unwrap()
+        );
+        let items = parse_x(&html, "https://x.com/interchouette", 8);
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].id, "2");
+        assert_eq!(items[0].text, "Only new post");
+    }
 
     #[test]
     fn skips_first_pinned_tweet() {
