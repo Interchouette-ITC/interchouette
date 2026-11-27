@@ -24,6 +24,9 @@ describe('SiteHeader', () => {
     expect(el.querySelector('.site-header__menu-btn')?.getAttribute('aria-label')).toBe(
       COPY.en.headerMenu,
     );
+    const myfeed = el.querySelector('a[href="https://myfeed.interchouette.net/"]');
+    expect(myfeed?.textContent?.trim()).toBe('Myfeed');
+    expect(myfeed?.nextElementSibling?.getAttribute('routerlink')).toBe('/news');
     expect(el.querySelector('a[routerlink="/news"]')?.textContent?.trim()).toBe(COPY.en.headerNews);
     expect(el.querySelector('a[href="https://rust.contact/"]')?.getAttribute('title')).toBe(
       COPY.en.titleRust,
