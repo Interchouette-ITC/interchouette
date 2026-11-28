@@ -2,7 +2,8 @@
 
 HTTP API for the public site: visitor chat (WebSocket), news JSON/RSS/Atom, booking proxy.
 
-Public hostname: **`https://api.interchouette.net`** (same Render web service; formerly `chat.interchouette.net`).
+Public hostname: **`https://api.interchouette.net`**.
+The unused `chat.interchouette.net` alias is retired.
 
 **No chat database.** Durable retrieval is the bot↔Greg Slack DM. Away mode must call the remote MCP HTTP API; it does not open `interchouette.db`.
 
@@ -38,14 +39,24 @@ Session, WebSocket, and `/v1/book` stay implemented but are omitted from the pub
 | `BOOKING_SCHEDULE_URL`      | Public appointment page. When set, ITCy sends this link for meetings                                                                                                                                   |
 | `CHAT_PLAYLIST_AFTER_TURNS` | Away mode: after N visitor turns (default 3), ITCy may emit `[[PLAYLIST: play]]` once                                                                                                                  |
 | `MCP_URL`                   | Interchouette MCP Streamable HTTP URL (default `https://mcp.interchouette.net/`)                                                                                                                       |
+| `MCP_CHAT_TOKEN`            | Shared token required by MCP booking/calendar proxies; must match the MCP service                                                                                                                     |
+| `GCAL_CLIENT_ID`            | Google Calendar OAuth client id                                                                                                                                                                      |
+| `GCAL_CLIENT_SECRET`        | Google Calendar OAuth client secret                                                                                                                                                                  |
+| `GCAL_REFRESH_TOKEN`        | Google Calendar offline refresh token; all three OAuth variables are required to enable calendar access                                                                                               |
+| `GCAL_CALENDAR_ID`          | Target Google Calendar (default `primary`)                                                                                                                                                           |
+| `GCAL_SLOT_MINUTES`         | Booking duration in minutes (default `45`); must match the appointment schedule                                                                                                                        |
+| `GCAL_TIMEZONE`             | Booking IANA timezone (default `Europe/Amsterdam`); must match the appointment schedule                                                                                                                |
 | `CORS_ORIGIN`               | Browser origin (default `https://interchouette.net`)                                                                                                                                                   |
 | `LINKEDIN_LI_AT`            | LinkedIn `li_at` session cookie for `/v1/news` LinkedIn fetches (server-only)                                                                                                                          |
 | `NEWS_CACHE_TTL_SECS`       | News feed cache lifetime in seconds (default `86400`, 24 hours)                                                                                                                                        |
 | `NEWS_FETCH_LIMIT`          | Max posts per feed on `/v1/news` (default `8`)                                                                                                                                                         |
 | `NEWS_DB`                   | Optional override for archive SQLite path (default `/app/db/news.db` in Docker, else `db/news.db`)                                                                                                     |
-| `NEWS_GITHUB_TOKEN`         | PAT for Contents API sync (Render **chat API** only; not the static www site)                                                                                                                          |
+| `NEWS_GITHUB_TOKEN`         | PAT for Contents API sync (API service only; not the static www site)                                                                                                                                 |
 
 `NEWS_GITHUB_REPO`, `NEWS_GITHUB_PATH`, and `NEWS_GITHUB_BRANCH` default in code to `Interchouette-ITC/interchouette`, `db/news.db`, and `dev` (same branch Render builds from). Override only for forks or experiments. Do **not** point sync at another branch: the image bakes `db/news.db` from the deploy branch on each build.
+
+`DATABASE_URL` and `KNOWLEDGE_MCP_URL` are not used by this backend.
+The news archive uses `NEWS_DB` (SQLite), and the knowledge client uses `MCP_URL`.
 
 `GET /v1/news` (and RSS/Atom siblings) share one in-memory cache across locales (default 24 hours). A refresh occurs on startup and, after expiry, when news is requested; concurrent requests share that refresh. Restarting the process refreshes again. Successful refreshes **merge** scraped items into SQLite (by stable post id; ISO week from `published_at`; keep 52 weeks). When `NEWS_GITHUB_TOKEN` is set on the API, it **pulls** `db/news.db` on boot and **pushes** after a merge that changed rows. The `/news` page and `/archive` call this API. `LINKEDIN_LI_AT` optionally supplies a server-side LinkedIn session cookie; it does not guarantee access.
 
@@ -84,16 +95,40 @@ Chat live when Slack presence is `active` and DND is not in effect now (inside `
 
 Live replies: Greg answers in the bot DM thread (Socket Mode). No visitor-facing “message sent” system line.
 
-## Render (production)
+## VPS deployment
+
+Chat CI publishes `ghcr.io/interchouette-itc/interchouette-api:dev` and
+`:latest` from `backend/Dockerfile` after Rust checks pass on `dev`. The
+workflow can also be dispatched manually on `dev`. Browser packages are built
+in a separate image job, not installed by the Rust lint/test job. The workflow
+uses `GITHUB_TOKEN` with package write permission and no longer calls the API
+Render deploy hook. Make the package public after first publication for
+unauthenticated VPS pulls.
+
+The `itc-vps` deployment uses `/srv/api.interchouette/.env`, a persistent news
+volume, and an Apache HTTP/WebSocket proxy for the API hostname. Keep
+`CHAT_BACKEND_URL=https://api.interchouette.net` on MCP; no website URL change
+is needed. Preserve the existing Slack, OpenRouter, calendar, and news sync
+settings. Only one production backend may run with the Slack credentials;
+stop Render before starting the VPS backend. Existing sessions are in memory
+and must reconnect. Verify the latest news archive was synced or backed up.
+With `NEWS_GITHUB_TOKEN`, startup still replaces the local news database with
+the GitHub copy; persistent storage does not change that behavior.
+
+The VPS Compose configuration uses `seccomp=unconfined` only for this API
+container to support the tested Chromium sandbox. This reduces container
+isolation and does not guarantee LinkedIn access.
+
+## Previous Render deployment
 
 Website static site stays separate. This API needs its **own** web service (WebSockets; free tier sleep breaks them).
 
 1. Build `backend/Dockerfile` (context = repo root) → Docker web service from Git.
-2. Custom domain **`api.interchouette.net`** → that service. **`chat.interchouette.net`** is a deprecated alias (same service); do not use it in new site or worker URLs.
+2. Custom domain **`api.interchouette.net`** → that service. The former **`chat.interchouette.net`** alias is retired.
 3. Env on the service (all required): `CHAT_ENV=prod`, `SLACK_BOT_TOKEN`, `SLACK_APP_TOKEN`, `GREG_SLACK_USER_ID`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL=google/gemini-2.5-flash`, `MCP_URL=https://mcp.interchouette.net/`, `CORS_ORIGIN=https://interchouette.net`. Set `BOOKING_SCHEDULE_URL` to the public appointment page so ITCy can send that link. Prefer `PORT` from the host (binary picks it up when `CHAT_LISTEN` is unset). Slack thread headers include `env=prod|local|e2e`.
 4. Slack app: Socket Mode on; scopes include `dnd:read`.
 5. Static site: CI on `dev` posts the Render deploy hook after checks (`RENDER_DEPLOY_HOOK_URL`). Keep Render Auto-Deploy **Off**. Widget and news call `https://api.interchouette.net`.
-6. Chat API: Render Auto-Deploy **Off**; deploy hook `RENDER_DEPLOY_HOOK_URL_API`. `chat-ci.yml` on `dev` posts that hook only when `backend/**` changes, so bot commits that touch only `db/news.db` do not redeploy the API.
+6. Chat API: Render Auto-Deploy **Off**. The former `RENDER_DEPLOY_HOOK_URL_API` step has been replaced by GHCR publication; the workflow does not redeploy Render or the VPS. Database-only bot commits do not trigger the chat image workflow.
 7. MCP env `CHAT_BACKEND_URL` (booking / `get_news`) should be `https://api.interchouette.net`.
 
 ## Local
